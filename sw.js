@@ -33,10 +33,6 @@ const PRECACHE_URLS = [
     // External Libraries
     'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
     
-    // Icons (would be actual paths in production)
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png',
-    
     // Offline fallback page
     '/offline.html'
 ];
@@ -153,520 +149,164 @@ self.addEventListener('fetch', event => {
         return;
     }
     
-    // מציאת אסטרטגיית cache מתאימה
-    const routeConfig = findMatchingRoute(request.url);
-    
+    // מציאת אסטרטגיה מתאימה
+    const routeConfig = findMatchingRoute(url);
     if (routeConfig) {
-        event.respondWith(
-            handleCacheStrategy(request, routeConfig)
-        );
-    } else {
-        // אסטרטגיה ברירת מחדל
-        event.respondWith(
-            handleDefaultStrategy(request)
-        );
+        event.respondWith(handleRequest(request, routeConfig));
     }
 });
 
-// טיפול בעמוד הראשי
-async function handleMainPage(request) {
-    try {
-        // ניסיון לטעון מהרשת
-        const networkResponse = await fetch(request);
-        
-        // עדכון cache עם התוכן החדש
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, networkResponse.clone());
-        
-        return networkResponse;
-    } catch (error) {
-        // אם הרשת לא זמינה, טעינה מcache
-        const cachedResponse = await caches.match(request);
-        
-        if (cachedResponse) {
-            return cachedResponse;
-        }
-        
-        // אם אין cache, החזרת עמוד offline
-        return caches.match('/offline.html');
-    }
-}
-
 // מציאת route מתאים
 function findMatchingRoute(url) {
-    return ROUTE_CONFIGS.find(config => config.pattern.test(url));
+    return ROUTE_CONFIGS.find(config => config.pattern.test(url.pathname));
 }
 
-// טיפול באסטרטגיות cache
-async function handleCacheStrategy(request, config) {
-    const { strategy, cacheName = RUNTIME_CACHE } = config;
+// טיפול בבקשה לפי אסטרטגיה
+async function handleRequest(request, routeConfig) {
+    const { strategy, cacheName } = routeConfig;
     
     switch (strategy) {
         case CACHE_STRATEGIES.CACHE_FIRST:
-            return handleCacheFirst(request, cacheName, config);
-            
+            return cacheFirst(request, cacheName);
         case CACHE_STRATEGIES.NETWORK_FIRST:
-            return handleNetworkFirst(request, cacheName, config);
-            
+            return networkFirst(request, cacheName);
         case CACHE_STRATEGIES.STALE_WHILE_REVALIDATE:
-            return handleStaleWhileRevalidate(request, cacheName, config);
-            
-        case CACHE_STRATEGIES.NETWORK_ONLY:
-            return fetch(request);
-            
-        case CACHE_STRATEGIES.CACHE_ONLY:
-            return caches.match(request);
-            
+            return staleWhileRevalidate(request, cacheName);
         default:
-            return handleDefaultStrategy(request);
+            return fetch(request);
     }
 }
 
-// Cache First Strategy
-async function handleCacheFirst(request, cacheName, config) {
-    const cachedResponse = await caches.match(request);
+// אסטרטגיית Cache First
+async function cacheFirst(request, cacheName) {
+    const cache = await caches.open(cacheName);
+    const cachedResponse = await cache.match(request);
     
     if (cachedResponse) {
-        // בדיקת תוקף cache
-        if (config.expiration && isCacheExpired(cachedResponse, config.expiration)) {
-            // Cache פג תוקף - ניסיון לעדכן ברקע
-            updateCacheInBackground(request, cacheName);
-        }
         return cachedResponse;
     }
     
-    // אין cache - טעינה מהרשת וCache
     try {
         const networkResponse = await fetch(request);
-        
         if (networkResponse.ok) {
-            const cache = await caches.open(cacheName);
             cache.put(request, networkResponse.clone());
-            
-            // ניהול הגבלות cache
-            if (config.expiration) {
-                manageCacheSize(cacheName, config.expiration);
-            }
         }
-        
         return networkResponse;
     } catch (error) {
-        console.warn('Solar System SW: Network request failed:', error);
-        return new Response('Network Error', { status: 408 });
+        return new Response('Network error', { status: 408 });
     }
 }
 
-// Network First Strategy
-async function handleNetworkFirst(request, cacheName, config) {
+// אסטרטגיית Network First
+async function networkFirst(request, cacheName) {
+    const cache = await caches.open(cacheName);
+    
     try {
         const networkResponse = await fetch(request);
-        
         if (networkResponse.ok) {
-            const cache = await caches.open(cacheName);
-            cache.put(request, networkResponse.clone());
-            
-            if (config.expiration) {
-                manageCacheSize(cacheName, config.expiration);
-            }
-        }
-        
-        return networkResponse;
-    } catch (error) {
-        const cachedResponse = await caches.match(request);
-        
-        if (cachedResponse) {
-            return cachedResponse;
-        }
-        
-        return new Response('Network Error and no cache available', { status: 408 });
-    }
-}
-
-// Stale While Revalidate Strategy
-async function handleStaleWhileRevalidate(request, cacheName, config) {
-    const cachedResponse = await caches.match(request);
-    
-    // טעינה מהרשת ברקע לעדכון cache
-    const networkResponsePromise = fetch(request)
-        .then(networkResponse => {
-            if (networkResponse.ok) {
-                const cache = caches.open(cacheName);
-                cache.then(c => c.put(request, networkResponse.clone()));
-                
-                if (config.expiration) {
-                    manageCacheSize(cacheName, config.expiration);
-                }
-            }
-            return networkResponse;
-        })
-        .catch(error => {
-            console.warn('Solar System SW: Background update failed:', error);
-        });
-    
-    // החזרת cache אם קיים, אחרת המתנה לרשת
-    return cachedResponse || networkResponsePromise;
-}
-
-// אסטרטגיה ברירת מחדל
-async function handleDefaultStrategy(request) {
-    try {
-        const networkResponse = await fetch(request);
-        
-        // Cache רק תגובות מוצלחות
-        if (networkResponse.ok) {
-            const cache = await caches.open(RUNTIME_CACHE);
             cache.put(request, networkResponse.clone());
         }
-        
         return networkResponse;
     } catch (error) {
-        const cachedResponse = await caches.match(request);
+        const cachedResponse = await cache.match(request);
         return cachedResponse || new Response('Offline', { status: 408 });
     }
 }
 
-// עדכון cache ברקע
-function updateCacheInBackground(request, cacheName) {
-    fetch(request)
-        .then(response => {
-            if (response.ok) {
-                return caches.open(cacheName)
-                    .then(cache => cache.put(request, response));
-            }
-        })
-        .catch(error => {
-            console.warn('Solar System SW: Background cache update failed:', error);
-        });
-}
-
-// בדיקת תוקף cache
-function isCacheExpired(response, expiration) {
-    if (!expiration.maxAgeSeconds) return false;
-    
-    const cacheDate = response.headers.get('sw-cache-date');
-    if (!cacheDate) return false;
-    
-    const age = Date.now() - new Date(cacheDate).getTime();
-    return age > (expiration.maxAgeSeconds * 1000);
-}
-
-// ניהול גודל cache
-async function manageCacheSize(cacheName, expiration) {
-    if (!expiration.maxEntries) return;
-    
+// אסטרטגיית Stale While Revalidate
+async function staleWhileRevalidate(request, cacheName) {
     const cache = await caches.open(cacheName);
-    const keys = await cache.keys();
+    const cachedResponse = await cache.match(request);
     
-    if (keys.length > expiration.maxEntries) {
-        // מחיקת הכניסות הישנות ביותר
-        const entriesToDelete = keys.length - expiration.maxEntries;
-        const keysToDelete = keys.slice(0, entriesToDelete);
-        
-        await Promise.all(
-            keysToDelete.map(key => cache.delete(key))
-        );
-        
-        console.log(`Solar System SW: Cleaned ${entriesToDelete} entries from ${cacheName}`);
+    const fetchPromise = fetch(request).then(networkResponse => {
+        if (networkResponse.ok) {
+            cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
+    });
+    
+    return cachedResponse || fetchPromise;
+}
+
+// טיפול בעמוד הראשי
+async function handleMainPage(request) {
+    try {
+        return await networkFirst(request, CACHE_NAME);
+    } catch (error) {
+        const cache = await caches.open(CACHE_NAME);
+        return await cache.match('/offline.html');
     }
 }
 
-// טיפול בהודעות מהאפליקציה העיקרית
+// האזנה להודעות מהאפליקציה
 self.addEventListener('message', event => {
-    const { data } = event;
+    const { type, data } = event.data;
     
-    switch (data.type) {
+    switch (type) {
         case 'SKIP_WAITING':
             self.skipWaiting();
             break;
             
-        case 'GET_VERSION':
-            event.ports[0].postMessage({
-                type: 'VERSION',
-                version: CACHE_NAME
+        case 'GET_CACHE_STATUS':
+            getCacheStatus().then(status => {
+                event.ports[0].postMessage(status);
             });
-            break;
-            
-        case 'CACHE_URLS':
-            event.waitUntil(
-                cacheUrls(data.urls)
-                    .then(() => {
-                        event.ports[0].postMessage({
-                            type: 'CACHE_COMPLETE',
-                            success: true
-                        });
-                    })
-                    .catch(error => {
-                        event.ports[0].postMessage({
-                            type: 'CACHE_COMPLETE',
-                            success: false,
-                            error: error.message
-                        });
-                    })
-            );
             break;
             
         case 'CLEAR_CACHE':
-            event.waitUntil(
-                clearAllCaches()
-                    .then(() => {
-                        event.ports[0].postMessage({
-                            type: 'CACHE_CLEARED',
-                            success: true
-                        });
-                    })
-                    .catch(error => {
-                        event.ports[0].postMessage({
-                            type: 'CACHE_CLEARED',
-                            success: false,
-                            error: error.message
-                        });
-                    })
-            );
+            clearAllCaches().then(() => {
+                event.ports[0].postMessage({ success: true });
+            });
             break;
     }
 });
 
-// Cache של URLs נוספים
-async function cacheUrls(urls) {
-    const cache = await caches.open(RUNTIME_CACHE);
-    return cache.addAll(urls);
+// קבלת סטטוס cache
+async function getCacheStatus() {
+    const cacheNames = await caches.keys();
+    const status = {};
+    
+    for (const cacheName of cacheNames) {
+        const cache = await caches.open(cacheName);
+        const keys = await cache.keys();
+        status[cacheName] = keys.length;
+    }
+    
+    return status;
 }
 
-// ניקוי כל הcaches
+// ניקוי כל ה-cache
 async function clearAllCaches() {
     const cacheNames = await caches.keys();
-    return Promise.all(
-        cacheNames.map(cacheName => caches.delete(cacheName))
-    );
+    return Promise.all(cacheNames.map(name => caches.delete(name)));
 }
 
-// טיפול בשגיאות לא מטופלות
-self.addEventListener('error', event => {
-    console.error('Solar System SW: Unhandled error:', event.error);
-});
-
-// טיפול בהודעות push (עבור עדכונים עתידיים)
-self.addEventListener('push', event => {
-    if (!event.data) return;
-    
-    const data = event.data.json();
-    const options = {
-        body: data.body,
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png',
-        vibrate: [200, 100, 200],
-        data: data.data,
-        actions: data.actions || []
-    };
-    
-    event.waitUntil(
-        self.registration.showNotification(data.title, options)
-    );
-});
-
-// טיפול בלחיצה על התראה
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
-    
-// טיפול בלחיצה על התראה
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
-    
-    const urlToOpen = event.notification.data?.url || '/';
-    
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then(clientList => {
-                // חיפוש חלון פתוח עם האפליקציה
-                for (const client of clientList) {
-                    if (client.url === urlToOpen && 'focus' in client) {
-                        return client.focus();
-                    }
-                }
-                
-                // פתיחת חלון חדש אם לא נמצא
-                if (clients.openWindow) {
-                    return clients.openWindow(urlToOpen);
-                }
-            })
-    );
-});
-
-// עדכונים אוטומטיים
-self.addEventListener('sync', event => {
-    if (event.tag === 'background-sync') {
-        event.waitUntil(
-            performBackgroundSync()
-        );
-    }
-});
-
-// סנכרון ברקע
-async function performBackgroundSync() {
-    try {
-        // בדיקת עדכונים לנתונים אסטרונומיים
-        const response = await fetch('/api/planetary-data');
-        if (response.ok) {
-            const data = await response.json();
-            
-            // עדכון cache עם נתונים חדשים
-            const cache = await caches.open('astronomical-data');
-            await cache.put('/api/planetary-data', new Response(JSON.stringify(data)));
-            
-            console.log('Solar System SW: Astronomical data updated');
-        }
-    } catch (error) {
-        console.warn('Solar System SW: Background sync failed:', error);
-    }
-}
-
-// מעקב אחר שימוש באפליקציה לאופטימיזציה
-let usageStats = {
-    pageViews: 0,
-    planetViews: {},
-    featureUsage: {},
-    sessionStart: Date.now()
-};
-
-// עדכון סטטיסטיקות שימוש
-function updateUsageStats(type, data) {
-    switch (type) {
-        case 'page-view':
-            usageStats.pageViews++;
-            break;
-        case 'planet-view':
-            usageStats.planetViews[data.planet] = (usageStats.planetViews[data.planet] || 0) + 1;
-            break;
-        case 'feature-use':
-            usageStats.featureUsage[data.feature] = (usageStats.featureUsage[data.feature] || 0) + 1;
-            break;
-    }
-}
-
-// שמירת סטטיסטיקות ב-IndexedDB (לצורך אנליטיקה עתידית)
-async function saveUsageStats() {
-    try {
-        // פתיחת IndexedDB
-        const request = indexedDB.open('SolarSystemStats', 1);
-        
-        request.onupgradeneeded = function(event) {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains('usage')) {
-                db.createObjectStore('usage', { keyPath: 'id', autoIncrement: true });
-            }
-        };
-        
-        request.onsuccess = function(event) {
-            const db = event.target.result;
-            const transaction = db.transaction(['usage'], 'readwrite');
-            const store = transaction.objectStore('usage');
-            
-            const statsRecord = {
-                timestamp: Date.now(),
-                sessionDuration: Date.now() - usageStats.sessionStart,
-                ...usageStats
-            };
-            
-            store.add(statsRecord);
-        };
-    } catch (error) {
-        console.warn('Solar System SW: Failed to save usage stats:', error);
-    }
-}
-
-// ניטור ביצועים
-let performanceMetrics = {
-    renderTimes: [],
-    loadTimes: [],
-    memoryUsage: []
-};
-
-// רישום מדדי ביצועים
-function recordPerformanceMetric(type, value) {
-    if (performanceMetrics[type]) {
-        performanceMetrics[type].push({
-            value,
-            timestamp: Date.now()
-        });
-        
-        // שמירה על מקסימום 100 מדידות
-        if (performanceMetrics[type].length > 100) {
-            performanceMetrics[type].shift();
-        }
-    }
-}
-
-// אופטימיזציית cache על בסיס שימוש
-async function optimizeCache() {
-    try {
-        const cache = await caches.open(RUNTIME_CACHE);
-        const keys = await cache.keys();
-        
-        // מיון לפי תדירות שימוש (יש לממש מעקב)
-        const sortedKeys = keys.sort((a, b) => {
-            // השוואה על בסיס נתוני שימוש
-            return 0; // מימוש פשוט - יש להרחיב
-        });
-        
-        // מחיקת 20% מהקבצים הפחות בשימוש אם Cache מלא
-        if (keys.length > 200) {
-            const keysToDelete = sortedKeys.slice(-Math.floor(keys.length * 0.2));
-            await Promise.all(keysToDelete.map(key => cache.delete(key)));
-            
-            console.log(`Solar System SW: Optimized cache - removed ${keysToDelete.length} items`);
-        }
-    } catch (error) {
-        console.warn('Solar System SW: Cache optimization failed:', error);
-    }
-}
-
-// ניהול מצב offline מתקדם
+// מנהל offline
 class OfflineManager {
-    static async isOnline() {
-        try {
-            const response = await fetch('/ping', { 
-                method: 'HEAD',
-                cache: 'no-cache'
-            });
-            return response.ok;
-        } catch {
-            return false;
-        }
-    }
-    
-    static async getOfflineCapabilities() {
-        const capabilities = {
-            coreApp: false,
-            planetaryData: false,
-            textures: false,
-            educational: false
-        };
+    static async handleOfflineRequest(request) {
+        const cache = await caches.open(CACHE_NAME);
         
-        try {
-            // בדיקת זמינות קבצי ליבה
-            const coreCache = await caches.open(CACHE_NAME);
-            const coreFiles = await coreCache.keys();
-            capabilities.coreApp = coreFiles.length > 0;
-            
-            // בדיקת זמינות נתונים
-            const dataCache = await caches.open('astronomical-data');
-            const dataFiles = await dataCache.keys();
-            capabilities.planetaryData = dataFiles.length > 0;
-            
-            // בדיקת זמינות טקסטורות
-            const imageCache = await caches.open('images-cache');
-            const imageFiles = await imageCache.keys();
-            capabilities.textures = imageFiles.length > 0;
-            
-        } catch (error) {
-            console.warn('Solar System SW: Failed to check offline capabilities:', error);
+        // נסה למצוא את הבקשה ב-cache
+        let response = await cache.match(request);
+        
+        if (!response) {
+            // אם זה HTML, החזר עמוד offline
+            if (request.headers.get('Accept').includes('text/html')) {
+                response = await cache.match('/offline.html');
+            } else {
+                // עבור משאבים אחרים, החזר תגובת שגיאה
+                response = new Response('Resource not available offline', {
+                    status: 408,
+                    statusText: 'Request Timeout'
+                });
+            }
         }
         
-        return capabilities;
+        return response;
     }
 }
 
-// עדכון אוטומטי של האפליקציה
+// מנהל עדכונים
 class UpdateManager {
     static async checkForUpdates() {
         try {
@@ -717,6 +357,56 @@ class UpdateManager {
     }
 }
 
+// פונקציות תחזוקה
+async function optimizeCache() {
+    // ניקוי cache שפג תוקפם
+    const cacheNames = await caches.keys();
+    
+    for (const cacheName of cacheNames) {
+        const cache = await caches.open(cacheName);
+        const requests = await cache.keys();
+        
+        for (const request of requests) {
+            const response = await cache.match(request);
+            const cacheDate = response.headers.get('date');
+            
+            if (cacheDate) {
+                const ageInDays = (Date.now() - new Date(cacheDate).getTime()) / (1000 * 60 * 60 * 24);
+                
+                // מחק קבצים ישנים מ-30 ימים
+                if (ageInDays > 30) {
+                    await cache.delete(request);
+                }
+            }
+        }
+    }
+}
+
+async function saveUsageStats() {
+    // שמירת סטטיסטיקות שימוש (אופציונלי)
+    const stats = {
+        timestamp: Date.now(),
+        cacheSize: await getCacheSize(),
+        activeClients: (await self.clients.matchAll()).length
+    };
+    
+    // ניתן לשמור ב-IndexedDB אם נדרש
+    console.log('Usage stats:', stats);
+}
+
+async function getCacheSize() {
+    const cacheNames = await caches.keys();
+    let totalSize = 0;
+    
+    for (const cacheName of cacheNames) {
+        const cache = await caches.open(cacheName);
+        const keys = await cache.keys();
+        totalSize += keys.length;
+    }
+    
+    return totalSize;
+}
+
 // הרצת משימות תחזוקה כל שעה
 setInterval(() => {
     optimizeCache();
@@ -742,13 +432,3 @@ setInterval(async () => {
 console.log('Solar System Service Worker loaded successfully');
 console.log('Cache Name:', CACHE_NAME);
 console.log('Precache URLs:', PRECACHE_URLS.length, 'files');
-
-// ייצוא פונקציות לבדיקות (אם נדרש)
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        CACHE_NAME,
-        PRECACHE_URLS,
-        OfflineManager,
-        UpdateManager
-    };
-}
