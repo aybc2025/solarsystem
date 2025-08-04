@@ -22,7 +22,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <!-- OrbitControls -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // טעינת OrbitControls עם fallback
+        (function() {
+            // נתיב עובד ל-OrbitControls
+            const orbitControlsScript = document.createElement('script');
+            orbitControlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
+            orbitControlsScript.onerror = function() {
+                console.warn('Failed to load OrbitControls from CDN, will use fallback');
+                // אם נכשל, נטען את המימוש המקומי
+                const fallbackScript = document.createElement('script');
+                fallbackScript.src = 'js/controls/orbit-controls.js';
+                document.head.appendChild(fallbackScript);
+            };
+            document.head.appendChild(orbitControlsScript);
+        })();
+    </script>
 </head>
 <body>
     <div id="container">
