@@ -4,177 +4,48 @@ const TEXTURE_URLS = {
     // טקסטורות כוכבי לכת - נתיבים לטקסטורות באיכות גבוהה
     planets: {
         sun: {
-            diffuse: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <defs>
-                        <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
-                            <stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#FF4500;stop-opacity:1" />
-                        </radialGradient>
-                    </defs>
-                    <rect width="512" height="256" fill="url(#sunGrad)" />
-                </svg>
-            `),
-            emissive: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <rect width="512" height="256" fill="#FFD700" />
-                </svg>
-            `)
+            diffuse: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Cdefs%3E%3CradialGradient id="sunGrad" cx="50%25" cy="50%25" r="50%25"%3E%3Cstop offset="0%25" style="stop-color:%23FFD700;stop-opacity:1" /%3E%3Cstop offset="50%25" style="stop-color:%23FFA500;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23FF4500;stop-opacity:1" /%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width="512" height="256" fill="url(%23sunGrad)" /%3E%3C/svg%3E',
+            emissive: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Crect width="512" height="256" fill="%23FFD700" /%3E%3C/svg%3E'
         },
         mercury: {
-            diffuse: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <defs>
-                        <pattern id="craters" patternUnits="userSpaceOnUse" width="40" height="40">
-                            <circle cx="20" cy="20" r="5" fill="#6B5B47" opacity="0.3"/>
-                            <circle cx="10" cy="10" r="2" fill="#6B5B47" opacity="0.2"/>
-                            <circle cx="30" cy="30" r="3" fill="#6B5B47" opacity="0.2"/>
-                        </pattern>
-                    </defs>
-                    <rect width="512" height="256" fill="#8C7853"/>
-                    <rect width="512" height="256" fill="url(#craters)"/>
-                </svg>
-            `)
+            diffuse: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Cdefs%3E%3Cpattern id="craters" patternUnits="userSpaceOnUse" width="40" height="40"%3E%3Ccircle cx="20" cy="20" r="5" fill="%236B5B47" opacity="0.3"/%3E%3Ccircle cx="10" cy="10" r="2" fill="%236B5B47" opacity="0.2"/%3E%3Ccircle cx="30" cy="30" r="3" fill="%236B5B47" opacity="0.2"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="512" height="256" fill="%238C7853"/%3E%3Crect width="512" height="256" fill="url(%23craters)"/%3E%3C/svg%3E'
         },
         venus: {
-            diffuse: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <defs>
-                        <linearGradient id="venusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#FFC649;stop-opacity:1" />
-                            <stop offset="50%" style="stop-color:#FFE55C;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#FFAA33;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="512" height="256" fill="url(#venusGrad)"/>
-                </svg>
-            `)
+            diffuse: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Cdefs%3E%3ClinearGradient id="venusGrad" x1="0%25" y1="0%25" x2="100%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23FFC649;stop-opacity:1" /%3E%3Cstop offset="50%25" style="stop-color:%23FFE55C;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23FFAA33;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="512" height="256" fill="url(%23venusGrad)"/%3E%3C/svg%3E'
         },
         earth: {
-            diffuse: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <defs>
-                        <pattern id="earthPattern" patternUnits="userSpaceOnUse" width="100" height="50">
-                            <rect width="100" height="50" fill="#4169E1"/>
-                            <path d="M20,10 Q30,5 40,15 Q50,25 60,10 Q70,5 80,20" fill="#228B22"/>
-                            <path d="M10,30 Q20,25 30,35 Q40,40 50,30" fill="#228B22"/>
-                            <circle cx="85" cy="40" r="8" fill="#F5DEB3"/>
-                        </pattern>
-                    </defs>
-                    <rect width="512" height="256" fill="url(#earthPattern)"/>
-                </svg>
-            `),
-            normal: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <rect width="512" height="256" fill="#8080FF"/>
-                </svg>
-            `)
+            diffuse: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Cdefs%3E%3Cpattern id="earthPattern" patternUnits="userSpaceOnUse" width="100" height="50"%3E%3Crect width="100" height="50" fill="%234169E1"/%3E%3Cpath d="M20,10 Q30,5 40,15 Q50,25 60,10 Q70,5 80,20" fill="%23228B22"/%3E%3Cpath d="M10,30 Q20,25 30,35 Q40,40 50,30" fill="%23228B22"/%3E%3Ccircle cx="85" cy="40" r="8" fill="%23F5DEB3"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="512" height="256" fill="url(%23earthPattern)"/%3E%3C/svg%3E',
+            normal: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Crect width="512" height="256" fill="%238080FF"/%3E%3C/svg%3E'
         },
         mars: {
-            diffuse: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <defs>
-                        <pattern id="marsPattern" patternUnits="userSpaceOnUse" width="60" height="60">
-                            <rect width="60" height="60" fill="#CD5C5C"/>
-                            <circle cx="15" cy="15" r="3" fill="#8B4513" opacity="0.4"/>
-                            <circle cx="45" cy="30" r="5" fill="#A0522D" opacity="0.3"/>
-                            <circle cx="30" cy="50" r="2" fill="#8B4513" opacity="0.5"/>
-                        </pattern>
-                    </defs>
-                    <rect width="512" height="256" fill="url(#marsPattern)"/>
-                </svg>
-            `)
+            diffuse: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Cdefs%3E%3Cpattern id="marsPattern" patternUnits="userSpaceOnUse" width="60" height="60"%3E%3Crect width="60" height="60" fill="%23CD5C5C"/%3E%3Ccircle cx="15" cy="15" r="3" fill="%238B4513" opacity="0.4"/%3E%3Ccircle cx="45" cy="30" r="5" fill="%23A0522D" opacity="0.3"/%3E%3Ccircle cx="30" cy="50" r="2" fill="%238B4513" opacity="0.5"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="512" height="256" fill="url(%23marsPattern)"/%3E%3C/svg%3E'
         },
         jupiter: {
-            diffuse: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <defs>
-                        <linearGradient id="jupiterBands" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" style="stop-color:#E6D8B5;stop-opacity:1" />
-                            <stop offset="20%" style="stop-color:#D8CA9D;stop-opacity:1" />
-                            <stop offset="40%" style="stop-color:#C4A47C;stop-opacity:1" />
-                            <stop offset="60%" style="stop-color:#D8CA9D;stop-opacity:1" />
-                            <stop offset="80%" style="stop-color:#B8860B;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#D8CA9D;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="512" height="256" fill="url(#jupiterBands)"/>
-                    <ellipse cx="380" cy="120" rx="25" ry="18" fill="#DC143C" opacity="0.8"/>
-                </svg>
-            `)
+            diffuse: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Cdefs%3E%3ClinearGradient id="jupiterBands" x1="0%25" y1="0%25" x2="0%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23E6D8B5;stop-opacity:1" /%3E%3Cstop offset="20%25" style="stop-color:%23D8CA9D;stop-opacity:1" /%3E%3Cstop offset="40%25" style="stop-color:%23C4A47C;stop-opacity:1" /%3E%3Cstop offset="60%25" style="stop-color:%23D8CA9D;stop-opacity:1" /%3E%3Cstop offset="80%25" style="stop-color:%23B8860B;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23D8CA9D;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="512" height="256" fill="url(%23jupiterBands)"/%3E%3Cellipse cx="380" cy="120" rx="25" ry="18" fill="%23DC143C" opacity="0.8"/%3E%3C/svg%3E'
         },
         saturn: {
-            diffuse: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <defs>
-                        <linearGradient id="saturnBands" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" style="stop-color:#FAD5A5;stop-opacity:1" />
-                            <stop offset="25%" style="stop-color:#DEB887;stop-opacity:1" />
-                            <stop offset="50%" style="stop-color:#F5DEB3;stop-opacity:1" />
-                            <stop offset="75%" style="stop-color:#D2B48C;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#FAD5A5;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="512" height="256" fill="url(#saturnBands)"/>
-                </svg>
-            `)
+            diffuse: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Cdefs%3E%3ClinearGradient id="saturnBands" x1="0%25" y1="0%25" x2="0%25" y2="100%25"%3E%3Cstop offset="0%25" style="stop-color:%23FAD5A5;stop-opacity:1" /%3E%3Cstop offset="25%25" style="stop-color:%23DEB887;stop-opacity:1" /%3E%3Cstop offset="50%25" style="stop-color:%23F5DEB3;stop-opacity:1" /%3E%3Cstop offset="75%25" style="stop-color:%23D2B48C;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%23FAD5A5;stop-opacity:1" /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="512" height="256" fill="url(%23saturnBands)"/%3E%3C/svg%3E'
         },
         uranus: {
-            diffuse: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <defs>
-                        <radialGradient id="uranusGrad" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" style="stop-color:#7FFFD4;stop-opacity:1" />
-                            <stop offset="50%" style="stop-color:#4FD0E7;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#40E0D0;stop-opacity:1" />
-                        </radialGradient>
-                    </defs>
-                    <rect width="512" height="256" fill="url(#uranusGrad)"/>
-                </svg>
-            `)
+            diffuse: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Cdefs%3E%3CradialGradient id="uranusGrad" cx="50%25" cy="50%25" r="50%25"%3E%3Cstop offset="0%25" style="stop-color:%237FFFD4;stop-opacity:1" /%3E%3Cstop offset="50%25" style="stop-color:%234FD0E7;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%2340E0D0;stop-opacity:1" /%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width="512" height="256" fill="url(%23uranusGrad)"/%3E%3C/svg%3E'
         },
         neptune: {
-            diffuse: 'data:image/svg+xml;base64,' + btoa(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="256">
-                    <defs>
-                        <radialGradient id="neptuneGrad" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" style="stop-color:#6495ED;stop-opacity:1" />
-                            <stop offset="50%" style="stop-color:#4B70DD;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#0000CD;stop-opacity:1" />
-                        </radialGradient>
-                    </defs>
-                    <rect width="512" height="256" fill="url(#neptuneGrad)"/>
-                    <ellipse cx="200" cy="100" rx="20" ry="15" fill="#191970" opacity="0.6"/>
-                </svg>
-            `)
+            diffuse: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="256"%3E%3Cdefs%3E%3CradialGradient id="neptuneGrad" cx="50%25" cy="50%25" r="50%25"%3E%3Cstop offset="0%25" style="stop-color:%236495ED;stop-opacity:1" /%3E%3Cstop offset="50%25" style="stop-color:%234B70DD;stop-opacity:1" /%3E%3Cstop offset="100%25" style="stop-color:%230000CD;stop-opacity:1" /%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width="512" height="256" fill="url(%23neptuneGrad)"/%3E%3Cellipse cx="200" cy="100" rx="20" ry="15" fill="%23191970" opacity="0.6"/%3E%3C/svg%3E'
+        }
         }
     },
 
     // טקסטורות רקע - כוכבים וערפילית
     backgrounds: {
-        starfield: 'data:image/svg+xml;base64,' + btoa(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1024">
-                <rect width="2048" height="1024" fill="#000000"/>
-                <g fill="white">
-                    <circle cx="100" cy="100" r="1" opacity="0.8"/>
-                    <circle cx="200" cy="150" r="0.5" opacity="0.6"/>
-                    <circle cx="300" cy="80" r="1.5" opacity="1"/>
-                    <circle cx="450" cy="200" r="0.8" opacity="0.7"/>
-                    <circle cx="600" cy="120" r="1" opacity="0.9"/>
-                    <circle cx="750" cy="180" r="0.6" opacity="0.5"/>
-                    <circle cx="900" cy="90" r="1.2" opacity="0.8"/>
-                    <circle cx="1100" cy="160" r="0.7" opacity="0.6"/>
-                    <circle cx="1300" cy="110" r="1.5" opacity="1"/>
-                    <circle cx="1500" cy="190" r="0.9" opacity="0.7"/>
-                    <circle cx="1700" cy="70" r="1" opacity="0.8"/>
-                    <circle cx="1900" cy="140" r="0.5" opacity="0.6"/>
-                    <circle cx="150" cy="300" r="0.8" opacity="0.7"/>
-                    <circle cx="350" cy="250" r="1.2" opacity="0.9"/>
-                    <circle cx="550" cy="280" r="0.6" opacity="0.5"/>
-                    <circle cx="800" cy="320" r="1" opacity="0.8"/>
-                    <circle cx="1000" cy="270" r="0.7" opacity="0.6"/>
-                    <circle cx="1200" cy="310" r="1.3" opacity="0.9"/>
+        starfield: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="2048" height="1024"%3E%3Crect width="2048" height="1024" fill="%23000000"/%3E%3Cg fill="white"%3E%3Ccircle cx="100" cy="100" r="1" opacity="0.8"/%3E%3Ccircle cx="200" cy="150" r="0.5" opacity="0.6"/%3E%3Ccircle cx="300" cy="80" r="1.5" opacity="1"/%3E%3Ccircle cx="450" cy="200" r="0.8" opacity="0.7"/%3E%3Ccircle cx="600" cy="120" r="1" opacity="0.9"/%3E%3Ccircle cx="750" cy="180" r="0.6" opacity="0.5"/%3E%3Ccircle cx="900" cy="90" r="1.2" opacity="0.8"/%3E%3Ccircle cx="1100" cy="160" r="0.7" opacity="0.6"/%3E%3Ccircle cx="1300" cy="110" r="1.5" opacity="1"/%3E%3Ccircle cx="1500" cy="190" r="0.9" opacity="0.7"/%3E%3Ccircle cx="1700" cy="70" r="1" opacity="0.8"/%3E%3Ccircle cx="1900" cy="140" r="0.5" opacity="0.6"/%3E%3C/g%3E%3C/svg%3E',
+        nebula: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"%3E%3Cdefs%3E%3CradialGradient id="nebulaGrad1" cx="30%25" cy="40%25" r="60%25"%3E%3Cstop offset="0%25" style="stop-color:%23FF1493;stop-opacity:0.3" /%3E%3Cstop offset="50%25" style="stop-color:%238A2BE2;stop-opacity:0.2" /%3E%3Cstop offset="100%25" style="stop-color:%23000000;stop-opacity:0" /%3E%3C/radialGradient%3E%3CradialGradient id="nebulaGrad2" cx="70%25" cy="60%25" r="40%25"%3E%3Cstop offset="0%25" style="stop-color:%2300CED1;stop-opacity:0.2" /%3E%3Cstop offset="50%25" style="stop-color:%234169E1;stop-opacity:0.1" /%3E%3Cstop offset="100%25" style="stop-color:%23000000;stop-opacity:0" /%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width="1024" height="1024" fill="%23000000"/%3E%3Cellipse cx="300" cy="400" rx="200" ry="150" fill="url(%23nebulaGrad1)"/%3E%3Cellipse cx="700" cy="600" rx="150" ry="100" fill="url(%23nebulaGrad2)"/%3E%3C/svg%3E'
+    },
+
+    // טקסטורות טבעות
+    rings: {
+        saturn: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="512"%3E%3Cdefs%3E%3CradialGradient id="ringGrad" cx="50%25" cy="50%25" r="50%25"%3E%3Cstop offset="30%25" style="stop-color:%23000000;stop-opacity:0" /%3E%3Cstop offset="35%25" style="stop-color:%23D4A574;stop-opacity:0.8" /%3E%3Cstop offset="40%25" style="stop-color:%23000000;stop-opacity:0.2" /%3E%3Cstop offset="45%25" style="stop-color:%23E6C2A6;stop-opacity:0.9" /%3E%3Cstop offset="50%25" style="stop-color:%23000000;stop-opacity:0.1" /%3E%3Cstop offset="55%25" style="stop-color:%23D4A574;stop-opacity:0.7" /%3E%3Cstop offset="65%25" style="stop-color:%23000000;stop-opacity:0" /%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx="256" cy="256" r="256" fill="url(%23ringGrad)"/%3E%3C/svg%3E',
+        uranus: 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="512" height="512"%3E%3Cdefs%3E%3CradialGradient id="uranusRingGrad" cx="50%25" cy="50%25" r="50%25"%3E%3Cstop offset="40%25" style="stop-color:%23000000;stop-opacity:0" /%3E%3Cstop offset="42%25" style="stop-color:%234FD0E7;stop-opacity:0.3" /%3E%3Cstop offset="44%25" style="stop-color:%23000000;stop-opacity:0" /%3E%3Cstop offset="46%25" style="stop-color:%234FD0E7;stop-opacity:0.2" /%3E%3Cstop offset="48%25" style="stop-color:%23000000;stop-opacity:0" /%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx="256" cy="256" r="256" fill="url(%23uranusRingGrad)"/%3E%3C/svg%3E'
+    } r="1.3" opacity="0.9"/>
                     <circle cx="1400" cy="240" r="0.8" opacity="0.7"/>
                     <circle cx="1600" cy="290" r="1" opacity="0.8"/>
                     <!-- הוספת עוד כוכבים בצורה אקראית -->
