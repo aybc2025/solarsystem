@@ -10,7 +10,7 @@
     <meta name="description" content="חקור את מערכת השמש בתלת מימד - אפליקציה חינוכית אינטראקטיבית">
     <link rel="manifest" href="manifest.json">
     
-    <!-- Fallback icon if 192x192 not found -->
+    <!-- Fallback icon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ffd700'/></svg>">
     
     <!-- Styles -->
@@ -21,7 +21,7 @@
     <!-- Three.js Core -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
-    <!-- OrbitControls - Load separately from CDN -->
+    <!-- OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
@@ -51,13 +51,14 @@
                 </div>
                 <div class="speed-control">
                     <label>מהירות זמן:</label>
-                    <input type="range" id="timeScale" min="0.1" max="5" step="0.1" value="1">
+                    <input type="range" id="timeScale" min="0.1" max="10" step="0.1" value="1">
                     <span id="timeScaleValue">1x</span>
                 </div>
                 <div class="view-controls">
-                    <button id="showOrbits" class="btn">מסלולים</button>
-                    <button id="showLabels" class="btn">תוויות</button>
-                    <button id="realisticMode" class="btn">מצב ריאליסטי</button>
+                    <button id="showOrbits" class="btn toggle active">מסלולים</button>
+                    <button id="showLabels" class="btn toggle active">תוויות</button>
+                    <button id="realisticMode" class="btn toggle">מצב ריאליסטי</button>
+                    <button id="showAsteroids" class="btn toggle active">אסטרואידים</button>
                 </div>
             </div>
             
@@ -78,15 +79,35 @@
         </div>
 
         <!-- Info Panel -->
-        <div id="infoPanel">
-            <div class="info-content">
+        <div id="infoPanel" class="hidden">
+            <div class="info-header">
                 <h3 id="planetName">מערכת השמש</h3>
-                <div id="planetInfo">
-                    <p>ברוכים הבאים לחקר מערכת השמש האינטראקטיבית!</p>
-                    <p>השתמשו בעכבר כדי לסובב, לגלול כדי להתקרב/להתרחק, ולחצו על כוכבי הלכת למידע נוסף.</p>
-                </div>
-                <button id="closeInfo" class="btn">✖️ סגור</button>
+                <button id="closeInfo" class="close-btn">✕</button>
             </div>
+            <div class="info-content">
+                <div class="planet-image">
+                    <div id="planetPreview"></div>
+                </div>
+                <div class="planet-data" id="planetData">
+                    <!-- Data will be populated by JavaScript -->
+                </div>
+                <div class="planet-description">
+                    <p id="planetDescription">ברוכים הבאים לחקר מערכת השמש האינטראקטיבית!</p>
+                </div>
+                <div class="interesting-facts" id="interestingFacts" style="display: none;">
+                    <h4>עובדות מעניינות</h4>
+                    <ul id="factsList"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Help -->
+        <div id="navHelp">
+            <div class="help-item">🖱️ עכבר: סובב את המצלמה</div>
+            <div class="help-item">🖱️ גלגלת: זום פנימה/החוצה</div>
+            <div class="help-item">📱 מגע: סובב וזום</div>
+            <div class="help-item">⌨️ רווח: השהה/המשך</div>
+            <div class="help-item">⌨️ R: איפוס תצוגה</div>
         </div>
 
         <!-- Performance Stats -->
@@ -96,274 +117,6 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script>
-        // Quick fix for OrbitControls compatibility
-        if (typeof THREE !== 'undefined' && THREE.OrbitControls) {
-            console.log('✅ OrbitControls loaded successfully');
-        } else {
-            console.warn('⚠️ OrbitControls not loaded, using fallback');
-            // Simple fallback orbit controls
-            THREE.OrbitControls = function(camera, domElement) {
-                this.camera = camera;
-                this.domElement = domElement;
-                this.enabled = true;
-                this.enableDamping = true;
-                this.dampingFactor = 0.05;
-                this.enableZoom = true;
-                this.enableRotate = true;
-                this.enablePan = true;
-                
-                this.target = new THREE.Vector3();
-                this.minDistance = 5;
-                this.maxDistance = 5000;
-                
-                let isDragging = false;
-                let previousMousePosition = { x: 0, y: 0 };
-                let spherical = new THREE.Spherical();
-                let sphericalDelta = new THREE.Spherical();
-                
-                this.update = function() {
-                    const offset = new THREE.Vector3();
-                    offset.copy(this.camera.position).sub(this.target);
-                    
-                    spherical.setFromVector3(offset);
-                    spherical.theta += sphericalDelta.theta;
-                    spherical.phi += sphericalDelta.phi;
-                    
-                    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
-                    spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, spherical.radius));
-                    
-                    offset.setFromSpherical(spherical);
-                    this.camera.position.copy(this.target).add(offset);
-                    this.camera.lookAt(this.target);
-                    
-                    if (this.enableDamping) {
-                        sphericalDelta.theta *= (1 - this.dampingFactor);
-                        sphericalDelta.phi *= (1 - this.dampingFactor);
-                    } else {
-                        sphericalDelta.set(0, 0, 0);
-                    }
-                };
-                
-                this.dispose = function() {
-                    // Cleanup event listeners
-                };
-                
-                // Basic mouse controls
-                domElement.addEventListener('mousedown', (event) => {
-                    isDragging = true;
-                    previousMousePosition = { x: event.clientX, y: event.clientY };
-                });
-                
-                domElement.addEventListener('mousemove', (event) => {
-                    if (!isDragging) return;
-                    
-                    const deltaMove = {
-                        x: event.clientX - previousMousePosition.x,
-                        y: event.clientY - previousMousePosition.y
-                    };
-                    
-                    sphericalDelta.theta -= deltaMove.x * 0.01;
-                    sphericalDelta.phi += deltaMove.y * 0.01;
-                    
-                    previousMousePosition = { x: event.clientX, y: event.clientY };
-                });
-                
-                domElement.addEventListener('mouseup', () => {
-                    isDragging = false;
-                });
-                
-                domElement.addEventListener('wheel', (event) => {
-                    event.preventDefault();
-                    spherical.radius += event.deltaY * 0.1;
-                });
-            };
-        }
-    </script>
-    
-    <!-- Load main application scripts -->
-    <script src="js/data/planets.js"></script>
-    <script src="js/data/textures.js"></script>
-    <script src="js/utils/math.js"></script>
-    <script src="js/core/scene.js"></script>
-    <script src="js/core/camera.js"></script>
-    <script src="js/core/lights.js"></script>
-    <script src="js/objects/sun.js"></script>
-    <script src="js/objects/planet.js"></script>
-    <script src="js/objects/asteroid-belt.js"></script>
-    <script src="js/controls/orbit-controls.js"></script>
-    <script src="js/ui/controls.js"></script>
-    <script src="js/ui/info-panel.js"></script>
-    <script src="js/main.js"></script>
-
-    <style>
-        /* Quick fixes for loading and layout */
-        body {
-            margin: 0;
-            padding: 0;
-            background: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-        }
-        
-        #container {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-        }
-        
-        #scene {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        
-        #loading {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        .loading-content {
-            text-align: center;
-            color: white;
-        }
-        
-        .sun-loader {
-            width: 50px;
-            height: 50px;
-            background: #ffd700;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.7; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        
-        .loading-bar {
-            width: 300px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
-            overflow: hidden;
-            margin: 20px auto;
-        }
-        
-        .loading-progress {
-            height: 100%;
-            background: linear-gradient(90deg, #ffd700, #ff6b35);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-        
-        #controls {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            min-width: 200px;
-        }
-        
-        .btn {
-            background: #333;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            margin: 4px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        
-        .btn:hover {
-            background: #555;
-        }
-        
-        .btn.primary {
-            background: #ffd700;
-            color: #000;
-        }
-        
-        .btn.primary:hover {
-            background: #ffed4a;
-        }
-        
-        #infoPanel {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 300px;
-            display: none;
-        }
-        
-        #stats {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        
-        .planet-buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px;
-        }
-        
-        .planet-btn {
-            font-size: 12px;
-            padding: 6px 8px;
-        }
-        
-        .control-section {
-            margin-bottom: 15px;
-        }
-        
-        .speed-control {
-            margin: 10px 0;
-        }
-        
-        #timeScale {
-            width: 100%;
-            margin: 5px 0;
-        }
-        
-        /* Error display */
-        .error-message {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 0, 0, 0.9);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            z-index: 2000;
-        }
-    </style>
-    
     <script>
         // Enhanced error handling and initialization
         window.addEventListener('error', (event) => {
@@ -377,10 +130,33 @@
             
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 0, 0, 0.9);
+                color: white;
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                z-index: 2000;
+                max-width: 400px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            `;
             errorDiv.innerHTML = `
-                <h3>שגיאה באפליקציה</h3>
+                <h3>⚠️ שגיאה באפליקציה</h3>
                 <p>${message}</p>
-                <button onclick="location.reload()" class="btn primary">טען מחדש</button>
+                <button onclick="location.reload()" style="
+                    background: #fff;
+                    color: #d32f2f;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    margin-top: 10px;
+                ">🔄 טען מחדש</button>
             `;
             document.body.appendChild(errorDiv);
         }
@@ -406,7 +182,7 @@
             
             updateLoadingProgress('טוען ספריות...', 15);
             
-            // Wait a moment for Three.js to fully load
+            // Wait for Three.js to load
             await new Promise(resolve => setTimeout(resolve, 100));
             
             if (typeof THREE === 'undefined') {
@@ -417,8 +193,8 @@
             updateLoadingProgress('מאתחל מערכת...', 25);
             
             try {
-                // Initialize with fallback for missing dependencies
-                const app = new SolarSystemApp();
+                // Initialize the app
+                const app = new ImprovedSolarSystemApp();
                 window.solarSystemApp = app;
                 
                 await app.init();
@@ -448,11 +224,10 @@
             }
         }
         
-        // Simplified Service Worker registration with better error handling
+        // Service Worker registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
-                    // Check if sw.js exists before registering
                     const response = await fetch('sw.js', { method: 'HEAD' });
                     if (response.ok) {
                         const registration = await navigator.serviceWorker.register('sw.js');
@@ -462,10 +237,20 @@
                     }
                 } catch (error) {
                     console.log('Service worker registration skipped:', error.message);
-                    // App continues to work without service worker
                 }
             });
         }
     </script>
+    
+    <!-- Load application scripts -->
+    <script src="js/data/planets-improved.js"></script>
+    <script src="js/utils/math-improved.js"></script>
+    <script src="js/core/scene-improved.js"></script>
+    <script src="js/objects/sun-improved.js"></script>
+    <script src="js/objects/planet-improved.js"></script>
+    <script src="js/objects/asteroid-belt-improved.js"></script>
+    <script src="js/ui/controls-improved.js"></script>
+    <script src="js/ui/info-panel-improved.js"></script>
+    <script src="js/main-improved.js"></script>
 </body>
 </html>
