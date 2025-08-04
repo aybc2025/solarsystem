@@ -191,6 +191,672 @@ class SolarSystemApp {
         this.camera.setupControls(this.scene.canvas);
         
         // אתחול תאורה
+        this.lights = new SolarSystemLighting(); // שינוי שם כדי למנוע כפילות
+        await this.lights.init(this.scene.scene);
+        
+        this.updateLoadingProgress('סצנה תלת ממדית מוכנה', 50);
+    }
+
+    // יצירת אובייקטים במערכת השמש
+    async createSolarSystemObjects() {
+        this.updateLoadingProgress('יוצר כוכבי לכת...', 60);
+        
+        // יצירת השמש
+        await this.createSun();
+        
+        // יצירת כוכבי הלכת
+        await this.createPlanets();
+        
+        // יצירת חגורת האסטרואידים
+        await this.createAsteroidBelt();
+        
+        this.updateLoadingProgress('כוכבי הלכת נוצרו', 80);
+    }
+
+    // יצירת השמש
+    async createSun() {
+        this.sun = new SolarSystemSun();
+        await this.sun.init();
+        
+        this.scene.addPlanet('sun', this.sun.getMesh());
+        
+        // הוספת אור השמש
+        this.lights.setSunPosition(this.sun.getMesh().position);
+    }
+
+    // יצירת כוכבי הלכת
+    async createPlanets() {
+        const planetNames = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+        
+        for (const planetName of planetNames) {
+            const planet = new SolarSystemPlanet(planetName);
+            await planet.init();
+            
+            this.planets.set(planetName, planet);
+            this.scene.addPlanet(planetName, planet.getMesh());
+        }
+    }
+
+    // יצירת חגורת האסטרואידים
+    async createAsteroidBelt() {
+        this.asteroidBelt = new AsteroidBelt();
+        await this.asteroidBelt.init();
+        
+        this.scene.scene.add(this.asteroidBelt.mesh);
+    }
+
+    // הגדרת ממשק משתמש
+    async setupUI() {
+        this.updateLoadingProgress('מגדיר ממשק משתמש...', 90);
+        
+        // בקרות
+        this.controls = new UIControls();
+        await this.controls.init(this);
+        
+        // פאנל מידע
+        this.infoPanel = new InfoPanel();
+        await this.infoPanel.init(this);
+        
+        // הגדרת אירועי לחיצה על כוכבי לכת
+        this.setupPlanetClickHandlers();
+        
+        this.updateLoadingProgress('ממשק המשתמש מוכן', 95);
+    }
+
+    // הגדרת אירועי לחיצה על כוכבי לכת
+    setupPlanetClickHandlers() {
+        const canvas = this.scene.canvas;
+        
+        canvas.addEventListener('click', (event) => {
+            this.handleCanvasClick(event);
+        });
+        
+        canvas.addEventListener('dblclick', (event) => {
+            this.handleCanvasDoubleClick(event);
+        });
+    }
+
+    // טיפול בלחיצה על הcanvas
+    handleCanvasClick(event) {
+        const rect = this.scene.canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        // יצירת ray מהמיקום שנלחץ
+        const intersects = this.camera.intersectObjects(
+            x, y, 
+            Array.from(this.planets.values()).map(p => p.getMesh()).concat([this.sun.getMesh()]),
+            rect.width, rect.height
+        );
+        
+        if (intersects.length > 0) {
+            const clickedObject = intersects[0].object;
+            const planetName = this.findPlanetNameByMesh(clickedObject);
+            
+            if (planetName) {
+                this.selectPlanet(planetName);
+            }
+        } else {
+            this.deselectPlanet();
+        }
+    }
+
+    // טיפול בלחיצה כפולה
+    handleCanvasDoubleClick(event) {
+        const rect = this.scene.canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        
+        const intersects = this.camera.intersectObjects(
+            x, y,
+            Array.from(this.planets.values()).map(p => p.getMesh()).concat([this.sun.getMesh()]),
+            rect.width, rect.height
+        );
+        
+        if (intersects.length > 0) {
+            const clickedObject = intersects[0].object;
+            const planetName = this.findPlanetNameByMesh(clickedObject);
+            
+            if (planetName) {
+                this.focusOnPlanet(planetName);
+            }
+        }
+    }
+
+    // מציאת שם כוכב לכת לפי mesh
+    findPlanetNameByMesh(mesh) {
+        // בדיקה בשמש
+        if (this.sun && this.sun.getMesh() === mesh) {
+            return 'sun';
+        }
+        
+        // בדיקה בכוכבי לכת
+        for (const [name, planet] of this.planets) {
+            if (planet.getMesh() === mesh) {
+                return name;
+            }
+        }
+        
+        return null;
+    }
+
+    // שאר הפונקציות נותרו זהות...
+    selectPlanet(planetName) {
+        this.state.selectedPlanet = planetName;
+        this.scene.selectPlanet(planetName);
+        this.infoPanel.showPlanetInfo(planetName);
+        this.controls.updatePlanetSelection(planetName);
+        this.emit('planetSelected', { planet: planetName });
+    }
+
+    deselectPlanet() {
+        this.state.selectedPlanet = null;
+        this.scene.selectPlanet(null);
+        this.infoPanel.hide();
+        this.controls.updatePlanetSelection(null);
+        this.emit('planetDeselected');
+    }
+
+    focusOnPlanet(planetName) {
+        this.selectPlanet(planetName);
+        this.camera.focusOnPlanet(planetName);
+        this.emit('planetFocused', { planet: planetName });
+    }
+
+    startRenderLoop() {
+        const animate = (currentTime) => {
+            const deltaTime = currentTime - this.performance.lastTime;
+            this.performance.lastTime = currentTime;
+            
+            this.updateFPS(currentTime);
+            this.update(deltaTime);
+            this.render();
+            
+            requestAnimationFrame(animate);
+        };
+        
+        requestAnimationFrame(animate);
+    }
+
+    updateFPS(currentTime) {
+        this.performance.frameCount++;
+        
+        if (currentTime - this.performance.lastFpsUpdate >= 1000) {
+            this.performance.fps = this.performance.frameCount;
+            this.performance.frameCount = 0;
+            this.performance.lastFpsUpdate = currentTime;
+            this.emit('fpsUpdate', { fps: this.performance.fps });
+        }
+    }
+
+    update(deltaTime) {
+        if (!this.isInitialized || this.state.isPaused) return;
+        
+        this.scene.update(deltaTime, this.camera.camera);
+        this.camera.update(deltaTime);
+        
+        if (this.sun) {
+            this.sun.update(deltaTime * this.state.timeScale);
+        }
+        
+        this.planets.forEach((planet, name) => {
+            planet.update(deltaTime * this.state.timeScale);
+        });
+        
+        if (this.asteroidBelt) {
+            this.asteroidBelt.update(deltaTime * this.state.timeScale);
+        }
+        
+        this.lights.update(deltaTime);
+        this.controls.update(deltaTime);
+    }
+
+    render() {
+        if (!this.isInitialized) return;
+        this.scene.render(this.camera.camera);
+    }
+
+    updateLoadingProgress(message, progress) {
+        this.loadingProgress.current = message;
+        this.loadingProgress.loaded = progress;
+        
+        const loadingElement = document.getElementById('loadingProgress');
+        if (loadingElement) {
+            loadingElement.style.width = progress + '%';
+        }
+        
+        const loadingText = document.querySelector('#loading h2');
+        if (loadingText) {
+            loadingText.textContent = message;
+        }
+        
+        console.log(`📋 Loading: ${message} (${progress}%)`);
+    }
+
+    finishLoading() {
+        this.updateLoadingProgress('מערכת השמש מוכנה!', 100);
+        this.isLoading = false;
+        
+        setTimeout(() => {
+            const loadingElement = document.getElementById('loading');
+            if (loadingElement) {
+                loadingElement.classList.add('fade-out');
+                setTimeout(() => {
+                    loadingElement.style.display = 'none';
+                }, 500);
+            }
+        }, 1000);
+    }
+
+    showError(message) {
+        const errorElement = document.createElement('div');
+        errorElement.className = 'error-message';
+        errorElement.innerHTML = `
+            <div class="error-content">
+                <h2>שגיאה</h2>
+                <p>${message}</p>
+                <button onclick="window.location.reload()" class="btn primary">נסה שוב</button>
+            </div>
+        `;
+        
+        document.body.appendChild(errorElement);
+    }
+
+    setViewMode(mode, value) {
+        this.state[mode] = value;
+        this.scene.setViewMode(mode, value);
+        this.emit('viewModeChanged', { mode, value });
+    }
+
+    setTimeScale(scale) {
+        this.state.timeScale = Math.max(0, Math.min(1000, scale));
+        this.emit('timeScaleChanged', { scale: this.state.timeScale });
+    }
+
+    togglePause() {
+        this.state.isPaused = !this.state.isPaused;
+        this.emit('pauseToggled', { isPaused: this.state.isPaused });
+    }
+
+    resetView() {
+        this.camera.resetView();
+        this.deselectPlanet();
+        this.setTimeScale(1);
+        this.emit('viewReset');
+    }
+
+    // מערכת אירועים פשוטה
+    on(event, handler) {
+        if (!this.eventHandlers.has(event)) {
+            this.eventHandlers.set(event, []);
+        }
+        this.eventHandlers.get(event).push(handler);
+    }
+
+    off(event, handler) {
+        if (this.eventHandlers.has(event)) {
+            const handlers = this.eventHandlers.get(event);
+            const index = handlers.indexOf(handler);
+            if (index > -1) {
+                handlers.splice(index, 1);
+            }
+        }
+    }
+
+    emit(event, data = {}) {
+        if (this.eventHandlers.has(event)) {
+            this.eventHandlers.get(event).forEach(handler => {
+                try {
+                    handler(data);
+                } catch (error) {
+                    console.error(`Error in event handler for ${event}:`, error);
+                }
+            });
+        }
+    }
+
+    getState() {
+        return {
+            ...this.state,
+            isInitialized: this.isInitialized,
+            isLoading: this.isLoading,
+            performance: { ...this.performance },
+            loadingProgress: { ...this.loadingProgress }
+        };
+    }
+
+    debug() {
+        console.group('🌍 Solar System App Debug Info');
+        console.log('State:', this.getState());
+        console.log('Scene Info:', this.scene?.getSceneInfo());
+        console.log('Camera Info:', this.camera?.getCameraInfo());
+        console.log('Planets:', Array.from(this.planets.keys()));
+        console.log('Performance:', this.performance);
+        console.groupEnd();
+    }
+
+    dispose() {
+        this.isInitialized = false;
+        
+        if (this.scene) this.scene.dispose();
+        if (this.camera) this.camera.dispose();
+        if (this.lights) this.lights.dispose();
+        if (this.controls) this.controls.dispose();
+        if (this.infoPanel) this.infoPanel.dispose();
+        
+        this.planets.forEach(planet => planet.dispose());
+        this.planets.clear();
+        
+        if (this.sun) this.sun.dispose();
+        if (this.asteroidBelt) this.asteroidBelt.dispose();
+        
+        this.eventHandlers.clear();
+        
+        console.log('🧹 Solar System App disposed');
+    }
+}
+
+// מחלקת תאורה עם שם מעודכן
+class SolarSystemLighting {
+    constructor() {
+        this.lights = [];
+        this.sunLight = null;
+        this.ambientLight = null;
+    }
+
+    async init(scene) {
+        this.sunLight = new THREE.DirectionalLight(0xffffff, 2);
+        this.sunLight.position.set(0, 0, 0);
+        this.sunLight.castShadow = true;
+        
+        this.sunLight.shadow.mapSize.width = 2048;
+        this.sunLight.shadow.mapSize.height = 2048;
+        this.sunLight.shadow.camera.near = 0.5;
+        this.sunLight.shadow.camera.far = 1000;
+        
+        scene.add(this.sunLight);
+        this.lights.push(this.sunLight);
+        
+        this.ambientLight = new THREE.AmbientLight(0x404040, 0.1);
+        scene.add(this.ambientLight);
+        this.lights.push(this.ambientLight);
+    }
+
+    setSunPosition(position) {
+        if (this.sunLight) {
+            this.sunLight.position.copy(position);
+        }
+    }
+
+    update(deltaTime) {
+        // עדכון תאורה דינמית
+    }
+
+    dispose() {
+        this.lights.forEach(light => {
+            if (light.parent) light.parent.remove(light);
+            if (light.dispose) light.dispose();
+        });
+        this.lights = [];
+    }
+}
+
+// אתחול האפליקציה
+let solarSystemApp = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🌟 Initializing Solar System PWA...');
+    
+    try {
+        solarSystemApp = new SolarSystemApp();
+        
+        window.solarSystemApp = solarSystemApp;
+        window.solarSystemScene = solarSystemApp.scene;
+        window.solarSystemCamera = solarSystemApp.camera;
+        
+        await solarSystemApp.init();
+        
+        setupKeyboardShortcuts();
+        
+        console.log('🎉 Solar System PWA ready!');
+        
+    } catch (error) {
+        console.error('💥 Failed to initialize Solar System PWA:', error);
+    }
+});
+
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (event) => {
+        if (!solarSystemApp || !solarSystemApp.isInitialized) return;
+        
+        switch(event.code) {
+            case 'Space':
+                event.preventDefault();
+                solarSystemApp.togglePause();
+                break;
+            case 'KeyR':
+                event.preventDefault();
+                solarSystemApp.resetView();
+                break;
+            case 'KeyO':
+                event.preventDefault();
+                solarSystemApp.setViewMode('showOrbits', !solarSystemApp.state.showOrbits);
+                break;
+            case 'KeyL':
+                event.preventDefault();
+                solarSystemApp.setViewMode('showLabels', !solarSystemApp.state.showLabels);
+                break;
+            case 'KeyD':
+                if (event.ctrlKey) {
+                    event.preventDefault();
+                    solarSystemApp.debug();
+                }
+                break;
+        }
+    });
+}
+
+window.addEventListener('beforeunload', () => {
+    if (solarSystemApp) {
+        solarSystemApp.dispose();
+    }
+});
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { SolarSystemApp };
+}// מערכת השמש - נקודת כניסה ראשית לאפליקציה
+// Solar System PWA - Main Application Entry Point
+
+class SolarSystemApp {
+    constructor() {
+        this.isInitialized = false;
+        this.isLoading = true;
+        
+        // רכיבי האפליקציה הראשיים
+        this.scene = null;
+        this.camera = null;
+        this.lights = null;
+        this.controls = null;
+        this.ui = null;
+        
+        // אובייקטים תלת ממדיים
+        this.sun = null;
+        this.planets = new Map();
+        this.asteroidBelt = null;
+        
+        // מצב האפליקציה
+        this.state = {
+            isPaused: false,
+            timeScale: 1,
+            selectedPlanet: null,
+            currentView: 'solar-system',
+            showOrbits: true,
+            showLabels: true,
+            realisticMode: false
+        };
+        
+        // מונה ביצועים
+        this.performance = {
+            lastTime: 0,
+            frameCount: 0,
+            fps: 0,
+            lastFpsUpdate: 0
+        };
+        
+        // אירועים
+        this.eventHandlers = new Map();
+        
+        // הגדרות טעינה
+        this.loadingProgress = {
+            total: 0,
+            loaded: 0,
+            current: ''
+        };
+    }
+
+    // אתחול האפליקציה
+    async init() {
+        try {
+            console.log('🚀 Starting Solar System PWA...');
+            
+            // אתחול מערכות בסיס
+            await this.initializeBaseSystems();
+            
+            // טעינת נתונים
+            await this.loadData();
+            
+            // יצירת סצנה תלת ממדית
+            await this.create3DScene();
+            
+            // יצירת אובייקטים
+            await this.createSolarSystemObjects();
+            
+            // הגדרת ממשק משתמש
+            await this.setupUI();
+            
+            // התחלת לולאת רנדור
+            this.startRenderLoop();
+            
+            // סיום טעינה
+            this.finishLoading();
+            
+            this.isInitialized = true;
+            console.log('✅ Solar System PWA initialized successfully');
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize Solar System PWA:', error);
+            this.showError('שגיאה באתחול האפליקציה: ' + error.message);
+        }
+    }
+
+    // אתחול מערכות בסיס
+    async initializeBaseSystems() {
+        this.updateLoadingProgress('אתחול מערכות בסיס...', 0);
+        
+        // בדיקת תמיכה בWebGL
+        if (!this.checkWebGLSupport()) {
+            throw new Error('הדפדפן שלך אינו תומך בWebGL');
+        }
+        
+        // אתחול TextureLoader
+        if (typeof TextureLoader !== 'undefined') {
+            TextureLoader.init();
+        }
+        
+        // רישום Service Worker
+        await this.registerServiceWorker();
+        
+        this.updateLoadingProgress('מערכות בסיס מוכנות', 10);
+    }
+
+    // בדיקת תמיכה בWebGL
+    checkWebGLSupport() {
+        try {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            return !!context;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // רישום Service Worker
+    async registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                console.log('Service Worker registered:', registration);
+                
+                // האזנה לעדכונים
+                registration.addEventListener('updatefound', () => {
+                    this.handleServiceWorkerUpdate(registration.installing);
+                });
+                
+            } catch (error) {
+                console.warn('Service Worker registration failed:', error);
+            }
+        }
+    }
+
+    // טיפול בעדכון Service Worker
+    handleServiceWorkerUpdate(installingWorker) {
+        installingWorker.addEventListener('statechange', () => {
+            if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                    this.showUpdateNotification();
+                }
+            }
+        });
+    }
+
+    // הצגת הודעת עדכון זמין
+    showUpdateNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'update-notification';
+        notification.innerHTML = `
+            <div class="update-content">
+                <h3>עדכון זמין</h3>
+                <p>גרסה חדשה של האפליקציה זמינה</p>
+                <button id="updateApp" class="btn primary">עדכן עכשיו</button>
+                <button id="dismissUpdate" class="btn">אחר כך</button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        document.getElementById('updateApp').onclick = () => {
+            window.location.reload();
+        };
+        
+        document.getElementById('dismissUpdate').onclick = () => {
+            notification.remove();
+        };
+    }
+
+    // טעינת נתונים
+    async loadData() {
+        this.updateLoadingProgress('טוען נתונים אסטרונומיים...', 20);
+        
+        // הנתונים כבר נטענו מהקובץ planets.js
+        // כאן נוכל להוסיף טעינת נתונים נוספים מAPI
+        
+        this.updateLoadingProgress('נתונים נטענו בהצלחה', 30);
+    }
+
+    // יצירת סצנה תלת ממדית
+    async create3DScene() {
+        this.updateLoadingProgress('יוצר סצנה תלת ממדית...', 40);
+        
+        // אתחול סצנה
+        this.scene = new SolarSystemScene();
+        await this.scene.init('scene');
+        
+        // אתחול מצלמה
+        this.camera = new SolarSystemCamera();
+        await this.camera.init();
+        this.camera.setupControls(this.scene.canvas);
+        
+        // אתחול תאורה
         this.lights = new SolarSystemLights();
         await this.lights.init(this.scene.scene);
         
