@@ -1,0 +1,300 @@
+/* Info Panel */
+#infoPanel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 0;
+    max-width: 500px;
+    width: 90vw;
+    max-height: 80vh;
+    z-index: 300;
+    box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#infoPanel:not(.hidden) {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Info Header */
+.info-header {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#planetName {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    text-align: right;
+}
+
+.close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.close-btn:hover {
+    background: rgba(255, 79, 79, 0.8);
+    border-color: #ff4f4f;
+    transform: scale(1.1);
+}
+
+/* Info Content */
+.info-content {
+    padding: 25px;
+    max-height: calc(80vh - 100px);
+    overflow-y: auto;
+}
+
+/* Planet Image */
+.planet-image {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+#planetPreview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin: 0 auto;
+    background: radial-gradient(circle at 30% 30%, #ffffff, #666666);
+    box-shadow: 
+        0 0 30px rgba(255, 255, 255, 0.2),
+        inset -10px -10px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+#planetPreview::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+    border-radius: 50%;
+}
+
+/* Planet Data */
+.planet-data {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.data-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.data-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(-2px);
+}
+
+.data-item .label {
+    font-size: 0.9rem;
+    color: #cccccc;
+    font-weight: 500;
+}
+
+.data-item .value {
+    font-size: 1rem;
+    color: #4facfe;
+    font-weight: 600;
+    text-align: left;
+    direction: ltr;
+}
+
+/* Planet Description */
+.planet-description {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+#planetDescription {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+    text-align: right;
+    margin: 0;
+}
+
+/* Planet-specific colors */
+.planet-mercury #planetPreview {
+    background: radial-gradient(circle at 30% 30%, #b8a591, #8c7853);
+    box-shadow: 0 0 30px rgba(184, 165, 145, 0.3);
+}
+
+.planet-venus #planetPreview {
+    background: radial-gradient(circle at 30% 30%, #ffd85d, #ffc649);
+    box-shadow: 0 0 30px rgba(255, 198, 73, 0.4);
+}
+
+.planet-earth #planetPreview {
+    background: radial-gradient(circle at 30% 30%, #87ceeb, #6b93d6);
+    box-shadow: 0 0 30px rgba(107, 147, 214, 0.4);
+}
+
+.planet-mars #planetPreview {
+    background: radial-gradient(circle at 30% 30%, #ff7f7f, #cd5c5c);
+    box-shadow: 0 0 30px rgba(205, 92, 92, 0.4);
+}
+
+.planet-jupiter #planetPreview {
+    background: radial-gradient(circle at 30% 30%, #f0e2b3, #d8ca9d);
+    box-shadow: 0 0 30px rgba(216, 202, 157, 0.4);
+}
+
+.planet-saturn #planetPreview {
+    background: radial-gradient(circle at 30% 30%, #ffe4b5, #fad5a5);
+    box-shadow: 0 0 30px rgba(250, 213, 165, 0.4);
+}
+
+.planet-uranus #planetPreview {
+    background: radial-gradient(circle at 30% 30%, #7fefff, #4fd0e7);
+    box-shadow: 0 0 30px rgba(79, 208, 231, 0.4);
+}
+
+.planet-neptune #planetPreview {
+    background: radial-gradient(circle at 30% 30%, #7f9eff, #4b70dd);
+    box-shadow: 0 0 30px rgba(75, 112, 221, 0.4);
+}
+
+/* Animations */
+@keyframes planetRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+#planetPreview {
+    animation: planetRotate 20s linear infinite;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    #infoPanel {
+        width: 95vw;
+        max-height: 85vh;
+    }
+    
+    .info-header {
+        padding: 15px 20px;
+    }
+    
+    #planetName {
+        font-size: 1.3rem;
+    }
+    
+    .info-content {
+        padding: 20px;
+    }
+    
+    #planetPreview {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .data-item {
+        padding: 10px 12px;
+    }
+    
+    .planet-description {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    #infoPanel {
+        width: 98vw;
+        max-height: 90vh;
+    }
+    
+    .info-header {
+        padding: 12px 15px;
+    }
+    
+    #planetName {
+        font-size: 1.2rem;
+    }
+    
+    .info-content {
+        padding: 15px;
+    }
+    
+    #planetPreview {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .data-item .label {
+        font-size: 0.85rem;
+    }
+    
+    .data-item .value {
+        font-size: 0.9rem;
+    }
+    
+    #planetDescription {
+        font-size: 0.9rem;
+    }
+}
+
+/* Scrollbar for info content */
+.info-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.info-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+}
+
+.info-content::-webkit-scrollbar-thumb {
+    background: rgba(79, 172, 254, 0.3);
+    border-radius: 2px;
+}
+
+.info-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(79, 172, 254, 0.5);
+}
