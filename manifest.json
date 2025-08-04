@@ -1,47 +1,62 @@
 {
-  "name": "Solar System 3D",
-  "short_name": "SolarSystem3D",
-  "description": "Interactive 3D Solar System visualization with PWA capabilities",
+  "name": "מערכת השמש - Solar System PWA",
+  "short_name": "Solar System",
+  "description": "חקור את מערכת השמש בתלת מימד - אפליקציה חינוכית אינטראקטיבית",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#1a1a2e",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
   "orientation": "any",
-  "scope": "/",
+  "lang": "he",
+  "dir": "rtl",
+  "categories": ["education", "science"],
   "icons": [
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMWExYTJlIi8+CjxjaXJjbGUgY3g9Ijk2IiBjeT0iOTYiIHI9IjMwIiBmaWxsPSIjZmZmZjAwIi8+CjxjaXJjbGUgY3g9Ijc1IiBjeT0iOTYiIHI9IjUiIGZpbGw9IiNmZjY2MDAiLz4KPGNpcmNsZSBjeD0iMTIwIiBjeT0iOTYiIHI9IjgiIGZpbGw9IiMwMDY2ZmYiLz4KPGNpcmNsZSBjeD0iNjAiIGN5PSI5NiIgcj0iMyIgZmlsbD0iI2ZmNDQwMCIvPgo8L3N2Zz4K",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><circle cx='96' cy='96' r='80' fill='%23ffd700' stroke='%23ff8c00' stroke-width='4'/><circle cx='96' cy='96' r='60' fill='%23ffed4e' opacity='0.8'/><circle cx='96' cy='96' r='40' fill='%23fff176' opacity='0.6'/></svg>",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjMWExYTJlIi8+CjxjaXJjbGUgY3g9IjI1NiIgY3k9IjI1NiIgcj0iODAiIGZpbGw9IiNmZmZmMDAiLz4KPGNpcmNsZSBjeD0iMjAwIiBjeT0iMjU2IiByPSIxMiIgZmlsbD0iI2ZmNjYwMCIvPgo8Y2lyY2xlIGN4PSIzMjAiIGN5PSIyNTYiIHI9IjIwIiBmaWxsPSIjMDA2NmZmIi8+CjxjaXJjbGUgY3g9IjE2MCIgY3k9IjI1NiIgcj0iOCIgZmlsbD0iI2ZmNDQwMCIvPgo8Y2lyY2xlIGN4PSIzODAiIGN5PSIyNTYiIHI9IjE1IiBmaWxsPSIjZmY4ODAwIi8+CjxjaXJjbGUgY3g9IjQ0MCIgY3k9IjI1NiIgcj0iMTgiIGZpbGw9IiM4ODAwZmYiLz4KPC9zdmc+Cg==",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><circle cx='256' cy='256' r='220' fill='%23ffd700' stroke='%23ff8c00' stroke-width='8'/><circle cx='256' cy='256' r='180' fill='%23ffed4e' opacity='0.8'/><circle cx='256' cy='256' r='140' fill='%23fff176' opacity='0.6'/><circle cx='256' cy='256' r='100' fill='%23ffff8d' opacity='0.4'/></svg>",
       "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQ0IiBoZWlnaHQ9IjE0NCIgdmlld0JveD0iMCAwIDE0NCAxNDQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxNDQiIGhlaWdodD0iMTQ0IiBmaWxsPSIjMWExYTJlIi8+CjxjaXJjbGUgY3g9IjcyIiBjeT0iNzIiIHI9IjI1IiBmaWxsPSIjZmZmZjAwIi8+CjxjaXJjbGUgY3g9IjU1IiBjeT0iNzIiIHI9IjQiIGZpbGw9IiNmZjY2MDAiLz4KPGNpcmNsZSBjeD0iOTAiIGN5PSI3MiIgcj0iNiIgZmlsbD0iIzAwNjZmZiIvPgo8L3N2Zz4K",
-      "sizes": "144x144",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["education", "entertainment", "science"],
-  "lang": "he",
-  "dir": "rtl",
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='1280' height='720' fill='%230a0a0a'/><circle cx='640' cy='360' r='40' fill='%23ffd700'/><circle cx='540' cy='360' r='8' fill='%238c7853'/><circle cx='500' cy='360' r='12' fill='%23ffc649'/><circle cx='460' cy='360' r='12' fill='%236b93d6'/><circle cx='420' cy='360' r='10' fill='%23cd5c5c'/><circle cx='760' cy='360' r='30' fill='%23d8ca9d'/><circle cx='840' cy='360' r='25' fill='%23fad5a5'/><circle cx='920' cy='360' r='18' fill='%234fd0e7'/><circle cx='1000' cy='360' r='16' fill='%234b70dd'/></svg>",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    }
+  ],
   "prefer_related_applications": false,
   "shortcuts": [
     {
-      "name": "View Solar System",
-      "short_name": "Solar System",
-      "description": "Open the 3D Solar System view",
-      "url": "/",
+      "name": "כדור הארץ",
+      "short_name": "Earth",
+      "description": "התמקד בכדור הארץ",
+      "url": "/?planet=earth",
       "icons": [
         {
-          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMWExYTJlIi8+CjxjaXJjbGUgY3g9Ijk2IiBjeT0iOTYiIHI9IjMwIiBmaWxsPSIjZmZmZjAwIi8+PC9zdmc+",
-          "sizes": "192x192"
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='40' fill='%236b93d6'/></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "מאדים",
+      "short_name": "Mars",
+      "description": "התמקד במאדים",
+      "url": "/?planet=mars",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='40' fill='%23cd5c5c'/></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
         }
       ]
     }
