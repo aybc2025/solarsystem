@@ -1,26 +1,4 @@
-/* Control Panel */
-#controls {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 20px;
-    max-width: 320px;
-    min-width: 280px;
-    z-index: 200;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-}
-
-#controls:hover {
-    background: rgba(0, 0, 0, 0.9);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-/* Control Sections */
+/* Control Panel - גרסה משופרת */
 .control-section {
     margin-bottom: 20px;
     padding-bottom: 15px;
@@ -77,6 +55,7 @@
     outline: none;
     appearance: none;
     -webkit-appearance: none;
+    cursor: pointer;
 }
 
 .speed-control input[type="range"]::-webkit-slider-thumb {
@@ -106,7 +85,7 @@
     box-shadow: 0 2px 8px rgba(79, 172, 254, 0.3);
 }
 
-#speedValue {
+#timeScaleValue {
     text-align: center;
     font-size: 0.9rem;
     color: #4facfe;
@@ -114,131 +93,415 @@
     background: rgba(79, 172, 254, 0.1);
     border-radius: 4px;
     padding: 4px 8px;
+    border: 1px solid rgba(79, 172, 254, 0.2);
 }
 
-/* View Options */
-.view-options {
+/* View Controls */
+.view-controls {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+    margin-bottom: 15px;
 }
 
-.view-options .btn {
+.view-controls .btn {
     font-size: 0.85rem;
-    padding: 6px 12px;
+    padding: 8px 12px;
     text-align: center;
+    position: relative;
+    transition: all 0.3s ease;
 }
 
-/* Planet List */
-.planet-list {
-    display: flex;
-    flex-direction: column;
+.view-controls .btn.toggle.active {
+    background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+    border-color: #4facfe;
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
+    transform: translateY(-1px);
+}
+
+.view-controls .btn.toggle.active::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+/* Planet Selection */
+.planet-selection {
+    margin-top: 20px;
+}
+
+.planet-selection h3 {
+    margin-bottom: 15px;
+}
+
+.planet-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 6px;
-    max-height: 200px;
+    max-height: 250px;
     overflow-y: auto;
     padding-right: 5px;
 }
 
-.planet-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
+.planet-btn {
+    font-size: 0.8rem;
+    padding: 8px 10px;
+    text-align: center;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    color: #ffffff;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
+    overflow: hidden;
 }
 
-.planet-item:hover {
+.planet-btn:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.2);
-    transform: translateX(-2px);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.planet-item.active {
-    background: linear-gradient(45deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
+.planet-btn:active {
+    transform: translateY(0);
+}
+
+.planet-btn.active,
+.planet-btn.selected {
+    background: linear-gradient(45deg, rgba(79, 172, 254, 0.3) 0%, rgba(0, 242, 254, 0.3) 100%);
     border-color: #4facfe;
-    box-shadow: 0 0 10px rgba(79, 172, 254, 0.2);
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.3);
 }
 
-.planet-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    box-shadow: 0 0 6px currentColor;
+/* צבעי כוכבי הלכת בכפתורים */
+.planet-btn[data-planet="sun"] {
+    background: linear-gradient(45deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 165, 0, 0.2) 100%);
+    border-color: rgba(255, 215, 0, 0.3);
 }
 
-.planet-name {
-    font-size: 0.9rem;
-    font-weight: 500;
-    flex: 1;
-    text-align: right;
+.planet-btn[data-planet="mercury"] {
+    background: linear-gradient(45deg, rgba(140, 120, 83, 0.2) 0%, rgba(156, 140, 115, 0.2) 100%);
+    border-color: rgba(140, 120, 83, 0.3);
 }
 
-.planet-distance {
-    font-size: 0.75rem;
-    color: #999999;
+.planet-btn[data-planet="venus"] {
+    background: linear-gradient(45deg, rgba(255, 198, 73, 0.2) 0%, rgba(255, 213, 93, 0.2) 100%);
+    border-color: rgba(255, 198, 73, 0.3);
+}
+
+.planet-btn[data-planet="earth"] {
+    background: linear-gradient(45deg, rgba(107, 147, 214, 0.2) 0%, rgba(79, 124, 184, 0.2) 100%);
+    border-color: rgba(107, 147, 214, 0.3);
+}
+
+.planet-btn[data-planet="mars"] {
+    background: linear-gradient(45deg, rgba(205, 92, 92, 0.2) 0%, rgba(230, 124, 124, 0.2) 100%);
+    border-color: rgba(205, 92, 92, 0.3);
+}
+
+.planet-btn[data-planet="jupiter"] {
+    background: linear-gradient(45deg, rgba(216, 202, 157, 0.2) 0%, rgba(232, 218, 181, 0.2) 100%);
+    border-color: rgba(216, 202, 157, 0.3);
+}
+
+.planet-btn[data-planet="saturn"] {
+    background: linear-gradient(45deg, rgba(250, 213, 165, 0.2) 0%, rgba(255, 229, 197, 0.2) 100%);
+    border-color: rgba(250, 213, 165, 0.3);
+}
+
+.planet-btn[data-planet="uranus"] {
+    background: linear-gradient(45deg, rgba(79, 208, 231, 0.2) 0%, rgba(111, 223, 255, 0.2) 100%);
+    border-color: rgba(79, 208, 231, 0.3);
+}
+
+.planet-btn[data-planet="neptune"] {
+    background: linear-gradient(45deg, rgba(75, 112, 221, 0.2) 0%, rgba(107, 143, 255, 0.2) 100%);
+    border-color: rgba(75, 112, 221, 0.3);
+}
+
+/* הדגשה בעת מעבר עכבר על כפתורי כוכבי הלכת */
+.planet-btn[data-planet="sun"]:hover {
+    background: linear-gradient(45deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 165, 0, 0.3) 100%);
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.2);
+}
+
+.planet-btn[data-planet="mercury"]:hover {
+    box-shadow: 0 4px 20px rgba(140, 120, 83, 0.2);
+}
+
+.planet-btn[data-planet="venus"]:hover {
+    box-shadow: 0 4px 20px rgba(255, 198, 73, 0.2);
+}
+
+.planet-btn[data-planet="earth"]:hover {
+    box-shadow: 0 4px 20px rgba(107, 147, 214, 0.2);
+}
+
+.planet-btn[data-planet="mars"]:hover {
+    box-shadow: 0 4px 20px rgba(205, 92, 92, 0.2);
+}
+
+.planet-btn[data-planet="jupiter"]:hover {
+    box-shadow: 0 4px 20px rgba(216, 202, 157, 0.2);
+}
+
+.planet-btn[data-planet="saturn"]:hover {
+    box-shadow: 0 4px 20px rgba(250, 213, 165, 0.2);
+}
+
+.planet-btn[data-planet="uranus"]:hover {
+    box-shadow: 0 4px 20px rgba(79, 208, 231, 0.2);
+}
+
+.planet-btn[data-planet="neptune"]:hover {
+    box-shadow: 0 4px 20px rgba(75, 112, 221, 0.2);
+}
+
+/* אנימציות מיוחדות */
+@keyframes planetGlow {
+    0%, 100% {
+        box-shadow: 0 0 10px rgba(79, 172, 254, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(79, 172, 254, 0.6);
+    }
+}
+
+.planet-btn.active {
+    animation: planetGlow 2s ease-in-out infinite;
+}
+
+/* טולטיפים */
+.planet-btn::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
     white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 1000;
 }
 
-/* Planet Colors */
-.planet-item[data-planet="mercury"] .planet-color { background: #8C7853; }
-.planet-item[data-planet="venus"] .planet-color { background: #FFC649; }
-.planet-item[data-planet="earth"] .planet-color { background: #6B93D6; }
-.planet-item[data-planet="mars"] .planet-color { background: #CD5C5C; }
-.planet-item[data-planet="jupiter"] .planet-color { background: #D8CA9D; }
-.planet-item[data-planet="saturn"] .planet-color { background: #FAD5A5; }
-.planet-item[data-planet="uranus"] .planet-color { background: #4FD0E7; }
-.planet-item[data-planet="neptune"] .planet-color { background: #4B70DD; }
+.planet-btn:hover::before {
+    opacity: 1;
+}
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
-    #controls {
-        top: 10px;
-        right: 10px;
-        left: 10px;
-        max-width: none;
-        min-width: auto;
-        padding: 15px;
-    }
-    
     .time-controls {
         flex-direction: column;
     }
     
-    .view-options {
+    .view-controls {
         grid-template-columns: 1fr;
     }
     
-    .planet-list {
-        max-height: 150px;
+    .planet-buttons {
+        grid-template-columns: 1fr;
+        max-height: 200px;
+    }
+    
+    .planet-btn {
+        font-size: 0.9rem;
+        padding: 12px;
     }
     
     .control-section h3 {
         font-size: 1rem;
     }
+    
+    .speed-control input[type="range"]::-webkit-slider-thumb {
+        width: 20px;
+        height: 20px;
+    }
 }
 
 @media (max-width: 480px) {
-    #controls {
-        padding: 12px;
-        border-radius: 10px;
+    .planet-btn {
+        font-size: 0.8rem;
+        padding: 10px 8px;
     }
     
-    .control-section {
-        margin-bottom: 15px;
-        padding-bottom: 12px;
-    }
-    
-    .planet-item {
+    .view-controls .btn {
+        font-size: 0.8rem;
         padding: 6px 10px;
     }
     
-    .planet-name {
-        font-size: 0.85rem;
+    .time-controls .btn {
+        font-size: 0.8rem;
+        padding: 8px 12px;
+    }
+}
+
+/* סגנונות נוספים לשיפור החוויה */
+.control-section {
+    position: relative;
+}
+
+.control-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -10px;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, rgba(79, 172, 254, 0.3), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.control-section:hover::before {
+    opacity: 1;
+}
+
+/* אפקט זוהר לכפתורים פעילים */
+.btn.toggle.active {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn.toggle.active::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: rotate(45deg);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
+}
+
+/* משפר את הנגישות */
+.btn:focus,
+.planet-btn:focus {
+    outline: 2px solid #4facfe;
+    outline-offset: 2px;
+}
+
+/* מצב כהה משופר */
+@media (prefers-color-scheme: dark) {
+    .control-section {
+        border-bottom-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .btn {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+    
+    .btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+}
+
+/* אפקטים למכשירי מגע */
+@media (hover: none) {
+    .btn:hover {
+        transform: none;
+    }
+    
+    .planet-btn:hover {
+        transform: none;
+    }
+    
+    .btn:active,
+    .planet-btn:active {
+        transform: scale(0.95);
+        transition: transform 0.1s ease;
+    }
+}
+
+/* Scrollbar עבור רשימת כוכבי הלכת */
+.planet-buttons::-webkit-scrollbar {
+    width: 4px;
+}
+
+.planet-buttons::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+}
+
+.planet-buttons::-webkit-scrollbar-thumb {
+    background: rgba(79, 172, 254, 0.3);
+    border-radius: 2px;
+}
+
+.planet-buttons::-webkit-scrollbar-thumb:hover {
+    background: rgba(79, 172, 254, 0.5);
+}
+
+/* אינדיקטור לכוכב לכת הנבחר */
+.planet-btn.selected::after {
+    content: '★';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 0.8rem;
+    color: #ffd700;
+    text-shadow: 0 0 4px rgba(255, 215, 0, 0.8);
+}
+
+/* הוספת אפקט פועם לכפתורים חשובים */
+.btn.primary {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+    }
+}
+
+/* סגנון מיוחד לכפתור האיפוס */
+#reset:hover {
+    background: linear-gradient(45deg, #ff6b6b 0%, #ee5a24 100%);
+    border-color: #ff6b6b;
+    color: white;
+}
+
+/* מצב נגישות מוגברת */
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .planet-btn {
+        transition: none;
+    }
+    
+    .btn.toggle.active::before {
+        animation: none;
+    }
+    
+    .btn.primary {
+        animation: none;
+    }
+    
+    .planet-btn.active {
+        animation: none;
     }
 }
