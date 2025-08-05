@@ -524,18 +524,21 @@ class ImprovedSolarSystemApp {
     }
 
     // יצירת השמש
-    async createSun() {
-        const sunGeometry = new THREE.SphereGeometry(20, 32, 32);
-        const sunMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffd700,
-            emissive: 0xff8800,
-            emissiveIntensity: 0.3
-        });
-        
-        this.sun = new THREE.Mesh(sunGeometry, sunMaterial);
-        this.sun.name = 'sun';
-        this.scene.add(this.sun);
-    }
+     async createSun() {
+    const sunGeometry = new THREE.SphereGeometry(20, 32, 32);
+    // תיקון: השתמש ב-MeshStandardMaterial במקום MeshBasicMaterial
+    const sunMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        emissive: 0xff8800,
+        emissiveIntensity: 0.3,
+        roughness: 0.2,
+        metalness: 0.1
+    });
+    
+    this.sun = new THREE.Mesh(sunGeometry, sunMaterial);
+    this.sun.name = 'sun';
+    this.scene.add(this.sun);
+}
 
     // יצירת כוכבי הלכת
     async createPlanets() {
