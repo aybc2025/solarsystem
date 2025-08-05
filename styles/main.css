@@ -1,4 +1,4 @@
-/* מערכת השמש - עיצוב ראשי מותאם למובייל */
+/* מערכת השמש - עיצוב ראשי מותאם למובייל עם תיקוני PWA */
 
 /* איפוס וגדרות בסיס */
 * {
@@ -10,6 +10,14 @@
 html {
     height: 100%;
     font-size: 16px;
+    /* אפשר זום במכשירים ניידים - תיקון PWA */
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 body {
@@ -20,7 +28,8 @@ body {
     overflow: hidden;
     direction: rtl;
     text-align: right;
-    touch-action: manipulation;
+    /* תיקון PWA - אפשר זום מוגבל */
+    touch-action: pan-x pan-y pinch-zoom;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
@@ -33,7 +42,7 @@ body {
     overflow: hidden;
 }
 
-/* קנבס תלת ממדי */
+/* קנבס תלת ממדי - תיקון PWA עיקרי */
 #scene {
     position: absolute;
     top: 0;
@@ -42,8 +51,10 @@ body {
     height: 100%;
     z-index: 1;
     display: block;
-    touch-action: none;
+    /* תיקון PWA - אפשר זום אבל מגביל gestures מיותרים */
+    touch-action: pan-x pan-y pinch-zoom;
     cursor: grab;
+    -webkit-tap-highlight-color: transparent;
 }
 
 #scene:active {
@@ -109,106 +120,68 @@ body {
 
 @keyframes sunGlow {
     0%, 100% {
-        opacity: 0.5;
-        transform: scale(1);
+        opacity: 0.3;
+        transform: rotate(0deg) scale(1);
     }
     50% {
-        opacity: 1;
-        transform: scale(1.2);
+        opacity: 0.8;
+        transform: rotate(180deg) scale(1.1);
     }
 }
 
 .loading-content h2 {
-    margin-bottom: 20px;
     font-size: 24px;
-    font-weight: bold;
-    color: #ffd700;
+    font-weight: 300;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .loading-bar {
     width: 100%;
-    height: 6px;
+    height: 4px;
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
+    border-radius: 2px;
     overflow: hidden;
-    margin-bottom: 15px;
+    margin-top: 20px;
 }
 
 .loading-progress {
     height: 100%;
-    background: linear-gradient(90deg, #ffd700, #ffed4e);
-    border-radius: 3px;
-    width: 0%;
+    background: linear-gradient(90deg, #ffd700, #ff8c00);
+    border-radius: 2px;
     transition: width 0.3s ease;
-    position: relative;
-}
-
-.loading-progress::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    animation: loadingShine 2s ease-in-out infinite;
-}
-
-@keyframes loadingShine {
-    0% {
-        transform: translateX(-100%);
-    }
-    100% {
-        transform: translateX(100%);
-    }
-}
-
-#loadingText {
-    font-size: 14px;
-    opacity: 0.8;
-    color: #ffffff;
+    width: 0%;
 }
 
 /* הודעות שגיאה */
 .error-message {
-    background: rgba(211, 47, 47, 0.95);
-    color: #ffffff;
-    padding: 20px;
-    border-radius: 12px;
-    border: 2px solid #ff5252;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(15px);
-    text-align: center;
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 3000;
-    max-width: 90%;
-    width: 400px;
-    animation: errorSlideIn 0.3s ease;
-}
-
-@keyframes errorSlideIn {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.8);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
+    background: rgba(255, 0, 0, 0.95);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    z-index: 2001;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .error-message h3 {
     margin-bottom: 15px;
-    color: #ffcdd2;
-    font-size: 18px;
+    font-size: 20px;
+    font-weight: bold;
 }
 
 .error-message p {
     margin-bottom: 20px;
     line-height: 1.5;
+    font-size: 16px;
 }
 
 .error-message button {
@@ -216,17 +189,24 @@ body {
     color: #d32f2f;
     border: none;
     padding: 12px 24px;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
     font-size: 14px;
     transition: all 0.3s ease;
+    /* תמיכה במגע */
+    touch-action: manipulation;
+    min-height: 44px;
 }
 
 .error-message button:hover {
     background: #f5f5f5;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.error-message button:active {
+    transform: scale(0.95);
 }
 
 /* התאמות מגע למכשירים ניידים */
@@ -285,9 +265,11 @@ body {
     color: #ffffff;
 }
 
-/* מניעת זום לא רצוי במובייל */
+/* מניעת זום לא רצוי במובייל - תיקון PWA */
 input, button, select, textarea {
     font-size: 16px;
+    /* אפשר אינטראקציה רגילה */
+    touch-action: manipulation;
 }
 
 /* התאמות לכיוון RTL */
@@ -324,6 +306,16 @@ input, button, select, textarea {
         font-size: 15px;
     }
     
+    body {
+        /* ב-PWA על מובייל, אפשר זום מוגבל יותר */
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+    
+    #scene {
+        /* זום מותר באזור הקנבס */
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+    
     .loading-content {
         padding: 15px;
     }
@@ -341,34 +333,16 @@ input, button, select, textarea {
     .error-message {
         margin: 20px;
         padding: 20px;
-        max-width: calc(100% - 40px);
+        font-size: 14px;
     }
     
-    /* מניעת גלילה כאשר התפריט פתוח */
-    body.menu-open {
-        position: fixed;
-        width: 100%;
+    .error-message h3 {
+        font-size: 18px;
     }
     
-    /* התאמות לכיוון RTL במובייל */
-    [dir="rtl"] .controls-panel {
-        right: 0;
-        left: 0;
-    }
-    
-    [dir="rtl"] .quick-controls {
-        left: auto;
-        right: 20px;
-    }
-    
-    [dir="rtl"] .nav-help {
-        right: auto;
-        left: 20px;
-    }
-    
-    [dir="rtl"] .performance-stats {
-        left: 20px;
-        right: 20px;
+    .error-message button {
+        font-size: 16px;
+        padding: 14px 20px;
     }
 }
 
@@ -397,203 +371,26 @@ input, button, select, textarea {
         font-size: 16px;
     }
     
-    .error-message button {
-        padding: 10px 20px;
-        font-size: 13px;
+    .error-message p {
+        font-size: 14px;
+    }
+    
+    #scene {
+        /* שמירה על אפשרות זום בסמארטפון */
+        touch-action: pan-x pan-y pinch-zoom;
     }
 }
 
-/* מסכים קטנים מאוד - 360px ומטה */
-@media (max-width: 360px) {
-    html {
-        font-size: 13px;
-    }
-    
-    .loading-content {
-        padding: 10px;
-    }
-    
-    .loading-content h2 {
-        font-size: 16px;
-        margin-bottom: 15px;
-    }
-    
-    .sun-loader {
-        width: 40px;
-        height: 40px;
-        margin-bottom: 10px;
-    }
-    
-    .error-message {
-        margin: 10px;
-        padding: 12px;
-    }
-}
-
-/* מצב לנדסקייפ במובייל */
-@media (max-width: 768px) and (orientation: landscape) {
-    .loading-content {
-        flex-direction: row;
-        align-items: center;
-        text-align: left;
-        max-width: 90%;
-    }
-    
-    .sun-loader {
-        margin: 0 20px 0 0;
-        flex-shrink: 0;
-    }
-    
-    .loading-info {
-        flex: 1;
-    }
-    
-    .loading-content h2 {
-        margin-bottom: 10px;
-    }
-    
-    .loading-bar {
-        margin-bottom: 10px;
-    }
-}
-
-/* מסכים גדולים */
-@media (min-width: 1200px) {
-    html {
-        font-size: 18px;
-    }
-    
-    .loading-content h2 {
-        font-size: 28px;
-    }
-    
-    .sun-loader {
-        width: 100px;
-        height: 100px;
-    }
-}
-
-/* מסכים ענקיים */
-@media (min-width: 1920px) {
-    html {
-        font-size: 20px;
-    }
-    
-    .loading-content {
-        max-width: 500px;
-    }
-    
-    .loading-content h2 {
-        font-size: 32px;
-    }
-    
-    .sun-loader {
-        width: 120px;
-        height: 120px;
-    }
-}
-
-/* התאמות לצפיפות פיקסלים גבוהה */
-@media (-webkit-min-device-pixel-ratio: 2),
-       (min-resolution: 192dpi) {
-    .sun-loader {
-        box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
-    }
-    
-    .loading-progress::after {
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-    }
-}
-
-/* הגדרות נגישות */
-@media (prefers-reduced-motion: reduce) {
-    .sun-loader {
-        animation: none;
-    }
-    
-    .sun-loader::before {
-        animation: none;
-    }
-    
-    .loading-progress::after {
-        animation: none;
-    }
-    
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* מצב כהה/בהיר לפי העדפות המערכת */
-@media (prefers-color-scheme: light) {
-    body {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        color: #333333;
-    }
-    
-    #loading {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    }
-    
-    .loading-content h2 {
-        color: #ff8f00;
-    }
-    
-    .loading-content {
-        color: #333333;
-    }
-    
-    #loadingText {
-        color: #666666;
-    }
-}
-
-/* מצב ניגודיות גבוהה */
-@media (prefers-contrast: high) {
-    body {
-        background: #000000;
-        color: #ffffff;
-    }
-    
-    .loading-bar {
-        background: #ffffff;
-    }
-    
-    .loading-progress {
-        background: #ffff00;
-    }
-    
-    .sun-loader {
-        background: #ffff00;
-        box-shadow: 0 0 20px #ffff00;
-    }
-}
-
-/* הדפסה */
-@media print {
-    body {
-        background: white !important;
-        color: black !important;
-    }
-    
-    #loading,
-    .error-message {
-        display: none !important;
+/* התאמות לשינוי כיוון */
+@media (orientation: portrait) {
+    .landscape-notice {
+        display: none;
     }
     
     #scene {
         position: static !important;
         width: 100% !important;
         height: 80vh !important;
-    }
-}
-
-/* התאמות לזקיפות מכשיר */
-@media (orientation: portrait) {
-    .landscape-notice {
-        display: none;
     }
 }
 
@@ -610,6 +407,21 @@ input, button, select, textarea {
         font-size: 12px;
         z-index: 1001;
         white-space: nowrap;
+    }
+}
+
+/* תמיכה ב-iOS Safari - תיקון PWA */
+@supports (-webkit-touch-callout: none) {
+    body {
+        /* iOS Safari specific */
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #scene {
+        /* מניעת rubber band effect אבל שמירה על זום */
+        -webkit-overflow-scrolling: auto;
+        /* תיקון ל-iOS */
+        touch-action: pan-x pan-y pinch-zoom;
     }
 }
 
@@ -694,6 +506,54 @@ input, button, select, textarea {
     transition-duration: 0.01ms !important;
 }
 
+/* תמיכה ב-PWA standalone mode - תיקון */
+@media all and (display-mode: standalone) {
+    body {
+        /* ב-standalone mode, הקפד על touch-action מדויק */
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+    
+    #scene {
+        /* באפליקציה standalone, אפשר זום מלא */
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+}
+
+@media all and (display-mode: minimal-ui) {
+    body {
+        /* ב-minimal-ui יש יותר חופש */
+        touch-action: manipulation;
+    }
+    
+    #scene {
+        /* עדיין נותן שליטה על זום */
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+}
+
+/* הסתרת UI ברירת המחדל במובייל - תיקון PWA */
+@media screen and (max-width: 768px) {
+    /* מניעת הצגת אפשרויות הקשר מובייל */
+    * {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    
+    /* אבל אפשר זום */
+    html, body {
+        -ms-touch-action: pan-x pan-y pinch-zoom;
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+    
+    #scene {
+        touch-action: pan-x pan-y pinch-zoom;
+    }
+}
+
 /* כלים למפתחים */
 .debug-mode {
     border: 1px solid red !important;
@@ -701,4 +561,30 @@ input, button, select, textarea {
 
 .debug-mode * {
     border: 1px solid blue !important;
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .error-message {
+        border-width: 1px;
+    }
+}
+
+/* Reduce Motion */
+@media (prefers-reduced-motion: reduce) {
+    .sun-loader {
+        animation: none;
+    }
+    
+    .sun-loader::before {
+        animation: none;
+        opacity: 0.5;
+    }
+    
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
