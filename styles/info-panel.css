@@ -1,117 +1,91 @@
-/* Info Panel - פאנל מידע משופר עם תמיכה מלאה בטקסט עברי */
+/* פאנל מידע על כוכבי הלכת - מותאם למובייל */
+
+/* פאנל מידע ראשי */
 #infoPanel {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
-    padding: 0;
-    max-width: 600px;
-    width: 95vw;
+    width: 500px;
+    max-width: 90vw;
     max-height: 85vh;
-    z-index: 300;
-    box-shadow: 
-        0 20px 50px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #ffd700;
+    border-radius: 15px;
+    z-index: 1100;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(20px);
     overflow: hidden;
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    direction: rtl;
-    text-align: right;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-#infoPanel:not(.hidden) {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+#infoPanel.hidden {
+    display: none;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
 }
 
 /* כותרת הפאנל */
 .info-header {
-    background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
-    padding: 20px 25px;
+    background: linear-gradient(135deg, #1a1a2e, #0a0a0a);
+    padding: 20px;
+    border-bottom: 2px solid #ffd700;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
-    overflow: hidden;
 }
 
 .info-header::before {
     content: '';
     position: absolute;
     top: 0;
+    left: 0;
     right: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-    transform: translateX(100%);
-    transition: transform 0.6s ease;
-}
-
-.info-header:hover::before {
-    transform: translateX(-100%);
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+    pointer-events: none;
 }
 
 #planetName {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #ffffff;
     margin: 0;
-    text-align: right;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: #ffd700;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    flex: 1;
 }
 
 .close-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #ffffff;
-    width: 36px;
-    height: 36px;
+    background: none;
+    border: 2px solid #ffd700;
+    color: #ffd700;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
     cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.4rem;
-    font-weight: bold;
-    transition: all 0.3s ease;
-    outline: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.close-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(255, 79, 79, 0.8);
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    transform: translate(-50%, -50%);
-}
-
-.close-btn:hover::before {
-    width: 100%;
-    height: 100%;
+    flex-shrink: 0;
 }
 
 .close-btn:hover {
-    border-color: #ff4f4f;
-    transform: scale(1.1);
-    color: #ffffff;
+    background: rgba(255, 215, 0, 0.2);
+    transform: rotate(90deg) scale(1.1);
+}
+
+.close-btn:active {
+    transform: rotate(90deg) scale(0.95);
 }
 
 /* תוכן הפאנל */
 .info-content {
-    padding: 25px;
+    padding: 20px;
     max-height: calc(85vh - 100px);
     overflow-y: auto;
     direction: rtl;
@@ -120,450 +94,816 @@
 /* תמונת כוכב הלכת */
 .planet-image {
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 #planetPreview {
     width: 120px;
     height: 120px;
-    border-radius: 50%;
     margin: 0 auto;
-    background: radial-gradient(circle at 30% 30%, #ffffff, #666666);
-    box-shadow: 
-        0 0 30px rgba(255, 255, 255, 0.2),
-        inset -10px -10px 20px rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
     position: relative;
     overflow: hidden;
-    animation: planetFloat 6s ease-in-out infinite;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
 }
 
-@keyframes planetFloat {
-    0%, 100% {
-        transform: translateY(0px);
+.planet-sphere {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    animation: planetRotate 20s linear infinite;
+    box-shadow: inset -10px -10px 20px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes planetRotate {
+    from {
+        transform: rotate(0deg);
     }
-    50% {
-        transform: translateY(-10px);
+    to {
+        transform: rotate(360deg);
     }
 }
 
-#planetPreview::after {
+/* אפקטים מיוחדים לכוכבי לכת */
+.saturn-rings {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotateX(75deg);
+    width: 180px;
+    height: 180px;
+    border: 8px solid rgba(200, 180, 140, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.saturn-rings::before {
     content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border: 3px solid rgba(180, 160, 120, 0.4);
+    border-radius: 50%;
+}
+
+.earth-clouds {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><filter id="clouds"><feTurbulence baseFrequency="0.02" numOctaves="3"/><feColorMatrix values="1 1 1 0 0 1 1 1 0 0 1 1 1 0 0 0 0 0 1 0"/></filter></defs><rect width="100" height="100" filter="url(%23clouds)" opacity="0.3"/></svg>');
     border-radius: 50%;
+    animation: cloudDrift 30s linear infinite;
+    opacity: 0.6;
+}
+
+@keyframes cloudDrift {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.jupiter-bands {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.1) 10%,
+        transparent 20%
+    );
+    border-radius: 50%;
+}
+
+.sun-corona {
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: coronaPulse 3s ease-in-out infinite alternate;
+}
+
+@keyframes coronaPulse {
+    from {
+        transform: scale(1);
+        opacity: 0.3;
+    }
+    to {
+        transform: scale(1.1);
+        opacity: 0.6;
+    }
 }
 
 /* נתוני כוכב הלכת */
 .planet-data {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .data-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 18px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    color: #ffffff;
 }
 
-.data-item::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 0;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(79, 172, 254, 0.1));
-    transition: width 0.3s ease;
-}
-
-.data-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
-    transform: translateX(-3px);
-}
-
-.data-item:hover::before {
-    width: 100%;
+.data-item:last-child {
+    border-bottom: none;
 }
 
 .data-item .label {
-    font-size: 1rem;
-    color: #cccccc;
-    font-weight: 500;
-    text-align: right;
+    font-weight: bold;
+    color: #ffd700;
+    flex: 1;
 }
 
 .data-item .value {
-    font-size: 1.1rem;
-    color: #4facfe;
-    font-weight: 600;
     text-align: left;
     direction: ltr;
-    min-width: 120px;
+    flex: 1;
+    color: #ffffff;
 }
 
 /* תיאור כוכב הלכת */
 .planet-description {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 15px;
-    padding: 20px;
     margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
 }
 
-.planet-description::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(to bottom, #4facfe, #00f2fe);
-    border-radius: 2px;
-}
-
-#planetDescription {
-    font-size: 1.05rem;
-    line-height: 1.7;
+.planet-description p {
+    line-height: 1.6;
     color: #e0e0e0;
-    text-align: right;
-    margin: 0;
-    direction: rtl;
+    font-size: 14px;
+    text-align: justify;
 }
 
 /* עובדות מעניינות */
 .interesting-facts {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 15px;
-    padding: 20px;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 10px;
+    padding: 15px;
     margin-bottom: 20px;
 }
 
 .interesting-facts h4 {
-    font-size: 1.2rem;
-    color: #4facfe;
-    margin-bottom: 15px;
-    text-align: right;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    color: #ffd700;
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: bold;
 }
 
-.interesting-facts h4::before {
-    content: '✨';
-    font-size: 1.1rem;
-}
-
-#factsList {
+.interesting-facts ul {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
-#factsList li {
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    color: #d0d0d0;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    text-align: right;
-    direction: rtl;
+.interesting-facts li {
+    padding: 8px 0;
     position: relative;
     padding-right: 20px;
+    color: #e0e0e0;
+    font-size: 13px;
+    line-height: 1.5;
 }
 
-#factsList li:last-child {
-    border-bottom: none;
-}
-
-#factsList li::before {
-    content: '•';
-    color: #4facfe;
-    font-size: 1.2rem;
+.interesting-facts li::before {
+    content: '★';
     position: absolute;
     right: 0;
-    top: 10px;
+    color: #ffd700;
+    font-size: 12px;
 }
 
-/* צבעים ספציפיים לכוכבי לכת */
-.planet-sun #planetPreview {
-    background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
-    box-shadow: 0 0 40px rgba(255, 215, 0, 0.5);
+/* נתונים מתקדמים */
+.advanced-data {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
 }
 
-.planet-mercury #planetPreview {
-    background: radial-gradient(circle at 30% 30%, #B8A591, #8C7853);
-    box-shadow: 0 0 30px rgba(140, 120, 83, 0.3);
+.advanced-data h4 {
+    color: #ffd700;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: bold;
 }
 
-.planet-venus #planetPreview {
-    background: radial-gradient(circle at 30% 30%, #FFD85D, #FFC649);
-    box-shadow: 0 0 30px rgba(255, 198, 73, 0.4);
+.advanced-data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
-.planet-earth #planetPreview {
-    background: radial-gradient(circle at 30% 30%, #87CEEB, #6B93D6);
-    box-shadow: 0 0 30px rgba(107, 147, 214, 0.4);
+/* השוואה לכדור הארץ */
+.earth-comparison {
+    background: rgba(107, 147, 214, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(107, 147, 214, 0.3);
 }
 
-.planet-mars #planetPreview {
-    background: radial-gradient(circle at 30% 30%, #FF7F7F, #CD5C5C);
-    box-shadow: 0 0 30px rgba(205, 92, 92, 0.4);
+.earth-comparison h4 {
+    color: #6b93d6;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: bold;
 }
 
-.planet-jupiter #planetPreview {
-    background: radial-gradient(circle at 30% 30%, #F0E2B3, #D8CA9D);
-    box-shadow: 0 0 30px rgba(216, 202, 157, 0.4);
+.comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
 }
 
-.planet-saturn #planetPreview {
-    background: radial-gradient(circle at 30% 30%, #FFE4B5, #FAD5A5);
-    box-shadow: 0 0 30px rgba(250, 213, 165, 0.4);
+.comparison-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    color: #e0e0e0;
+    font-size: 13px;
 }
 
-.planet-uranus #planetPreview {
-    background: radial-gradient(circle at 30% 30%, #7FEFFF, #4FD0E7);
-    box-shadow: 0 0 30px rgba(79, 208, 231, 0.4);
+.comparison-item .label {
+    color: #6b93d6;
+    font-weight: 500;
 }
 
-.planet-neptune #planetPreview {
-    background: radial-gradient(circle at 30% 30%, #7F9EFF, #4B70DD);
-    box-shadow: 0 0 30px rgba(75, 112, 221, 0.4);
+/* מידע על ירחים */
+.moons-info {
+    background: rgba(150, 150, 150, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(150, 150, 150, 0.3);
 }
 
-/* אנימציות מיוחדות */
-@keyframes planetRotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+.moons-info h4 {
+    color: #cccccc;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: bold;
 }
 
-#planetPreview {
-    animation: planetRotate 20s linear infinite, planetFloat 6s ease-in-out infinite;
+.moons-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
-/* אפקטים מיוחדים לכוכבי לכת */
-.planet-saturn #planetPreview::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 140px;
-    height: 140px;
-    border: 2px solid rgba(250, 213, 165, 0.6);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
+.moon-item {
+    background: rgba(200, 200, 200, 0.2);
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    color: #e0e0e0;
+    border: 1px solid rgba(200, 200, 200, 0.3);
 }
 
-.planet-jupiter #planetPreview {
-    position: relative;
+/* צבעי כוכבי לכת */
+.planet-sun .info-header {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, #2a2400, #1a1a00);
 }
 
-.planet-jupiter #planetPreview::before {
-    content: '';
-    position: absolute;
-    top: 30%;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: rgba(184, 160, 133, 0.8);
-    z-index: 1;
+.planet-mercury .info-header {
+    border-color: #8c7853;
+    background: linear-gradient(135deg, #2a241a, #1a1810);
 }
 
-/* Mobile Responsive */
+.planet-venus .info-header {
+    border-color: #ffc649;
+    background: linear-gradient(135deg, #2a2212, #1a1a08);
+}
+
+.planet-earth .info-header {
+    border-color: #6b93d6;
+    background: linear-gradient(135deg, #1a222a, #0a1218);
+}
+
+.planet-mars .info-header {
+    border-color: #cd5c5c;
+    background: linear-gradient(135deg, #2a1a1a, #1a1010);
+}
+
+.planet-jupiter .info-header {
+    border-color: #d8ca9d;
+    background: linear-gradient(135deg, #2a2620, #1a1810);
+}
+
+.planet-saturn .info-header {
+    border-color: #fad5a5;
+    background: linear-gradient(135deg, #2a2518, #1a1808);
+}
+
+.planet-uranus .info-header {
+    border-color: #4fd0e7;
+    background: linear-gradient(135deg, #122a2a, #081a1a);
+}
+
+.planet-neptune .info-header {
+    border-color: #4b70dd;
+    background: linear-gradient(135deg, #121a2a, #08101a);
+}
+
+/* פאנל מורחב */
+#infoPanel.expanded {
+    width: 700px;
+    max-width: 95vw;
+    max-height: 90vh;
+}
+
+#infoPanel.expanded .info-content {
+    max-height: calc(90vh - 100px);
+}
+
+/* Scrollbar עיצוב */
+.info-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.info-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.info-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 215, 0, 0.5);
+    border-radius: 4px;
+}
+
+.info-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 215, 0, 0.7);
+}
+
+/* Media Queries - התאמה למסכים שונים */
+
+/* טאבלט - 768px ומטה */
 @media (max-width: 768px) {
     #infoPanel {
-        width: 98vw;
+        width: 95vw;
+        max-width: none;
         max-height: 90vh;
-        border-radius: 15px;
+        top: 5vh;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 12px;
     }
-    
+
     .info-header {
-        padding: 15px 20px;
+        padding: 15px;
     }
-    
+
     #planetName {
-        font-size: 1.5rem;
+        font-size: 20px;
     }
-    
+
     .close-btn {
         width: 32px;
         height: 32px;
-        font-size: 1.2rem;
+        font-size: 16px;
     }
-    
+
     .info-content {
-        padding: 20px;
+        padding: 15px;
+        max-height: calc(90vh - 80px);
     }
-    
+
     #planetPreview {
         width: 100px;
         height: 100px;
     }
-    
+
+    .saturn-rings {
+        width: 150px;
+        height: 150px;
+        border-width: 6px;
+    }
+
     .data-item {
-        padding: 12px 15px;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-    
-    .data-item .label {
-        text-align: right;
-    }
-    
-    .data-item .value {
-        text-align: right;
-        direction: rtl;
-        min-width: auto;
-    }
-    
-    #planetDescription {
-        font-size: 1rem;
-        line-height: 1.6;
-    }
-    
-    #factsList li {
-        font-size: 0.9rem;
         padding: 8px 0;
-        padding-right: 15px;
+        font-size: 13px;
+    }
+
+    .planet-description p {
+        font-size: 13px;
+    }
+
+    .interesting-facts,
+    .advanced-data,
+    .earth-comparison,
+    .moons-info {
+        padding: 12px;
+    }
+
+    .interesting-facts h4,
+    .advanced-data h4,
+    .earth-comparison h4,
+    .moons-info h4 {
+        font-size: 15px;
+    }
+
+    .advanced-data-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .comparison-grid {
+        gap: 6px;
+    }
+
+    .comparison-item {
+        font-size: 12px;
+    }
+
+    .moon-item {
+        font-size: 11px;
+        padding: 4px 8px;
     }
 }
 
+/* סמארטפון - 480px ומטה */
 @media (max-width: 480px) {
     #infoPanel {
         width: 100vw;
         height: 100vh;
         max-height: 100vh;
-        border-radius: 0;
         top: 0;
         left: 0;
         transform: none;
+        border-radius: 0;
+        border: none;
     }
-    
-    #infoPanel:not(.hidden) {
-        transform: none;
-    }
-    
+
     .info-header {
         padding: 12px 15px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
     }
-    
+
     #planetName {
-        font-size: 1.3rem;
+        font-size: 18px;
     }
-    
+
+    .close-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+
     .info-content {
         padding: 15px;
-        max-height: calc(100vh - 80px);
+        max-height: calc(100vh - 70px);
     }
-    
+
     #planetPreview {
         width: 80px;
         height: 80px;
+        margin-bottom: 15px;
     }
-    
-    .data-item .label {
-        font-size: 0.9rem;
+
+    .saturn-rings {
+        width: 120px;
+        height: 120px;
+        border-width: 4px;
     }
-    
+
+    .data-item {
+        padding: 6px 0;
+        font-size: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
     .data-item .value {
-        font-size: 1rem;
+        text-align: right;
+        direction: rtl;
     }
-    
-    #planetDescription {
-        font-size: 0.95rem;
+
+    .planet-description {
+        margin-bottom: 15px;
     }
-    
-    .interesting-facts {
-        padding: 15px;
+
+    .planet-description p {
+        font-size: 12px;
+        line-height: 1.5;
     }
-    
-    .interesting-facts h4 {
-        font-size: 1.1rem;
+
+    .interesting-facts,
+    .advanced-data,
+    .earth-comparison,
+    .moons-info {
+        padding: 10px;
+        margin-bottom: 15px;
     }
-}
 
-/* אפקטים נוספים */
-.data-item:nth-child(odd) {
-    background: rgba(79, 172, 254, 0.02);
-}
-
-.data-item:nth-child(even) {
-    background: rgba(0, 242, 254, 0.02);
-}
-
-/* Scrollbar מותאם אישית */
-.info-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.info-content::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 3px;
-}
-
-.info-content::-webkit-scrollbar-thumb {
-    background: rgba(79, 172, 254, 0.3);
-    border-radius: 3px;
-}
-
-.info-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(79, 172, 254, 0.5);
-}
-
-/* אפקט כניסה לפאנל */
-@keyframes slideInFromBottom {
-    from {
-        opacity: 0;
-        transform: translate(-50%, 100%);
+    .interesting-facts h4,
+    .advanced-data h4,
+    .earth-comparison h4,
+    .moons-info h4 {
+        font-size: 14px;
+        margin-bottom: 10px;
     }
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%);
+
+    .interesting-facts li {
+        font-size: 12px;
+        padding: 6px 0;
+        padding-right: 15px;
+    }
+
+    .comparison-item {
+        font-size: 11px;
+        padding: 6px 0;
+    }
+
+    .moon-item {
+        font-size: 10px;
+        padding: 3px 6px;
     }
 }
 
-#infoPanel.show {
-    animation: slideInFromBottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
+/* מסכים קטנים מאוד - 360px ומטה */
+@media (max-width: 360px) {
+    .info-header {
+        padding: 10px 12px;
+    }
 
-/* נגישות משופרת */
-.close-btn:focus {
-    outline: 2px solid #4facfe;
-    outline-offset: 2px;
-}
+    #planetName {
+        font-size: 16px;
+    }
 
-@media (prefers-reduced-motion: reduce) {
+    .close-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .info-content {
+        padding: 12px;
+    }
+
     #planetPreview {
+        width: 70px;
+        height: 70px;
+    }
+
+    .saturn-rings {
+        width: 100px;
+        height: 100px;
+        border-width: 3px;
+    }
+
+    .planet-description p {
+        font-size: 11px;
+    }
+
+    .data-item {
+        font-size: 11px;
+    }
+
+    .interesting-facts li {
+        font-size: 11px;
+    }
+}
+
+/* מצב לנדסקייפ במובייל */
+@media (max-width: 768px) and (orientation: landscape) {
+    #infoPanel {
+        width: 90vw;
+        height: 95vh;
+        max-height: 95vh;
+        top: 2.5vh;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 8px;
+    }
+
+    .info-content {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: 20px;
+        align-items: start;
+        max-height: calc(95vh - 70px);
+    }
+
+    .planet-image {
+        margin-bottom: 0;
+    }
+
+    .planet-info {
+        overflow-y: auto;
+    }
+
+    #planetPreview {
+        width: 120px;
+        height: 120px;
+    }
+}
+
+/* הגדרות נגישות */
+@media (prefers-reduced-motion: reduce) {
+    .planet-sphere {
         animation: none;
     }
-    
-    .data-item {
+
+    .earth-clouds {
+        animation: none;
+    }
+
+    .sun-corona {
+        animation: none;
+    }
+
+    #infoPanel {
         transition: none;
     }
-    
+
     .close-btn {
         transition: none;
     }
-    
+}
+
+/* מצב ניגודיות גבוהה */
+@media (prefers-contrast: high) {
     #infoPanel {
-        transition: opacity 0.3s ease;
+        background: #000000;
+        border-color: #ffffff;
     }
+
+    .info-header {
+        background: #000000;
+        border-color: #ffffff;
+    }
+
+    #planetName {
+        color: #ffffff;
+    }
+
+    .close-btn {
+        border-color: #ffffff;
+        color: #ffffff;
+    }
+
+    .data-item .label {
+        color: #ffffff;
+    }
+
+    .interesting-facts h4,
+    .advanced-data h4,
+    .earth-comparison h4,
+    .moons-info h4 {
+        color: #ffffff;
+    }
+}
+
+/* מצב בהיר */
+@media (prefers-color-scheme: light) {
+    #infoPanel {
+        background: rgba(255, 255, 255, 0.95);
+        border-color: #333333;
+        color: #333333;
+    }
+
+    .info-header {
+        background: linear-gradient(135deg, #f5f5f5, #ffffff);
+        border-color: #333333;
+    }
+
+    #planetName {
+        color: #333333;
+    }
+
+    .close-btn {
+        border-color: #333333;
+        color: #333333;
+    }
+
+    .data-item {
+        color: #333333;
+        border-color: rgba(0, 0, 0, 0.2);
+    }
+
+    .data-item .label {
+        color: #666666;
+    }
+
+    .planet-description p {
+        color: #555555;
+    }
+
+    .interesting-facts {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    .advanced-data {
+        background: rgba(0, 0, 0, 0.03);
+        border-color: rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* הדפסה */
+@media print {
+    #infoPanel {
+        position: static !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        max-height: none !important;
+        background: white !important;
+        border: 1px solid black !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        color: black !important;
+    }
+
+    .close-btn {
+        display: none !important;
+    }
+
+    .info-content {
+        max-height: none !important;
+        overflow: visible !important;
+        padding: 20px !important;
+    }
+
+    .planet-sphere {
+        animation: none !important;
+    }
+
+    .earth-clouds {
+        animation: none !important;
+    }
+
+    .sun-corona {
+        animation: none !important;
+    }
+}
+
+/* אנימציות כניסה ויציאה */
+.info-panel-enter {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+    animation: infoPanelEnter 0.3s ease-out forwards;
+}
+
+.info-panel-exit {
+    animation: infoPanelExit 0.3s ease-in forwards;
+}
+
+@keyframes infoPanelEnter {
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes infoPanelExit {
+    to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+}
+
+/* התמקדות מקלדת */
+.close-btn:focus {
+    outline: 2px solid #ffd700;
+    outline-offset: 2px;
+}
+
+/* מניעת בחירת טקסט לא רצויה */
+.close-btn {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+/* שיפורי ביצועים */
+.planet-sphere,
+.earth-clouds,
+.sun-corona {
+    will-change: transform;
+}
+
+#infoPanel {
+    will-change: transform, opacity;
 }
