@@ -1,7 +1,7 @@
 // Service Worker for Solar System PWA - Fixed Version
 // מספק פונקציונליות offline וcaching מתקדמת עם טיפול שגיאות משופר
 
-const CACHE_NAME = 'solar-system-v1.2.1';
+const CACHE_NAME = 'solar-system-v1.3.0';
 const RUNTIME_CACHE = 'solar-system-runtime';
 
 // קבצים חיוניים לcache (רק קבצים שבטוח קיימים)
@@ -16,8 +16,8 @@ const OPTIONAL_URLS = [
     '/styles/main.css',
     '/styles/controls.css', 
     '/styles/info-panel.css',
-    '/js/main.js',
-    '/js/data/planets.js',
+    '/js/main-improved.js',
+    '/js/data/planets-improved.js',
     '/js/data/textures.js',
     '/js/utils/math.js',
     '/js/core/scene.js',
@@ -286,125 +286,5 @@ async function handlePageRequest(request) {
         return indexResponse;
     }
     
-    // Last resort offline page
-    return new Response(`
-        <!DOCTYPE html>
-        <html dir="rtl">
-        <head>
-            <title>מערכת השמש - לא מחובר</title>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body { 
-                    font-family: Arial, sans-serif;
-                    background: linear-gradient(135deg, #000428, #004e92);
-                    color: white;
-                    margin: 0;
-                    padding: 20px;
-                    min-height: 100vh;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    text-align: center;
-                }
-                .sun-icon {
-                    width: 80px;
-                    height: 80px;
-                    background: #ffd700;
-                    border-radius: 50%;
-                    margin: 0 auto 20px;
-                    animation: rotate 20s linear infinite;
-                }
-                @keyframes rotate {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-                .btn {
-                    background: #ffd700;
-                    color: #000;
-                    border: none;
-                    padding: 12px 24px;
-                    border-radius: 6px;
-                    font-size: 16px;
-                    cursor: pointer;
-                    margin-top: 20px;
-                }
-                .btn:hover {
-                    background: #ffed4a;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="sun-icon"></div>
-            <h1>מערכת השמש</h1>
-            <h2>לא מחובר לאינטרנט</h2>
-            <p>האפליקציה זמינה רק כאשר אתה מחובר לאינטרנט</p>
-            <button class="btn" onclick="window.location.reload()">נסה שוב</button>
-        </body>
-        </html>
-    `, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
-    });
+    throw new Error(`Page not available: ${request.url}`);
 }
-
-// Background sync for updating cache
-self.addEventListener('sync', (event) => {
-    if (event.tag === 'background-sync') {
-        event.waitUntil(updateCache());
-    }
-});
-
-// Update cache in background
-async function updateCache() {
-    try {
-        const cache = await caches.open(CACHE_NAME);
-        
-        // Try to update essential files
-        for (const url of ESSENTIAL_URLS) {
-            try {
-                const response = await fetch(url);
-                if (response.ok) {
-                    await cache.put(url, response);
-                }
-            } catch (error) {
-                console.log('Background update failed for:', url);
-            }
-        }
-        
-        console.log('Background cache update completed');
-    } catch (error) {
-        console.error('Background cache update failed:', error);
-    }
-}
-
-// Message handling for communication with main thread
-self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
-    }
-    
-    if (event.data && event.data.type === 'GET_CACHE_STATUS') {
-        event.ports[0].postMessage({
-            cacheName: CACHE_NAME,
-            isOnline: navigator.onLine
-        });
-    }
-});
-
-// Periodic cache cleanup
-setInterval(async () => {
-    try {
-        const cacheNames = await caches.keys();
-        const oldCaches = cacheNames.filter(name => 
-            name.startsWith('solar-system-') && name !== CACHE_NAME
-        );
-        
-        for (const oldCache of oldCaches) {
-            await caches.delete(oldCache);
-            console.log('Cleaned up old cache:', oldCache);
-        }
-    } catch (error) {
-        console.error('Cache cleanup failed:', error);
-    }
-}, 60000); // Run every minute
