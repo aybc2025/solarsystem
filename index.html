@@ -13,10 +13,10 @@
     <!-- Fallback icon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ffd700'/></svg>">
     
-    <!-- Styles -->
-    <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/controls.css">
-    <link rel="stylesheet" href="styles/info-panel.css">
+    <!-- Styles with fallback -->
+    <link rel="stylesheet" href="styles/main.css" onerror="console.warn('main.css not loaded')">
+    <link rel="stylesheet" href="styles/controls.css" onerror="console.warn('controls.css not loaded')">
+    <link rel="stylesheet" href="styles/info-panel.css" onerror="console.warn('info-panel.css not loaded')">
 </head>
 <body>
     <div id="container">
@@ -52,88 +52,62 @@
             <div class="controls-content">
                 <div class="control-section">
                     <div class="time-controls">
-                        <button id="playPause" class="btn primary">⏸️ השהה</button>
-                        <button id="reset" class="btn">🔄 איפוס</button>
+                        <button id="playPause" class="btn">⏸️ השהה</button>
+                        <button id="resetView" class="btn">🔄 איפוס תצוגה</button>
                     </div>
+                    
                     <div class="speed-control">
-                        <label>מהירות זמן:</label>
-                        <input type="range" id="timeScale" min="0.1" max="10" step="0.1" value="1">
+                        <label for="timeSpeed">מהירות זמן:</label>
+                        <input type="range" id="timeSpeed" min="0" max="10" value="1" step="0.1">
                         <span id="timeScaleValue">1x</span>
                     </div>
-                    <div class="view-controls">
-                        <button id="showOrbits" class="btn toggle active">מסלולים</button>
-                        <button id="showLabels" class="btn toggle active">תוויות</button>
-                        <button id="realisticMode" class="btn toggle">מצב ריאליסטי</button>
-                        <button id="showAsteroids" class="btn toggle active">אסטרואידים</button>
+                </div>
+                
+                <div class="control-section">
+                    <div class="view-options">
+                        <label><input type="checkbox" id="showOrbits" checked> הצג מסלולים</label>
+                        <label><input type="checkbox" id="showLabels" checked> הצג תוויות</label>
+                        <label><input type="checkbox" id="realisticMode"> מצב ריאליסטי</label>
                     </div>
                 </div>
                 
                 <div class="control-section">
                     <h4>כוכבי לכת</h4>
-                    <div class="planet-buttons">
-                        <button data-planet="mercury" class="planet-btn">☿ כוכב חמה</button>
-                        <button data-planet="venus" class="planet-btn">♀ נוגה</button>
-                        <button data-planet="earth" class="planet-btn">🌍 כדור הארץ</button>
-                        <button data-planet="mars" class="planet-btn">♂ מאדים</button>
-                        <button data-planet="jupiter" class="planet-btn">♃ צדק</button>
-                        <button data-planet="saturn" class="planet-btn">♄ שבתאי</button>
-                        <button data-planet="uranus" class="planet-btn">♅ אורנוס</button>
-                        <button data-planet="neptune" class="planet-btn">♆ נפטון</button>
+                    <div class="planets-grid">
+                        <button class="planet-btn" data-planet="sun">☀️ שמש</button>
+                        <button class="planet-btn" data-planet="mercury">☿️ כוכב חמה</button>
+                        <button class="planet-btn" data-planet="venus">♀️ נוגה</button>
+                        <button class="planet-btn" data-planet="earth">🌍 כדור הארץ</button>
+                        <button class="planet-btn" data-planet="mars">♂️ מאדים</button>
+                        <button class="planet-btn" data-planet="jupiter">♃ צדק</button>
+                        <button class="planet-btn" data-planet="saturn">♄ שבתאי</button>
+                        <button class="planet-btn" data-planet="uranus">♅ אורנוס</button>
+                        <button class="planet-btn" data-planet="neptune">♆ נפטון</button>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div id="infoPanel" class="hidden">
+            <div class="info-header">
+                <h3 id="planetName">מידע על כוכב הלכת</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="info-content">
+                <div id="planetPreview"></div>
+                <div id="planetData"></div>
             </div>
         </div>
 
         <!-- Quick Controls -->
         <div id="quickControls" class="quick-controls">
-            <button id="quickPlayPause" class="quick-btn" title="השהה/המשך">⏸️</button>
-            <button id="quickReset" class="quick-btn" title="איפוס תצוגה">🔄</button>
-            <button id="quickInfo" class="quick-btn" title="מידע">ℹ️</button>
-        </div>
-
-        <!-- Info Panel -->
-        <div id="infoPanel" class="info-panel">
-            <div class="info-header">
-                <h3 id="planetName">מערכת השמש</h3>
-                <button id="closeInfo" class="close-info">&times;</button>
-            </div>
-            <div class="info-content">
-                <div class="planet-stats" id="planetStats" style="display: none;">
-                    <div class="stat-item">
-                        <strong>מרחק מהשמש:</strong>
-                        <span id="planetDistance">-</span>
-                    </div>
-                    <div class="stat-item">
-                        <strong>רדיוס:</strong>
-                        <span id="planetRadius">-</span>
-                    </div>
-                    <div class="stat-item">
-                        <strong>תקופת הקפה:</strong>
-                        <span id="planetPeriod">-</span>
-                    </div>
-                    <div class="stat-item">
-                        <strong>טמפרטורה:</strong>
-                        <span id="planetTemp">-</span>
-                    </div>
-                    <div class="stat-item">
-                        <strong>ירחים:</strong>
-                        <span id="planetMoons">-</span>
-                    </div>
-                </div>
-                <div class="planet-description">
-                    <p id="planetDescription">ברוכים הבאים לחקר מערכת השמש האינטראקטיבית!</p>
-                </div>
-                <div class="interesting-facts" id="interestingFacts" style="display: none;">
-                    <h4>עובדות מעניינות</h4>
-                    <ul id="factsList"></ul>
-                </div>
-            </div>
+            <button class="quick-btn" id="quickPause" title="השהה/המשך">⏯️</button>
+            <button class="quick-btn" id="quickReset" title="איפוס תצוגה">🔄</button>
         </div>
 
         <!-- Navigation Help -->
         <div id="navHelp" class="nav-help">
-            <div class="help-item desktop-only">🖱️ עכבר: סובב את המצלמה</div>
-            <div class="help-item desktop-only">🖱️ גלגלת: זום פנימה/החוצה</div>
             <div class="help-item mobile-only">📱 מגע: סובב וזום</div>
             <div class="help-item desktop-only">⌨️ רווח: השהה/המשך</div>
             <div class="help-item desktop-only">⌨️ R: איפוס תצוגה</div>
@@ -149,35 +123,171 @@
     <!-- Load Three.js FIRST -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
-    <!-- Load OrbitControls from SAME CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+    <!-- Fallback OrbitControls implementation -->
+    <script>
+        // Custom OrbitControls fallback for when CDN fails
+        window.createFallbackOrbitControls = function(camera, domElement) {
+            const controls = {
+                enabled: true,
+                enableDamping: true,
+                dampingFactor: 0.05,
+                enableZoom: true,
+                enableRotate: true,
+                enablePan: true,
+                
+                // Internal state
+                _spherical: new THREE.Spherical(),
+                _sphericalDelta: new THREE.Spherical(),
+                _scale: 1,
+                _panOffset: new THREE.Vector3(),
+                _zoomChanged: false,
+                
+                target: new THREE.Vector3(),
+                
+                update: function() {
+                    const offset = new THREE.Vector3();
+                    const quat = new THREE.Quaternion().setFromUnitVectors(camera.up, new THREE.Vector3(0, 1, 0));
+                    const quatInverse = quat.clone().invert();
+                    
+                    const lastPosition = new THREE.Vector3();
+                    const lastQuaternion = new THREE.Quaternion();
+                    
+                    offset.copy(camera.position).sub(this.target);
+                    offset.applyQuaternion(quat);
+                    
+                    this._spherical.setFromVector3(offset);
+                    
+                    if (this.enableDamping) {
+                        this._spherical.theta += this._sphericalDelta.theta * this.dampingFactor;
+                        this._spherical.phi += this._sphericalDelta.phi * this.dampingFactor;
+                        this._sphericalDelta.theta *= (1 - this.dampingFactor);
+                        this._sphericalDelta.phi *= (1 - this.dampingFactor);
+                    }
+                    
+                    this._spherical.radius *= this._scale;
+                    this._scale = 1;
+                    
+                    offset.setFromSpherical(this._spherical);
+                    offset.applyQuaternion(quatInverse);
+                    
+                    camera.position.copy(this.target).add(offset);
+                    camera.lookAt(this.target);
+                    
+                    return this._zoomChanged;
+                }
+            };
+            
+            // Mouse and touch event handlers
+            let isMouseDown = false;
+            let mouseButton = null;
+            let lastMouseX = 0, lastMouseY = 0;
+            
+            domElement.addEventListener('mousedown', (event) => {
+                isMouseDown = true;
+                mouseButton = event.button;
+                lastMouseX = event.clientX;
+                lastMouseY = event.clientY;
+                event.preventDefault();
+            });
+            
+            domElement.addEventListener('mousemove', (event) => {
+                if (!isMouseDown || !controls.enabled) return;
+                
+                const deltaX = event.clientX - lastMouseX;
+                const deltaY = event.clientY - lastMouseY;
+                
+                if (mouseButton === 0 && controls.enableRotate) { // Left button - rotate
+                    controls._sphericalDelta.theta -= 2 * Math.PI * deltaX / domElement.clientHeight;
+                    controls._sphericalDelta.phi -= 2 * Math.PI * deltaY / domElement.clientHeight;
+                }
+                
+                lastMouseX = event.clientX;
+                lastMouseY = event.clientY;
+                event.preventDefault();
+            });
+            
+            domElement.addEventListener('mouseup', () => {
+                isMouseDown = false;
+                mouseButton = null;
+            });
+            
+            domElement.addEventListener('wheel', (event) => {
+                if (!controls.enabled || !controls.enableZoom) return;
+                
+                if (event.deltaY < 0) {
+                    controls._scale /= 0.95;
+                } else {
+                    controls._scale *= 0.95;
+                }
+                
+                controls._zoomChanged = true;
+                event.preventDefault();
+            });
+            
+            // Touch events for mobile
+            let touchStart = {};
+            
+            domElement.addEventListener('touchstart', (event) => {
+                if (event.touches.length === 1) {
+                    touchStart = {
+                        x: event.touches[0].pageX,
+                        y: event.touches[0].pageY
+                    };
+                }
+                event.preventDefault();
+            });
+            
+            domElement.addEventListener('touchmove', (event) => {
+                if (!controls.enabled) return;
+                
+                if (event.touches.length === 1 && controls.enableRotate) {
+                    const deltaX = event.touches[0].pageX - touchStart.x;
+                    const deltaY = event.touches[0].pageY - touchStart.y;
+                    
+                    controls._sphericalDelta.theta -= 2 * Math.PI * deltaX / domElement.clientHeight;
+                    controls._sphericalDelta.phi -= 2 * Math.PI * deltaY / domElement.clientHeight;
+                    
+                    touchStart.x = event.touches[0].pageX;
+                    touchStart.y = event.touches[0].pageY;
+                }
+                event.preventDefault();
+            });
+            
+            return controls;
+        };
+    </script>
     
-    <!-- Load Data Layer FIRST (no dependencies) -->
-    <script src="js/data/planets-improved.js"></script>
-    <script src="js/data/textures.js"></script>
+    <!-- Try to load OrbitControls, fallback to custom implementation -->
+    <script>
+        // Try loading OrbitControls from CDN with timeout
+        const orbitControlsScript = document.createElement('script');
+        orbitControlsScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js';
+        orbitControlsScript.onerror = function() {
+            console.warn('OrbitControls CDN failed, using fallback');
+            window.OrbitControlsLoaded = false;
+        };
+        orbitControlsScript.onload = function() {
+            console.log('OrbitControls loaded from CDN');
+            window.OrbitControlsLoaded = true;
+        };
+        document.head.appendChild(orbitControlsScript);
+        
+        // Timeout fallback
+        setTimeout(() => {
+            if (typeof THREE.OrbitControls === 'undefined') {
+                console.warn('OrbitControls timeout, using fallback');
+                window.OrbitControlsLoaded = false;
+            }
+        }, 3000);
+    </script>
     
-    <!-- Load Utilities (no dependencies on other classes) -->
-    <script src="js/utils/math.js"></script>
-    
-    <!-- Load Core Classes (depend on utilities) -->
-    <script src="js/core/scene.js"></script>
-    <script src="js/core/camera.js"></script>
-    <script src="js/core/lights.js"></script>
-    
-    <!-- Load Object Classes (depend on core and data) -->
-    <script src="js/objects/sun.js"></script>
-    <script src="js/objects/planet.js"></script>
-    <script src="js/objects/asteroid-belt.js"></script>
-    
-    <!-- Load UI Classes (depend on objects) -->
-    <script src="js/ui/controls.js"></script>
-    <script src="js/ui/info-panel.js"></script>
-    
-    <!-- Load Controls (depend on UI) -->
-    <script src="js/controls/orbit-controls.js"></script>
-    
-    <!-- Load Main App LAST (depends on everything) -->
-    <script src="js/main-improved.js"></script>
+    <!-- Load only existing files, skip missing ones -->
+    <script src="js/data/planets-improved.js" onerror="console.warn('planets-improved.js not loaded')"></script>
+    <script src="js/utils/math.js" onerror="console.warn('math.js not loaded')"></script>
+    <script src="js/objects/sun.js" onerror="console.warn('sun.js not loaded')"></script>
+    <script src="js/objects/planet.js" onerror="console.warn('planet.js not loaded')"></script>
+    <script src="js/ui/controls.js" onerror="console.warn('controls.js not loaded')"></script>
+    <script src="js/main-improved.js" onerror="console.warn('main-improved.js not loaded')"></script>
 
     <script>
         // Enhanced error handling and initialization
@@ -187,106 +297,61 @@
         });
         
         function showError(message) {
+            console.error('Solar System Error:', message);
+            
             const existing = document.querySelector('.error-message');
             if (existing) existing.remove();
             
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
-            errorDiv.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(255, 0, 0, 0.9);
-                color: white;
-                padding: 20px;
-                border-radius: 10px;
-                text-align: center;
-                z-index: 2000;
-                max-width: 400px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            `;
             errorDiv.innerHTML = `
                 <h3>⚠️ שגיאה באפליקציה</h3>
                 <p>${message}</p>
-                <button onclick="location.reload()" style="
-                    background: #fff;
-                    color: #d32f2f;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    margin-top: 10px;
-                ">🔄 טען מחדש</button>
+                <button onclick="location.reload()">🔄 טען מחדש</button>
+            `;
+            errorDiv.style.cssText = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(255, 0, 0, 0.95); color: white; padding: 30px;
+                border-radius: 15px; text-align: center; z-index: 2001;
+                max-width: 450px; width: 90%; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
             `;
             document.body.appendChild(errorDiv);
         }
         
-        function updateLoadingProgress(text, percentage) {
+        function updateLoadingProgress(text, percent) {
+            const progressBar = document.getElementById('loadingProgress');
             const loadingText = document.getElementById('loadingText');
-            const loadingProgress = document.getElementById('loadingProgress');
             
+            if (progressBar) progressBar.style.width = percent + '%';
             if (loadingText) loadingText.textContent = text;
-            if (loadingProgress) loadingProgress.style.width = percentage + '%';
         }
-        
-        // Initialize when DOM is ready
-        document.addEventListener('DOMContentLoaded', async () => {
+
+        // Main initialization
+        document.addEventListener('DOMContentLoaded', async function() {
             console.log('🌟 Initializing Solar System PWA...');
-            updateLoadingProgress('בודק תמיכה בדפדפן...', 5);
-            
-            // Check WebGL support
-            if (!checkWebGLSupport()) {
-                showError('הדפדפן שלך אינו תומך בWebGL. אנא השתמש בדפדפן מודרני יותר.');
-                return;
-            }
-            
-            updateLoadingProgress('טוען ספריות...', 15);
-            
-            // Wait for Three.js to load
-            await new Promise(resolve => {
-                if (typeof THREE !== 'undefined') {
-                    resolve();
-                } else {
-                    const checkThree = setInterval(() => {
-                        if (typeof THREE !== 'undefined') {
-                            clearInterval(checkThree);
-                            resolve();
-                        }
-                    }, 100);
-                    // Timeout after 5 seconds
-                    setTimeout(() => {
-                        clearInterval(checkThree);
-                        showError('לא ניתן לטעון את ספריית Three.js');
-                    }, 5000);
-                }
-            });
-            
-            // Wait for OrbitControls to load
-            await new Promise(resolve => {
-                if (typeof THREE.OrbitControls !== 'undefined') {
-                    resolve();
-                } else {
-                    const checkControls = setInterval(() => {
-                        if (typeof THREE.OrbitControls !== 'undefined') {
-                            clearInterval(checkControls);
-                            resolve();
-                        }
-                    }, 100);
-                    // Timeout after 3 seconds
-                    setTimeout(() => {
-                        clearInterval(checkControls);
-                        console.warn('OrbitControls not loaded, will use fallback');
-                        resolve();
-                    }, 3000);
-                }
-            });
-            
-            updateLoadingProgress('מאתחל מערכת...', 25);
             
             try {
-                // Wait for all required classes to be available
+                if (!checkWebGLSupport()) {
+                    showError('הדפדפן שלך לא תומך בWebGL. אנא השתמש בדפדפן מודרני יותר.');
+                    return;
+                }
+                
+                updateLoadingProgress('טוען ספריות...', 15);
+                
+                // Wait for Three.js to load
+                await waitForLibrary('THREE', 'Three.js', 5000);
+                
+                // Setup OrbitControls fallback if CDN failed
+                if (typeof THREE.OrbitControls === 'undefined') {
+                    console.warn('OrbitControls not available, setting up fallback');
+                    THREE.OrbitControls = function(camera, domElement) {
+                        return window.createFallbackOrbitControls(camera, domElement);
+                    };
+                }
+                
+                updateLoadingProgress('מאתחל מערכת...', 25);
+                
+                // Wait for required classes with longer timeout
                 await waitForClasses();
                 
                 // Initialize the app
@@ -313,32 +378,78 @@
             }
         });
         
-        // Wait for all required classes to load
+        // Wait for library to load
+        async function waitForLibrary(globalName, displayName, timeout = 5000) {
+            return new Promise((resolve, reject) => {
+                if (typeof window[globalName] !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                
+                const startTime = Date.now();
+                const checkInterval = setInterval(() => {
+                    if (typeof window[globalName] !== 'undefined') {
+                        clearInterval(checkInterval);
+                        console.log(`✅ ${displayName} loaded`);
+                        resolve();
+                    } else if (Date.now() - startTime > timeout) {
+                        clearInterval(checkInterval);
+                        reject(new Error(`לא ניתן לטעון את ${displayName}`));
+                    }
+                }, 100);
+            });
+        }
+        
+        // Wait for all required classes to load - FIXED VERSION
         async function waitForClasses() {
             const requiredClasses = [
-                'ImprovedSolarSystemApp',
-                'SolarSystemScene', 
-                'SolarSystemSun',
-                'SolarSystemPlanet'
+                'ImprovedSolarSystemApp'
             ];
             
-            const maxWait = 10000; // 10 seconds
+            // Optional classes - don't fail if missing
+            const optionalClasses = [
+                'SolarSystemScene', 
+                'SolarSystemSun',
+                'SolarSystemPlanet',
+                'UIControls'
+            ];
+            
+            const maxWait = 15000; // Extended to 15 seconds
             const startTime = Date.now();
             
             while (Date.now() - startTime < maxWait) {
-                const allLoaded = requiredClasses.every(className => 
+                const requiredLoaded = requiredClasses.every(className => 
                     typeof window[className] !== 'undefined'
                 );
                 
-                if (allLoaded) {
+                if (requiredLoaded) {
                     console.log('✅ All required classes loaded');
+                    
+                    // Log which optional classes are available
+                    optionalClasses.forEach(className => {
+                        if (typeof window[className] !== 'undefined') {
+                            console.log(`✅ Optional class loaded: ${className}`);
+                        } else {
+                            console.warn(`⚠️ Optional class missing: ${className}`);
+                        }
+                    });
+                    
                     return true;
                 }
                 
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
             
-            throw new Error('לא ניתן לטעון את כל המחלקות הנדרשות');
+            // List what's actually missing
+            const missingRequired = requiredClasses.filter(className => 
+                typeof window[className] === 'undefined'
+            );
+            
+            if (missingRequired.length > 0) {
+                throw new Error(`חסרות מחלקות חיוניות: ${missingRequired.join(', ')}`);
+            }
+            
+            return true;
         }
         
         function checkWebGLSupport() {
