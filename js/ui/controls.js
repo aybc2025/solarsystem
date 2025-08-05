@@ -110,211 +110,277 @@ class UIControls {
             this.controls.timeSpeed.addEventListener('input', (event) => {
                 this.setTimeScale(parseFloat(event.target.value));
             });
-            
-            // עדכון בזמן אמת
-            this.controls.timeSpeed.addEventListener('mousemove', (event) => {
-                if (event.buttons === 1) { // לחצן שמאל לחוץ
-                    this.setTimeScale(parseFloat(event.target.value));
-                }
+        }
+        
+        // בקרות תצוגה
+        if (this.controls.viewOrbits) {
+            this.controls.viewOrbits.addEventListener('change', (event) => {
+                this.toggleOrbits(event.target.checked);
             });
         }
         
-        // כפתורי תצוגה
-        this.setupViewButtons();
+        if (this.controls.viewLabels) {
+            this.controls.viewLabels.addEventListener('change', (event) => {
+                this.toggleLabels(event.target.checked);
+            });
+        }
         
-        // קיצורי מקלדת
-        this.setupKeyboardShortcuts();
+        if (this.controls.viewRealistic) {
+            this.controls.viewRealistic.addEventListener('change', (event) => {
+                this.toggleRealisticMode(event.target.checked);
+            });
+        }
         
-        // אירועי אפליקציה - מותאם ללא app.on
-        this.setupAppEventListeners();
-    }
-
-    // הגדרת כפתורי תצוגה
-    setupViewButtons() {
-        const viewButtons = [
-            { element: this.controls.viewOrbits, setting: 'showOrbits', method: 'toggleOrbits' },
-            { element: this.controls.viewLabels, setting: 'showLabels', method: 'toggleLabels' },
-            { element: this.controls.viewRealistic, setting: 'realisticMode', method: 'toggleRealisticMode' }
-        ];
-        
-        viewButtons.forEach(({ element, setting, method }) => {
-            if (element) {
-                element.addEventListener('click', () => {
-                    this.toggleViewSetting(setting, method);
+        // כפתורי כוכבי הלכת
+        if (this.controls.planetList) {
+            this.controls.planetList.forEach(button => {
+                button.addEventListener('click', () => {
+                    const planetName = button.dataset.planet;
+                    this.selectPlanet(planetName);
                 });
-            }
-        });
+            });
+        }
+        
+        // מקלדת קיצורים
+        this.setupKeyboardShortcuts();
     }
 
     // הגדרת קיצורי מקלדת
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (event) => {
-            // התעלמות אם יש אלמנט input פעיל
-            if (document.activeElement && 
-                (document.activeElement.tagName === 'INPUT' || 
-                 document.activeElement.tagName === 'TEXTAREA')) {
-                return;
-            }
+            if (!this.app) return;
             
-            switch (event.code) {
+            switch(event.code) {
                 case 'Space':
                     event.preventDefault();
                     this.togglePlayPause();
                     break;
-                    
                 case 'KeyR':
                     event.preventDefault();
                     this.resetView();
                     break;
-                    
                 case 'KeyO':
                     event.preventDefault();
-                    this.toggleViewSetting('showOrbits', 'toggleOrbits');
+                    this.toggleOrbits();
                     break;
-                    
                 case 'KeyL':
                     event.preventDefault();
-                    this.toggleViewSetting('showLabels', 'toggleLabels');
+                    this.toggleLabels();
                     break;
-                    
-                case 'KeyM':
-                    event.preventDefault();
-                    this.toggleViewSetting('realisticMode', 'toggleRealisticMode');
-                    break;
-                    
                 case 'Escape':
                     event.preventDefault();
-                    this.deselectPlanet();
+                    this.closeInfoPanel();
                     break;
             }
         });
-    }
-
-    // הגדרת מאזיני אירועי אפליקציה - ללא app.on
-    setupAppEventListeners() {
-        if (!this.app) return;
-        
-        // במקום app.on, נשתמש בחיפוש מידע ישיר מהapp
-        // זה יקרה ב-update loop
     }
 
     // יצירת רשימת כוכבי הלכת
     createPlanetList() {
-        if (!this.controls.planetList || this.controls.planetList.length === 0) {
-            return;
+        // הפונקציה כבר מיושמת בHTML, אבל נוסיף פונקציונליות נוספת
+        if (this.controls.planetList) {
+            this.controls.planetList.forEach(button => {
+                // הוספת tooltip
+                const planetName = button.dataset.planet;
+                if (planetName) {
+                    button.title = `לחץ לצפייה ב${planetName}`;
+                }
+            });
         }
-
-        // הוספת מאזיני קליק לכל כפתור כוכב לכת
-        this.controls.planetList.forEach(button => {
-            const planetName = button.getAttribute('data-planet');
-            if (planetName) {
-                button.addEventListener('click', () => {
-                    this.selectPlanet(planetName);
-                });
-            }
-        });
     }
 
-    // פונקציות פעולה
+    // השהיה/המשכה
     togglePlayPause() {
-        if (this.app && typeof this.app.togglePause === 'function') {
-            this.app.togglePause();
-            this.updatePlayPauseButton();
-        }
-    }
-
-    resetView() {
-        if (this.app && typeof this.app.resetView === 'function') {
-            this.app.resetView();
-        }
-    }
-
-    setTimeScale(scale) {
-        this.state.timeScale = scale;
-        if (this.app && typeof this.app.setTimeScale === 'function') {
-            this.app.setTimeScale(scale);
-        }
+        if (!this.app) return;
         
-        // עדכון תצוגה
-        if (this.controls.speedValue) {
-            this.controls.speedValue.textContent = scale.toFixed(1) + 'x';
-        }
-    }
-
-    toggleViewSetting(setting, method) {
-        this.state[setting] = !this.state[setting];
-        
-        // קריאה למתודה באפליקציה
-        if (this.app && typeof this.app[method] === 'function') {
-            this.app[method]();
-        }
+        this.state.isPaused = !this.state.isPaused;
+        this.app.state.isPaused = this.state.isPaused;
         
         // עדכון כפתור
-        this.updateToggleButton(setting);
+        if (this.controls.playPause) {
+            this.controls.playPause.textContent = this.state.isPaused ? '▶️ המשך' : '⏸️ השהה';
+        }
+        
+        console.log(this.state.isPaused ? 'Animation paused' : 'Animation resumed');
     }
 
+    // איפוס תצוגה
+    resetView() {
+        if (!this.app || typeof this.app.resetView !== 'function') return;
+        
+        this.app.resetView();
+        console.log('View reset');
+    }
+
+    // הגדרת מהירות זמן
+    setTimeScale(scale) {
+        this.state.timeScale = Math.max(0, Math.min(10, scale));
+        
+        if (this.app) {
+            this.app.state.timeScale = this.state.timeScale;
+        }
+        
+        // עדכון תצוגת הערך
+        if (this.controls.speedValue) {
+            this.controls.speedValue.textContent = this.state.timeScale.toFixed(1) + 'x';
+        }
+        
+        console.log('Time scale set to:', this.state.timeScale);
+    }
+
+    // הצגת/הסתרת מסלולים
+    toggleOrbits(show = null) {
+        if (show === null) {
+            this.state.showOrbits = !this.state.showOrbits;
+        } else {
+            this.state.showOrbits = show;
+        }
+        
+        if (this.app && this.app.orbits) {
+            this.app.orbits.forEach(orbit => {
+                orbit.visible = this.state.showOrbits;
+            });
+        }
+        
+        // עדכון checkbox
+        if (this.controls.viewOrbits) {
+            this.controls.viewOrbits.checked = this.state.showOrbits;
+        }
+        
+        console.log('Orbits visibility:', this.state.showOrbits);
+    }
+
+    // הצגת/הסתרת תוויות
+    toggleLabels(show = null) {
+        if (show === null) {
+            this.state.showLabels = !this.state.showLabels;
+        } else {
+            this.state.showLabels = show;
+        }
+        
+        if (this.app && this.app.labels) {
+            this.app.labels.forEach(label => {
+                label.visible = this.state.showLabels;
+            });
+        }
+        
+        // עדכון checkbox
+        if (this.controls.viewLabels) {
+            this.controls.viewLabels.checked = this.state.showLabels;
+        }
+        
+        console.log('Labels visibility:', this.state.showLabels);
+    }
+
+    // הפעלת/כיבוי מצב ריאליסטי
+    toggleRealisticMode(enabled = null) {
+        if (enabled === null) {
+            this.state.realisticMode = !this.state.realisticMode;
+        } else {
+            this.state.realisticMode = enabled;
+        }
+        
+        if (this.app && this.app.planets) {
+            this.app.planets.forEach(planet => {
+                if (planet.setRealisticScale) {
+                    planet.setRealisticScale(this.state.realisticMode);
+                }
+            });
+        }
+        
+        // עדכון checkbox
+        if (this.controls.viewRealistic) {
+            this.controls.viewRealistic.checked = this.state.realisticMode;
+        }
+        
+        console.log('Realistic mode:', this.state.realisticMode);
+    }
+
+    // בחירת כוכב לכת
     selectPlanet(planetName) {
         this.state.selectedPlanet = planetName;
         
-        if (this.app && typeof this.app.selectPlanet === 'function') {
-            this.app.selectPlanet(planetName);
+        // התמקדות על הכוכב לכת
+        if (this.app && typeof this.app.focusOnPlanet === 'function') {
+            this.app.focusOnPlanet(planetName);
         }
         
-        this.updatePlanetSelection(planetName);
+        // עדכון סטייל הכפתורים
+        if (this.controls.planetList) {
+            this.controls.planetList.forEach(button => {
+                button.classList.remove('active');
+                if (button.dataset.planet === planetName) {
+                    button.classList.add('active');
+                }
+            });
+        }
+        
+        // פתיחת פאנל מידע (אם קיים)
+        this.openInfoPanel(planetName);
+        
+        console.log('Selected planet:', planetName);
     }
 
-    deselectPlanet() {
+    // פתיחת פאנל מידע
+    openInfoPanel(planetName) {
+        const infoPanel = document.getElementById('infoPanel');
+        if (infoPanel) {
+            const planetNameElement = document.getElementById('planetName');
+            if (planetNameElement) {
+                planetNameElement.textContent = this.getPlanetDisplayName(planetName);
+            }
+            
+            infoPanel.classList.remove('hidden');
+            
+            // הוספת מאזין לסגירה
+            const closeBtn = infoPanel.querySelector('.close-btn');
+            if (closeBtn) {
+                closeBtn.onclick = () => this.closeInfoPanel();
+            }
+        }
+    }
+
+    // סגירת פאנל מידע
+    closeInfoPanel() {
+        const infoPanel = document.getElementById('infoPanel');
+        if (infoPanel) {
+            infoPanel.classList.add('hidden');
+        }
+        
+        // איפוס בחירת כוכב הלכת
         this.state.selectedPlanet = null;
-        
-        if (this.app && typeof this.app.deselectPlanet === 'function') {
-            this.app.deselectPlanet();
+        if (this.controls.planetList) {
+            this.controls.planetList.forEach(button => {
+                button.classList.remove('active');
+            });
         }
-        
-        this.updatePlanetSelection(null);
     }
 
-    // עדכון ממשק
-    updateUI() {
-        this.updatePlayPauseButton();
-        this.updateToggleButtons();
-        this.updateTimeScale();
-    }
-
-    updatePlayPauseButton() {
-        if (!this.controls.playPause || !this.app) return;
-        
-        const isPaused = this.app.state ? this.app.state.isPaused : false;
-        this.controls.playPause.textContent = isPaused ? '▶️ המשך' : '⏸️ השהה';
-        this.controls.playPause.title = isPaused ? 'המשך' : 'השהה';
-    }
-
-    updateToggleButtons() {
-        const toggleButtons = [
-            { element: this.controls.viewOrbits, state: 'showOrbits' },
-            { element: this.controls.viewLabels, state: 'showLabels' },
-            { element: this.controls.viewRealistic, state: 'realisticMode' }
-        ];
-        
-        toggleButtons.forEach(({ element, state }) => {
-            this.updateToggleButton(state);
-        });
-    }
-
-    updateToggleButton(stateName) {
-        const buttonMap = {
-            'showOrbits': this.controls.viewOrbits,
-            'showLabels': this.controls.viewLabels,
-            'realisticMode': this.controls.viewRealistic
+    // קבלת שם תצוגה לכוכב לכת
+    getPlanetDisplayName(planetName) {
+        const displayNames = {
+            sun: 'השמש',
+            mercury: 'כוכב חמה',
+            venus: 'נוגה',
+            earth: 'כדור הארץ',
+            mars: 'מאדים',
+            jupiter: 'צדק',
+            saturn: 'שבתאי',
+            uranus: 'אורנוס',
+            neptune: 'נפטון'
         };
         
-        const button = buttonMap[stateName];
-        if (button) {
-            const isActive = this.state[stateName];
-            button.classList.toggle('active', isActive);
-        }
+        return displayNames[planetName] || planetName;
     }
 
-    updateTimeScale() {
+    // עדכון ממשק המשתמש
+    updateUI() {
+        // עדכון כפתור השהיה/המשכה
+        if (this.controls.playPause) {
+            this.controls.playPause.textContent = this.state.isPaused ? '▶️ המשך' : '⏸️ השהה';
+        }
+        
+        // עדכון בקרת מהירות זמן
         if (this.controls.timeSpeed) {
             this.controls.timeSpeed.value = this.state.timeScale;
         }
@@ -322,94 +388,159 @@ class UIControls {
         if (this.controls.speedValue) {
             this.controls.speedValue.textContent = this.state.timeScale.toFixed(1) + 'x';
         }
-    }
-
-    updatePlanetSelection(planetName) {
-        // עדכון כפתורי כוכבי הלכת
-        if (this.controls.planetList) {
-            this.controls.planetList.forEach(button => {
-                const buttonPlanet = button.getAttribute('data-planet');
-                button.classList.toggle('selected', buttonPlanet === planetName);
-            });
-        }
-    }
-
-    // עדכון מתמיד - קריאה מlucky render loop
-    update(deltaTime) {
-        // סנכרון מצב עם האפליקציה
-        if (this.app && this.app.state) {
-            const appState = this.app.state;
-            
-            // בדיקה אם צריך לעדכן UI
-            if (this.state.isPaused !== appState.isPaused) {
-                this.state.isPaused = appState.isPaused;
-                this.updatePlayPauseButton();
-            }
-            
-            if (this.state.selectedPlanet !== appState.selectedPlanet) {
-                this.state.selectedPlanet = appState.selectedPlanet;
-                this.updatePlanetSelection(appState.selectedPlanet);
-            }
-        }
-    }
-
-    // שמירת הגדרות
-    saveSettings() {
-        try {
-            const settings = {
-                timeScale: this.state.timeScale,
-                showOrbits: this.state.showOrbits,
-                showLabels: this.state.showLabels,
-                realisticMode: this.state.realisticMode
-            };
-            
-            localStorage.setItem('solarSystemSettings', JSON.stringify(settings));
-            return true;
-        } catch (error) {
-            console.warn('Failed to save settings:', error);
-            return false;
-        }
-    }
-
-    // טעינת הגדרות
-    loadSettings() {
-        try {
-            const saved = localStorage.getItem('solarSystemSettings');
-            if (saved) {
-                const settings = JSON.parse(saved);
-                
-                // החלת ההגדרות
-                Object.assign(this.state, settings);
-                this.updateUI();
-                
-                return true;
-            }
-        } catch (error) {
-            console.warn('Failed to load settings:', error);
+        
+        // עדכון checkboxes
+        if (this.controls.viewOrbits) {
+            this.controls.viewOrbits.checked = this.state.showOrbits;
         }
         
-        return false;
+        if (this.controls.viewLabels) {
+            this.controls.viewLabels.checked = this.state.showLabels;
+        }
+        
+        if (this.controls.viewRealistic) {
+            this.controls.viewRealistic.checked = this.state.realisticMode;
+        }
     }
 
-    // קבלת מידע על מצב הממשק
-    getState() {
+    // הגדרת מאזיני אירועים למובייל
+    setupMobileEvents() {
+        // בקרות מהירות למובייל
+        const quickPause = document.getElementById('quickPause');
+        const quickReset = document.getElementById('quickReset');
+        
+        if (quickPause) {
+            quickPause.addEventListener('click', () => this.togglePlayPause());
+        }
+        
+        if (quickReset) {
+            quickReset.addEventListener('click', () => this.resetView());
+        }
+    }
+
+    // טיפול באירועי מגע
+    handleTouchEvents() {
+        let touchStartTime = 0;
+        let touchStartPos = { x: 0, y: 0 };
+        
+        document.addEventListener('touchstart', (event) => {
+            touchStartTime = Date.now();
+            if (event.touches[0]) {
+                touchStartPos.x = event.touches[0].clientX;
+                touchStartPos.y = event.touches[0].clientY;
+            }
+        });
+        
+        document.addEventListener('touchend', (event) => {
+            const touchDuration = Date.now() - touchStartTime;
+            
+            // זיהוי tap מהיר (פחות מ-200ms)
+            if (touchDuration < 200) {
+                const target = event.target;
+                
+                // בדיקה אם המגע היה על כוכב לכת
+                if (target && target.classList && target.classList.contains('planet-btn')) {
+                    const planetName = target.dataset.planet;
+                    if (planetName) {
+                        this.selectPlanet(planetName);
+                    }
+                }
+            }
+        });
+    }
+
+    // עדכון מצב המשתמש
+    updateState(newState) {
+        this.state = { ...this.state, ...newState };
+        
+        // סנכרון עם האפליקציה
+        if (this.app && this.app.state) {
+            Object.assign(this.app.state, newState);
+        }
+        
+        // עדכון הממשק
+        this.updateUI();
+    }
+
+    // קבלת מידע על מצב הבקרות
+    getControlsInfo() {
         return {
-            ...this.state,
-            isInitialized: this.isInitialized
+            isInitialized: this.isInitialized,
+            state: { ...this.state },
+            availableElements: Object.keys(this.controls).filter(key => this.controls[key] !== null),
+            missingElements: Object.keys(this.controls).filter(key => this.controls[key] === null)
         };
+    }
+
+    // הפעלת/כיבוי בקרות
+    setEnabled(enabled) {
+        const elements = Object.values(this.controls).filter(el => el !== null);
+        
+        elements.forEach(element => {
+            if (element.disabled !== undefined) {
+                element.disabled = !enabled;
+            }
+            
+            if (element.style) {
+                element.style.opacity = enabled ? '1' : '0.5';
+                element.style.pointerEvents = enabled ? 'auto' : 'none';
+            }
+        });
+        
+        console.log('Controls enabled:', enabled);
+    }
+
+    // איפוס הגדרות לברירת מחדל
+    resetToDefaults() {
+        this.state = {
+            isPaused: false,
+            timeScale: 1,
+            showOrbits: true,
+            showLabels: true,
+            realisticMode: false,
+            selectedPlanet: null
+        };
+        
+        // עדכון האפליקציה
+        if (this.app) {
+            this.app.state.isPaused = false;
+            this.app.state.timeScale = 1;
+            this.app.state.showOrbits = true;
+            this.app.state.showLabels = true;
+            this.app.state.realisticMode = false;
+        }
+        
+        // עדכון הממשק
+        this.updateUI();
+        
+        // יישום השינויים
+        this.toggleOrbits(true);
+        this.toggleLabels(true);
+        this.toggleRealisticMode(false);
+        
+        console.log('Controls reset to defaults');
+    }
+
+    // פונקציית דיבוג
+    debug() {
+        console.group('UI Controls Debug Info');
+        console.log('Controls Info:', this.getControlsInfo());
+        console.log('App State:', this.app ? this.app.state : 'No app connected');
+        console.groupEnd();
     }
 
     // ניקוי משאבים
     dispose() {
         // הסרת מאזיני אירועים
+        this.eventListeners.forEach((listener, event) => {
+            document.removeEventListener(event, listener);
+        });
         this.eventListeners.clear();
         
-        // ניקוי אלמנטים
-        Object.keys(this.controls).forEach(key => {
-            this.controls[key] = null;
-        });
-        
+        // איפוס מצב
+        this.app = null;
         this.isInitialized = false;
+        
         console.log('UI Controls disposed');
     }
 }
@@ -418,3 +549,6 @@ class UIControls {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = UIControls;
 }
+
+// הפוך את המחלקה זמינה גלובלית - תיקון עיקרי
+window.UIControls = UIControls;
