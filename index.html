@@ -25,14 +25,11 @@
     
     <!-- OrbitControls -->
     <script>
-        // טעינת OrbitControls עם fallback
         (function() {
-            // נתיב עובד ל-OrbitControls
             const orbitControlsScript = document.createElement('script');
             orbitControlsScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js';
             orbitControlsScript.onerror = function() {
                 console.warn('Failed to load OrbitControls from CDN, will use fallback');
-                // אם נכשל, נטען את המימוש המקומי
                 const fallbackScript = document.createElement('script');
                 fallbackScript.src = 'js/controls/orbit-controls.js';
                 document.head.appendChild(fallbackScript);
@@ -58,41 +55,61 @@
         <!-- 3D Scene -->
         <canvas id="scene"></canvas>
 
+        <!-- Mobile Menu Toggle Button -->
+        <button id="mobileMenuToggle" class="mobile-menu-toggle" aria-label="תפריט">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+
         <!-- Control Panel -->
-        <div id="controls">
-            <div class="control-section">
+        <div id="controls" class="controls-panel">
+            <div class="controls-header">
                 <h3>בקרות</h3>
-                <div class="time-controls">
-                    <button id="playPause" class="btn primary">⏸️ השהה</button>
-                    <button id="reset" class="btn">🔄 איפוס</button>
-                </div>
-                <div class="speed-control">
-                    <label>מהירות זמן:</label>
-                    <input type="range" id="timeScale" min="0.1" max="10" step="0.1" value="1">
-                    <span id="timeScaleValue">1x</span>
-                </div>
-                <div class="view-controls">
-                    <button id="showOrbits" class="btn toggle active">מסלולים</button>
-                    <button id="showLabels" class="btn toggle active">תוויות</button>
-                    <button id="realisticMode" class="btn toggle">מצב ריאליסטי</button>
-                    <button id="showAsteroids" class="btn toggle active">אסטרואידים</button>
-                </div>
+                <button id="closeControls" class="close-controls">&times;</button>
             </div>
             
-            <div class="planet-selection">
-                <h3>בחר כוכב לכת</h3>
-                <div class="planet-buttons">
-                    <button class="planet-btn" data-planet="sun">☀️ השמש</button>
-                    <button class="planet-btn" data-planet="mercury">☿ כוכב חמה</button>
-                    <button class="planet-btn" data-planet="venus">♀ נוגה</button>
-                    <button class="planet-btn" data-planet="earth">🌍 כדור הארץ</button>
-                    <button class="planet-btn" data-planet="mars">♂ מאדים</button>
-                    <button class="planet-btn" data-planet="jupiter">♃ צדק</button>
-                    <button class="planet-btn" data-planet="saturn">♄ שבתאי</button>
-                    <button class="planet-btn" data-planet="uranus">♅ אורנוס</button>
-                    <button class="planet-btn" data-planet="neptune">♆ נפטון</button>
+            <div class="controls-content">
+                <div class="control-section">
+                    <div class="time-controls">
+                        <button id="playPause" class="btn primary">⏸️ השהה</button>
+                        <button id="reset" class="btn">🔄 איפוס</button>
+                    </div>
+                    <div class="speed-control">
+                        <label>מהירות זמן:</label>
+                        <input type="range" id="timeScale" min="0.1" max="10" step="0.1" value="1">
+                        <span id="timeScaleValue">1x</span>
+                    </div>
+                    <div class="view-controls">
+                        <button id="showOrbits" class="btn toggle active">מסלולים</button>
+                        <button id="showLabels" class="btn toggle active">תוויות</button>
+                        <button id="realisticMode" class="btn toggle">מצב ריאליסטי</button>
+                        <button id="showAsteroids" class="btn toggle active">אסטרואידים</button>
+                    </div>
+                </div>
+                
+                <div class="planet-selection">
+                    <h4>בחר כוכב לכת</h4>
+                    <div class="planet-buttons">
+                        <button class="planet-btn" data-planet="sun">☀️ השמש</button>
+                        <button class="planet-btn" data-planet="mercury">☿ כוכב חמה</button>
+                        <button class="planet-btn" data-planet="venus">♀ נוגה</button>
+                        <button class="planet-btn" data-planet="earth">🌍 כדור הארץ</button>
+                        <button class="planet-btn" data-planet="mars">♂ מאדים</button>
+                        <button class="planet-btn" data-planet="jupiter">♃ צדק</button>
+                        <button class="planet-btn" data-planet="saturn">♄ שבתאי</button>
+                        <button class="planet-btn" data-planet="uranus">♅ אורנוס</button>
+                        <button class="planet-btn" data-planet="neptune">♆ נפטון</button>
+                    </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Quick Controls (visible on mobile) -->
+        <div id="quickControls" class="quick-controls">
+            <button id="quickPlayPause" class="quick-btn" title="השהה/המשך">⏸️</button>
+            <button id="quickReset" class="quick-btn" title="איפוס">🔄</button>
+            <button id="quickInfo" class="quick-btn" title="מידע">ℹ️</button>
         </div>
 
         <!-- Info Panel -->
@@ -119,20 +136,31 @@
         </div>
 
         <!-- Navigation Help -->
-        <div id="navHelp">
-            <div class="help-item">🖱️ עכבר: סובב את המצלמה</div>
-            <div class="help-item">🖱️ גלגלת: זום פנימה/החוצה</div>
-            <div class="help-item">📱 מגע: סובב וזום</div>
-            <div class="help-item">⌨️ רווח: השהה/המשך</div>
-            <div class="help-item">⌨️ R: איפוס תצוגה</div>
+        <div id="navHelp" class="nav-help">
+            <div class="help-item desktop-only">🖱️ עכבר: סובב את המצלמה</div>
+            <div class="help-item desktop-only">🖱️ גלגלת: זום פנימה/החוצה</div>
+            <div class="help-item mobile-only">📱 מגע: סובב וזום</div>
+            <div class="help-item desktop-only">⌨️ רווח: השהה/המשך</div>
+            <div class="help-item desktop-only">⌨️ R: איפוס תצוגה</div>
         </div>
 
         <!-- Performance Stats -->
-        <div id="stats">
+        <div id="stats" class="performance-stats">
             <div>FPS: <span id="fpsCounter">60</span></div>
-            <div>Objects: <span id="objectCount">0</span></div>
+            <div class="desktop-only">Objects: <span id="objectCount">0</span></div>
         </div>
     </div>
+
+    <!-- Scripts -->
+    <script src="js/data/planets-improved.js"></script>
+    <script src="js/utils/math.js"></script>
+    <script src="js/core/scene.js"></script>
+    <script src="js/objects/sun.js"></script>
+    <script src="js/objects/planet.js"></script>
+    <script src="js/objects/asteroid-belt.js"></script>
+    <script src="js/ui/controls.js"></script>
+    <script src="js/ui/info-panel.js"></script>
+    <script src="js/main-improved.js"></script>
 
     <script>
         // Enhanced error handling and initialization
@@ -216,6 +244,9 @@
                 
                 await app.init();
                 
+                // Initialize mobile menu
+                initializeMobileMenu();
+                
                 // Hide loading screen
                 const loading = document.getElementById('loading');
                 if (loading) {
@@ -240,6 +271,97 @@
                 return false;
             }
         }
+
+        // Mobile menu functionality
+        function initializeMobileMenu() {
+            const mobileToggle = document.getElementById('mobileMenuToggle');
+            const controlsPanel = document.getElementById('controls');
+            const closeControls = document.getElementById('closeControls');
+            const quickControls = document.getElementById('quickControls');
+            
+            if (mobileToggle && controlsPanel) {
+                mobileToggle.addEventListener('click', () => {
+                    controlsPanel.classList.toggle('open');
+                    mobileToggle.classList.toggle('active');
+                    document.body.classList.toggle('menu-open');
+                });
+            }
+            
+            if (closeControls && controlsPanel) {
+                closeControls.addEventListener('click', () => {
+                    controlsPanel.classList.remove('open');
+                    mobileToggle.classList.remove('active');
+                    document.body.classList.remove('menu-open');
+                });
+            }
+
+            // Quick controls
+            const quickPlayPause = document.getElementById('quickPlayPause');
+            const quickReset = document.getElementById('quickReset');
+            const quickInfo = document.getElementById('quickInfo');
+            const playPause = document.getElementById('playPause');
+            const reset = document.getElementById('reset');
+
+            if (quickPlayPause && playPause) {
+                quickPlayPause.addEventListener('click', () => {
+                    playPause.click();
+                });
+            }
+
+            if (quickReset && reset) {
+                quickReset.addEventListener('click', () => {
+                    reset.click();
+                });
+            }
+
+            if (quickInfo) {
+                quickInfo.addEventListener('click', () => {
+                    const infoPanel = document.getElementById('infoPanel');
+                    if (infoPanel && !infoPanel.classList.contains('hidden')) {
+                        infoPanel.classList.add('hidden');
+                    } else {
+                        // Show general solar system info if no planet selected
+                        if (window.solarSystemApp && window.solarSystemApp.showPlanetInfo) {
+                            window.solarSystemApp.showPlanetInfo('sun');
+                        }
+                    }
+                });
+            }
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (event) => {
+                if (!controlsPanel.contains(event.target) && 
+                    !mobileToggle.contains(event.target) && 
+                    controlsPanel.classList.contains('open')) {
+                    controlsPanel.classList.remove('open');
+                    mobileToggle.classList.remove('active');
+                    document.body.classList.remove('menu-open');
+                }
+            });
+
+            // Sync quick controls with main controls
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                        const playPauseBtn = document.getElementById('playPause');
+                        const quickPlayPauseBtn = document.getElementById('quickPlayPause');
+                        
+                        if (playPauseBtn && quickPlayPauseBtn) {
+                            quickPlayPauseBtn.textContent = playPauseBtn.textContent.includes('השהה') ? '⏸️' : '▶️';
+                        }
+                    }
+                });
+            });
+
+            const playPauseBtn = document.getElementById('playPause');
+            if (playPauseBtn) {
+                observer.observe(playPauseBtn, { 
+                    childList: true, 
+                    subtree: true, 
+                    characterData: true 
+                });
+            }
+        }
         
         // Service Worker registration
         if ('serviceWorker' in navigator) {
@@ -258,16 +380,5 @@
             });
         }
     </script>
-    
-    <!-- Load application scripts -->
-    <script src="js/data/planets-improved.js"></script>
-    <script src="js/utils/math.js"></script>
-    <script src="js/core/scene.js"></script>
-    <script src="js/objects/sun.js"></script>
-    <script src="js/objects/planet.js"></script>
-    <script src="js/objects/asteroid-belt.js"></script>
-    <script src="js/ui/controls.js"></script>
-    <script src="js/ui/info-panel.js"></script>
-    <script src="js/main-improved.js"></script>
 </body>
 </html>
