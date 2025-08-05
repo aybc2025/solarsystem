@@ -2,12 +2,18 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5, user-scalable=yes, viewport-fit=cover">
     <title>מערכת השמש | Solar System PWA</title>
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#0a0a0a">
     <meta name="description" content="חקור את מערכת השמש בתלת מימד - אפליקציה חינוכית אינטראקטיבית">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="מערכת השמש">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#0a0a0a">
+    <meta name="msapplication-tap-highlight" content="no">
     <link rel="manifest" href="manifest.json">
 
     <base href="https://aybc2025.github.io/solarsystem/">
@@ -44,117 +50,209 @@
         <div id="loading">
             <div class="loading-content">
                 <div class="sun-loader"></div>
-                <h2>טוען את מערכת השמש...</h2>
+                <h2 id="loadingText">טוען את מערכת השמש...</h2>
                 <div class="loading-bar">
-                    <div class="loading-progress" id="loadingProgress"></div>
+                    <div id="loadingProgress" class="loading-progress"></div>
                 </div>
-                <div id="loadingText">מאתחל...</div>
             </div>
         </div>
 
-        <!-- 3D Scene -->
-        <canvas id="scene"></canvas>
-
-        <!-- Mobile Menu Toggle Button -->
-        <button id="mobileMenuToggle" class="mobile-menu-toggle" aria-label="תפריט">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
+        <!-- Mobile Menu Toggle -->
+        <button id="mobileMenuToggle" class="mobile-menu-toggle" aria-label="פתח תפריט">
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
+            <div class="hamburger-line"></div>
         </button>
 
-        <!-- Control Panel -->
+        <!-- 3D Scene Container -->
+        <div id="scene"></div>
+
+        <!-- Controls Panel -->
         <div id="controls" class="controls-panel">
             <div class="controls-header">
-                <h3>בקרות</h3>
-                <button id="closeControls" class="close-controls">&times;</button>
+                <h3>⚙️ בקרות</h3>
+                <button id="closeControls" class="close-controls" aria-label="סגור תפריט">✕</button>
             </div>
-            
             <div class="controls-content">
-                <div class="control-section">
-                    <div class="time-controls">
-                        <button id="playPause" class="btn primary">⏸️ השהה</button>
-                        <button id="reset" class="btn">🔄 איפוס</button>
-                    </div>
-                    <div class="speed-control">
-                        <label>מהירות זמן:</label>
-                        <input type="range" id="timeScale" min="0.1" max="10" step="0.1" value="1">
-                        <span id="timeScaleValue">1x</span>
-                    </div>
-                    <div class="view-controls">
-                        <button id="showOrbits" class="btn toggle active">מסלולים</button>
-                        <button id="showLabels" class="btn toggle active">תוויות</button>
-                        <button id="realisticMode" class="btn toggle">מצב ריאליסטי</button>
-                        <button id="showAsteroids" class="btn toggle active">אסטרואידים</button>
-                    </div>
-                </div>
                 
-                <div class="planet-selection">
-                    <h4>בחר כוכב לכת</h4>
-                    <div class="planet-buttons">
-                        <button class="planet-btn" data-planet="sun">☀️ השמש</button>
-                        <button class="planet-btn" data-planet="mercury">☿ כוכב חמה</button>
-                        <button class="planet-btn" data-planet="venus">♀ נוגה</button>
-                        <button class="planet-btn" data-planet="earth">🌍 כדור הארץ</button>
-                        <button class="planet-btn" data-planet="mars">♂ מאדים</button>
-                        <button class="planet-btn" data-planet="jupiter">♃ צדק</button>
-                        <button class="planet-btn" data-planet="saturn">♄ שבתאי</button>
-                        <button class="planet-btn" data-planet="uranus">♅ אורנוס</button>
-                        <button class="planet-btn" data-planet="neptune">♆ נפטון</button>
+                <!-- Time Controls -->
+                <div class="control-section">
+                    <h4>⏰ בקרות זמן</h4>
+                    <div class="control-group">
+                        <button id="playPause" class="btn btn-primary">⏸️ השהה</button>
+                        <button id="resetView" class="btn">🔄 איפוס תצוגה</button>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="timeSpeed">⚡ מהירות זמן: <span id="timeScaleValue">1.0x</span></label>
+                        <input type="range" id="timeSpeed" min="0.1" max="10" step="0.1" value="1" class="slider">
+                        <div class="slider-labels">
+                            <span>איטי</span>
+                            <span>מהיר</span>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Display Controls -->
+                <div class="control-section">
+                    <h4>👁️ בקרות תצוגה</h4>
+                    <div class="toggle-grid">
+                        <button id="showOrbits" class="btn btn-toggle active">🛸 מסלולים</button>
+                        <button id="showLabels" class="btn btn-toggle active">🏷️ תוויות</button>
+                        <button id="showAsteroids" class="btn btn-toggle">☄️ אסטרואידים</button>
+                        <button id="realisticMode" class="btn btn-toggle">📏 מצב ריאליסטי</button>
+                    </div>
+                </div>
+
+                <!-- Planet Selection -->
+                <div class="control-section">
+                    <h4>🌟 בחירת כוכב לכת</h4>
+                    <div class="planet-grid">
+                        <button class="planet-btn" data-planet="sun">☀️<br>השמש</button>
+                        <button class="planet-btn" data-planet="mercury">☿<br>כוכב חמה</button>
+                        <button class="planet-btn" data-planet="venus">♀<br>נוגה</button>
+                        <button class="planet-btn" data-planet="earth">🌍<br>כדור הארץ</button>
+                        <button class="planet-btn" data-planet="mars">♂<br>מאדים</button>
+                        <button class="planet-btn" data-planet="jupiter">♃<br>צדק</button>
+                        <button class="planet-btn" data-planet="saturn">♄<br>שבתאי</button>
+                        <button class="planet-btn" data-planet="uranus">♅<br>אורנוס</button>
+                        <button class="planet-btn" data-planet="neptune">♆<br>נפטון</button>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="control-section">
+                    <h4>⚙️ הגדרות</h4>
+                    <div class="control-group">
+                        <button id="enableSound" class="btn btn-toggle">🔊 צלילים</button>
+                        <button id="enableParticles" class="btn btn-toggle active">✨ אפקטים</button>
+                        <button id="showStats" class="btn btn-toggle">📊 סטטיסטיקות</button>
+                        <button id="fullscreen" class="btn">🖥️ מסך מלא</button>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- Quick Controls (visible on mobile) -->
+        <!-- Quick Controls (Mobile) -->
         <div id="quickControls" class="quick-controls">
             <button id="quickPlayPause" class="quick-btn" title="השהה/המשך">⏸️</button>
-            <button id="quickReset" class="quick-btn" title="איפוס">🔄</button>
+            <button id="quickReset" class="quick-btn" title="איפוס תצוגה">🔄</button>
             <button id="quickInfo" class="quick-btn" title="מידע">ℹ️</button>
         </div>
 
         <!-- Info Panel -->
-        <div id="infoPanel" class="hidden">
+        <div id="infoPanel" class="info-panel hidden">
             <div class="info-header">
                 <h3 id="planetName">מערכת השמש</h3>
                 <button id="closeInfo" class="close-btn">✕</button>
             </div>
             <div class="info-content">
-                <div class="planet-image">
-                    <div id="planetPreview"></div>
+                <div class="planet-preview">
+                    <div id="planetModel" class="planet-model"></div>
+                    <div class="planet-quick-facts">
+                        <div class="quick-fact">
+                            <span class="fact-icon">📏</span>
+                            <span id="planetRadius">-</span>
+                        </div>
+                        <div class="quick-fact">
+                            <span class="fact-icon">🌡️</span>
+                            <span id="planetTemperature">-</span>
+                        </div>
+                        <div class="quick-fact">
+                            <span class="fact-icon">⭕</span>
+                            <span id="planetDistance">-</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="planet-data" id="planetData">
-                    <!-- Data will be populated by JavaScript -->
-                </div>
-                <div class="planet-description">
-                    <p id="planetDescription">ברוכים הבאים לחקר מערכת השמש האינטראקטיבית!</p>
-                </div>
-                <div class="interesting-facts" id="interestingFacts" style="display: none;">
-                    <h4>עובדות מעניינות</h4>
-                    <ul id="factsList"></ul>
+                <div class="planet-details">
+                    <div class="detail-tabs">
+                        <button class="tab-btn active" data-tab="overview">סקירה</button>
+                        <button class="tab-btn" data-tab="data">נתונים</button>
+                        <button class="tab-btn" data-tab="facts">עובדות</button>
+                    </div>
+                    <div class="tab-content">
+                        <div id="tab-overview" class="tab-panel active">
+                            <p id="planetDescription">בחר כוכב לכת לצפייה במידע</p>
+                        </div>
+                        <div id="tab-data" class="tab-panel">
+                            <div class="data-grid" id="planetData">
+                                <!-- Data will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div id="tab-facts" class="tab-panel">
+                            <ul id="planetFacts" class="facts-list">
+                                <!-- Facts will be populated by JavaScript -->
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Navigation Help -->
         <div id="navHelp" class="nav-help">
-            <div class="help-item desktop-only">🖱️ עכבר: סובב את המצלמה</div>
-            <div class="help-item desktop-only">🖱️ גלגלת: זום פנימה/החוצה</div>
-            <div class="help-item mobile-only">📱 מגע: סובב וזום</div>
-            <div class="help-item desktop-only">⌨️ רווח: השהה/המשך</div>
-            <div class="help-item desktop-only">⌨️ R: איפוס תצוגה</div>
+            <div class="help-header">
+                <span>🎮 עזרה בניווט</span>
+                <button id="hideHelp" class="hide-help">✕</button>
+            </div>
+            <div class="help-content">
+                <div class="help-item desktop-only">
+                    <span class="help-icon">🖱️</span>
+                    <span>גרור לסיבוב המצלמה</span>
+                </div>
+                <div class="help-item desktop-only">
+                    <span class="help-icon">🖱️</span>
+                    <span>גלגלת לזום פנימה/החוצה</span>
+                </div>
+                <div class="help-item mobile-only">
+                    <span class="help-icon">👆</span>
+                    <span>גרור לסיבוב, צבוט לזום</span>
+                </div>
+                <div class="help-item">
+                    <span class="help-icon">👆</span>
+                    <span>לחץ על כוכב לכת למידע</span>
+                </div>
+                <div class="help-item desktop-only">
+                    <span class="help-icon">⌨️</span>
+                    <span>רווח: השהה/המשך</span>
+                </div>
+                <div class="help-item desktop-only">
+                    <span class="help-icon">⌨️</span>
+                    <span>R: איפוס תצוגה</span>
+                </div>
+            </div>
         </div>
 
         <!-- Performance Stats -->
-        <div id="stats" class="performance-stats">
-            <div>FPS: <span id="fpsCounter">60</span></div>
-            <div class="desktop-only">Objects: <span id="objectCount">0</span></div>
+        <div id="stats" class="performance-stats hidden">
+            <div class="stat-item">
+                <span class="stat-label">FPS:</span>
+                <span id="fpsCounter" class="stat-value">60</span>
+            </div>
+            <div class="stat-item desktop-only">
+                <span class="stat-label">Objects:</span>
+                <span id="objectCount" class="stat-value">0</span>
+            </div>
+            <div class="stat-item desktop-only">
+                <span class="stat-label">Triangles:</span>
+                <span id="triangleCount" class="stat-value">0</span>
+            </div>
         </div>
+
+        <!-- Landscape Notice (for mobile) -->
+        <div class="landscape-notice mobile-only">
+            🔄 הפוך את המכשיר לחוויה טובה יותר
+        </div>
+
     </div>
 
     <!-- Scripts -->
     <script src="js/data/planets-improved.js"></script>
     <script src="js/utils/math.js"></script>
     <script src="js/core/scene.js"></script>
+    <script src="js/core/camera.js"></script>
+    <script src="js/core/lights.js"></script>
     <script src="js/objects/sun.js"></script>
     <script src="js/objects/planet.js"></script>
     <script src="js/objects/asteroid-belt.js"></script>
@@ -167,6 +265,11 @@
         window.addEventListener('error', (event) => {
             console.error('Global error:', event.error);
             showError(`Error: ${event.error.message}`);
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+            showError(`Promise rejected: ${event.reason}`);
         });
         
         function showError(message) {
@@ -214,6 +317,58 @@
             if (loadingProgress) loadingProgress.style.width = percentage + '%';
         }
         
+        function checkWebGLSupport() {
+            try {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                return context !== null;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Mobile menu functionality
+        function initializeMobileMenu() {
+            const mobileToggle = document.getElementById('mobileMenuToggle');
+            const controlsPanel = document.getElementById('controls');
+            const closeControls = document.getElementById('closeControls');
+            const quickControls = document.getElementById('quickControls');
+            
+            if (mobileToggle && controlsPanel) {
+                mobileToggle.addEventListener('click', () => {
+                    controlsPanel.classList.toggle('open');
+                    mobileToggle.classList.toggle('active');
+                    document.body.classList.toggle('menu-open');
+                });
+            }
+            
+            if (closeControls && controlsPanel) {
+                closeControls.addEventListener('click', () => {
+                    controlsPanel.classList.remove('open');
+                    mobileToggle.classList.remove('active');
+                    document.body.classList.remove('menu-open');
+                });
+            }
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', (event) => {
+                if (controlsPanel && controlsPanel.classList.contains('open')) {
+                    if (!controlsPanel.contains(event.target) && !mobileToggle.contains(event.target)) {
+                        controlsPanel.classList.remove('open');
+                        mobileToggle.classList.remove('active');
+                        document.body.classList.remove('menu-open');
+                    }
+                }
+            });
+            
+            // Prevent menu close when clicking inside
+            if (controlsPanel) {
+                controlsPanel.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                });
+            }
+        }
+
         // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('🌟 Initializing Solar System PWA...');
@@ -261,124 +416,47 @@
                 showError('כשל באתחול האפליקציה: ' + error.message);
             }
         });
+
+        // PWA installation handling
+        let deferredPrompt;
         
-        function checkWebGLSupport() {
-            try {
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                return context !== null;
-            } catch (e) {
-                return false;
-            }
-        }
-
-        // Mobile menu functionality
-        function initializeMobileMenu() {
-            const mobileToggle = document.getElementById('mobileMenuToggle');
-            const controlsPanel = document.getElementById('controls');
-            const closeControls = document.getElementById('closeControls');
-            const quickControls = document.getElementById('quickControls');
-            
-            if (mobileToggle && controlsPanel) {
-                mobileToggle.addEventListener('click', () => {
-                    controlsPanel.classList.toggle('open');
-                    mobileToggle.classList.toggle('active');
-                    document.body.classList.toggle('menu-open');
-                });
-            }
-            
-            if (closeControls && controlsPanel) {
-                closeControls.addEventListener('click', () => {
-                    controlsPanel.classList.remove('open');
-                    mobileToggle.classList.remove('active');
-                    document.body.classList.remove('menu-open');
-                });
-            }
-
-            // Quick controls
-            const quickPlayPause = document.getElementById('quickPlayPause');
-            const quickReset = document.getElementById('quickReset');
-            const quickInfo = document.getElementById('quickInfo');
-            const playPause = document.getElementById('playPause');
-            const reset = document.getElementById('reset');
-
-            if (quickPlayPause && playPause) {
-                quickPlayPause.addEventListener('click', () => {
-                    playPause.click();
-                });
-            }
-
-            if (quickReset && reset) {
-                quickReset.addEventListener('click', () => {
-                    reset.click();
-                });
-            }
-
-            if (quickInfo) {
-                quickInfo.addEventListener('click', () => {
-                    const infoPanel = document.getElementById('infoPanel');
-                    if (infoPanel && !infoPanel.classList.contains('hidden')) {
-                        infoPanel.classList.add('hidden');
-                    } else {
-                        // Show general solar system info if no planet selected
-                        if (window.solarSystemApp && window.solarSystemApp.showPlanetInfo) {
-                            window.solarSystemApp.showPlanetInfo('sun');
-                        }
-                    }
-                });
-            }
-
-            // Close menu when clicking outside
-            document.addEventListener('click', (event) => {
-                if (!controlsPanel.contains(event.target) && 
-                    !mobileToggle.contains(event.target) && 
-                    controlsPanel.classList.contains('open')) {
-                    controlsPanel.classList.remove('open');
-                    mobileToggle.classList.remove('active');
-                    document.body.classList.remove('menu-open');
-                }
-            });
-
-            // Sync quick controls with main controls
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
-                        const playPauseBtn = document.getElementById('playPause');
-                        const quickPlayPauseBtn = document.getElementById('quickPlayPause');
-                        
-                        if (playPauseBtn && quickPlayPauseBtn) {
-                            quickPlayPauseBtn.textContent = playPauseBtn.textContent.includes('השהה') ? '⏸️' : '▶️';
-                        }
-                    }
-                });
-            });
-
-            const playPauseBtn = document.getElementById('playPause');
-            if (playPauseBtn) {
-                observer.observe(playPauseBtn, { 
-                    childList: true, 
-                    subtree: true, 
-                    characterData: true 
-                });
-            }
-        }
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA installation prompt available');
+            deferredPrompt = e;
+        });
         
         // Service Worker registration
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', async () => {
-                try {
-                    const response = await fetch('sw.js', { method: 'HEAD' });
-                    if (response.ok) {
-                        const registration = await navigator.serviceWorker.register('sw.js');
-                        console.log('SW registered:', registration.scope);
-                    } else {
-                        console.log('Service worker file not found, running without offline support');
-                    }
-                } catch (error) {
-                    console.log('Service worker registration skipped:', error.message);
-                }
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
             });
         }
+
+        // Handle orientation changes on mobile
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (window.solarSystemApp && window.solarSystemApp.renderer) {
+                    window.solarSystemApp.handleResize();
+                }
+            }, 100);
+        });
+
+        // Handle app visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (window.solarSystemApp) {
+                if (document.hidden) {
+                    window.solarSystemApp.pause();
+                } else {
+                    window.solarSystemApp.resume();
+                }
+            }
+        });
     </script>
 </body>
 </html>
