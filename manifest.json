@@ -3,7 +3,7 @@
   "short_name": "Solar System",
   "description": "חקור את מערכת השמש בתלת מימד - אפליקציה חינוכית אינטראקטיבית",
   "start_url": "https://aybc2025.github.io/solarsystem/",
-  "display": "standalone",
+  "display": "minimal-ui",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
   "orientation": "any",
