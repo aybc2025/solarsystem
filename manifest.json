@@ -38,7 +38,7 @@
       "name": "כדור הארץ",
       "short_name": "Earth",
       "description": "התמקד בכדור הארץ",
-      "url": "/?planet=earth",
+      "url": "https://aybc2025.github.io/solarsystem/?planet=earth",
       "icons": [
         {
           "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='40' fill='%236b93d6'/></svg>",
@@ -51,7 +51,7 @@
       "name": "מאדים",
       "short_name": "Mars",
       "description": "התמקד במאדים",
-      "url": "/?planet=mars",
+      "url": "https://aybc2025.github.io/solarsystem/?planet=mars",
       "icons": [
         {
           "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='40' fill='%23cd5c5c'/></svg>",
