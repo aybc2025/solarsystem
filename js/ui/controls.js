@@ -1,4 +1,4 @@
-// מחלקת בקרות ממשק המשתמש
+// מחלקת בקרות ממשק המשתמש - מתוקן לשגיאות
 class UIControls {
     constructor() {
         this.app = null;
@@ -15,16 +15,16 @@ class UIControls {
             selectedPlanet: null
         };
         
-        // אלמנטים בממשק
+        // אלמנטים בממשק - מותאם לindex.html החדש
         this.controls = {
             playPause: null,
-            reset: null,
+            reset: null, // resetView ב-HTML
             timeSpeed: null,
             speedValue: null,
-            viewOrbits: null,
-            viewLabels: null,
-            viewRealistic: null,
-            planetList: null
+            viewOrbits: null, // showOrbits ב-HTML  
+            viewLabels: null, // showLabels ב-HTML
+            viewRealistic: null, // realisticMode ב-HTML
+            planetList: null // planet-btn elements
         };
         
         // מאזיני אירועים
@@ -57,30 +57,35 @@ class UIControls {
         }
     }
 
-    // איתור אלמנטים בDOM
+    // איתור אלמנטים בDOM - מותאם לHTML החדש
     findDOMElements() {
         // כפתורי בקרה עיקריים
         this.controls.playPause = document.getElementById('playPause');
-        this.controls.reset = document.getElementById('reset');
+        this.controls.reset = document.getElementById('resetView'); // שונה מ-reset ל-resetView
         
         // בקרת מהירות זמן
         this.controls.timeSpeed = document.getElementById('timeSpeed');
-        this.controls.speedValue = document.getElementById('speedValue');
+        this.controls.speedValue = document.getElementById('timeScaleValue'); // שונה מ-speedValue
         
-        // כפתורי תצוגה
-        this.controls.viewOrbits = document.getElementById('viewOrbits');
-        this.controls.viewLabels = document.getElementById('viewLabels');
-        this.controls.viewRealistic = document.getElementById('viewRealistic');
+        // כפתורי תצוגה - מותאם לHTML
+        this.controls.viewOrbits = document.getElementById('showOrbits');
+        this.controls.viewLabels = document.getElementById('showLabels');
+        this.controls.viewRealistic = document.getElementById('realisticMode');
         
-        // רשימת כוכבי לכת
-        this.controls.planetList = document.getElementById('planetList');
+        // רשימת כוכבי לכת - elements עם class planet-btn
+        this.controls.planetList = document.querySelectorAll('.planet-btn');
         
         // בדיקת קיום אלמנטים חיוניים
-        const requiredElements = ['playPause', 'reset', 'timeSpeed', 'planetList'];
+        const requiredElements = ['playPause', 'timeSpeed'];
         for (const elementName of requiredElements) {
             if (!this.controls[elementName]) {
                 console.warn(`UI element '${elementName}' not found`);
             }
+        }
+        
+        // בדיקת planet buttons
+        if (!this.controls.planetList || this.controls.planetList.length === 0) {
+            console.warn(`UI element 'planetList' not found`);
         }
     }
 
@@ -120,22 +125,22 @@ class UIControls {
         // קיצורי מקלדת
         this.setupKeyboardShortcuts();
         
-        // אירועי אפליקציה
+        // אירועי אפליקציה - מותאם ללא app.on
         this.setupAppEventListeners();
     }
 
     // הגדרת כפתורי תצוגה
     setupViewButtons() {
         const viewButtons = [
-            { element: this.controls.viewOrbits, setting: 'showOrbits' },
-            { element: this.controls.viewLabels, setting: 'showLabels' },
-            { element: this.controls.viewRealistic, setting: 'realisticMode' }
+            { element: this.controls.viewOrbits, setting: 'showOrbits', method: 'toggleOrbits' },
+            { element: this.controls.viewLabels, setting: 'showLabels', method: 'toggleLabels' },
+            { element: this.controls.viewRealistic, setting: 'realisticMode', method: 'toggleRealisticMode' }
         ];
         
-        viewButtons.forEach(({ element, setting }) => {
+        viewButtons.forEach(({ element, setting, method }) => {
             if (element) {
                 element.addEventListener('click', () => {
-                    this.toggleViewSetting(setting);
+                    this.toggleViewSetting(setting, method);
                 });
             }
         });
@@ -164,550 +169,201 @@ class UIControls {
                     
                 case 'KeyO':
                     event.preventDefault();
-                    this.toggleViewSetting('showOrbits');
+                    this.toggleViewSetting('showOrbits', 'toggleOrbits');
                     break;
                     
                 case 'KeyL':
                     event.preventDefault();
-                    this.toggleViewSetting('showLabels');
+                    this.toggleViewSetting('showLabels', 'toggleLabels');
                     break;
                     
                 case 'KeyM':
                     event.preventDefault();
-                    this.toggleViewSetting('realisticMode');
+                    this.toggleViewSetting('realisticMode', 'toggleRealisticMode');
                     break;
                     
                 case 'Escape':
                     event.preventDefault();
                     this.deselectPlanet();
                     break;
-                    
-                case 'Digit1':
-                case 'Digit2':
-                case 'Digit3':
-                case 'Digit4':
-                case 'Digit5':
-                case 'Digit6':
-                case 'Digit7':
-                case 'Digit8':
-                    event.preventDefault();
-                    const planetIndex = parseInt(event.code.slice(-1)) - 1;
-                    this.selectPlanetByIndex(planetIndex);
-                    break;
-                    
-                case 'Equal':
-                case 'NumpadAdd':
-                    event.preventDefault();
-                    this.adjustTimeScale(1.5);
-                    break;
-                    
-                case 'Minus':
-                case 'NumpadSubtract':
-                    event.preventDefault();
-                    this.adjustTimeScale(1 / 1.5);
-                    break;
             }
         });
     }
 
-    // הגדרת מאזיני אירועי אפליקציה
+    // הגדרת מאזיני אירועי אפליקציה - ללא app.on
     setupAppEventListeners() {
         if (!this.app) return;
         
-        // מאזין לשינויי מצב
-        this.app.on('stateChanged', (data) => {
-            this.updateUIFromState(data);
-        });
-        
-        // מאזין לבחירת כוכב לכת
-        this.app.on('planetSelected', (data) => {
-            this.updatePlanetSelection(data.planet);
-        });
-        
-        // מאזין לביטול בחירה
-        this.app.on('planetDeselected', () => {
-            this.updatePlanetSelection(null);
-        });
-        
-        // מאזין לעדכון FPS
-        this.app.on('fpsUpdate', (data) => {
-            this.updateFPSDisplay(data.fps);
-        });
+        // במקום app.on, נשתמש בחיפוש מידע ישיר מהapp
+        // זה יקרה ב-update loop
     }
 
     // יצירת רשימת כוכבי הלכת
     createPlanetList() {
-        if (!this.controls.planetList) return;
-        
-        // רשימת כוכבי הלכת בסדר
-        const planets = [
-            'mercury', 'venus', 'earth', 'mars', 
-            'jupiter', 'saturn', 'uranus', 'neptune'
-        ];
-        
-        // ניקוי תוכן קיים
-        this.controls.planetList.innerHTML = '';
-        
-        planets.forEach((planetName, index) => {
-            const planetData = PLANETS_DATA[planetName];
-            if (!planetData) return;
-            
-            const planetItem = this.createPlanetListItem(planetName, planetData, index);
-            this.controls.planetList.appendChild(planetItem);
-        });
-    }
-
-    // יצירת פריט ברשימת כוכבי הלכת
-    createPlanetListItem(planetName, planetData, index) {
-        const planetItem = document.createElement('div');
-        planetItem.className = 'planet-item';
-        planetItem.dataset.planet = planetName;
-        planetItem.dataset.index = index;
-        
-        // צבע כוכב הלכת
-        const planetColor = document.createElement('div');
-        planetColor.className = 'planet-color';
-        planetColor.style.backgroundColor = `#${planetData.color.toString(16).padStart(6, '0')}`;
-        
-        // שם כוכב הלכת
-        const planetNameElement = document.createElement('span');
-        planetNameElement.className = 'planet-name';
-        planetNameElement.textContent = planetData.name;
-        
-        // מרחק מהשמש
-        const planetDistance = document.createElement('span');
-        planetDistance.className = 'planet-distance';
-        const distanceInMillion = Math.round(planetData.distance / 1e6);
-        planetDistance.textContent = `${distanceInMillion} מיליון ק"מ`;
-        
-        // קיצור מקלדת
-        const keyboardShortcut = document.createElement('span');
-        keyboardShortcut.className = 'keyboard-shortcut';
-        keyboardShortcut.textContent = `${index + 1}`;
-        
-        // הרכבת האלמנט
-        planetItem.appendChild(planetColor);
-        planetItem.appendChild(planetNameElement);
-        planetItem.appendChild(planetDistance);
-        planetItem.appendChild(keyboardShortcut);
-        
-        // הוספת מאזין לחיצה
-        planetItem.addEventListener('click', () => {
-            this.selectPlanet(planetName);
-        });
-        
-        // הוספת hover effects
-        planetItem.addEventListener('mouseenter', () => {
-            this.highlightPlanet(planetName, true);
-        });
-        
-        planetItem.addEventListener('mouseleave', () => {
-            this.highlightPlanet(planetName, false);
-        });
-        
-        return planetItem;
-    }
-
-    // פעולות בקרה עיקריות
-    togglePlayPause() {
-        this.state.isPaused = !this.state.isPaused;
-        
-        if (this.app) {
-            this.app.togglePause();
+        if (!this.controls.planetList || this.controls.planetList.length === 0) {
+            return;
         }
-        
-        this.updatePlayPauseButton();
-        this.emitEvent('playPauseToggled', { isPaused: this.state.isPaused });
+
+        // הוספת מאזיני קליק לכל כפתור כוכב לכת
+        this.controls.planetList.forEach(button => {
+            const planetName = button.getAttribute('data-planet');
+            if (planetName) {
+                button.addEventListener('click', () => {
+                    this.selectPlanet(planetName);
+                });
+            }
+        });
+    }
+
+    // פונקציות פעולה
+    togglePlayPause() {
+        if (this.app && typeof this.app.togglePause === 'function') {
+            this.app.togglePause();
+            this.updatePlayPauseButton();
+        }
     }
 
     resetView() {
-        if (this.app) {
+        if (this.app && typeof this.app.resetView === 'function') {
             this.app.resetView();
         }
-        
-        // איפוס הגדרות ממשק
-        this.state.selectedPlanet = null;
-        this.state.timeScale = 1;
-        
-        this.updateUI();
-        this.emitEvent('viewReset');
     }
 
     setTimeScale(scale) {
-        this.state.timeScale = MathUtils.clamp(scale, 0, 1000);
-        
-        if (this.app) {
-            this.app.setTimeScale(this.state.timeScale);
+        this.state.timeScale = scale;
+        if (this.app && typeof this.app.setTimeScale === 'function') {
+            this.app.setTimeScale(scale);
         }
         
-        this.updateSpeedDisplay();
-        this.emitEvent('timeScaleChanged', { scale: this.state.timeScale });
-    }
-
-    adjustTimeScale(multiplier) {
-        const currentScale = this.state.timeScale;
-        const newScale = MathUtils.clamp(currentScale * multiplier, 0, 1000);
-        
-        this.setTimeScale(newScale);
-        
-        // עדכון slider
-        if (this.controls.timeSpeed) {
-            this.controls.timeSpeed.value = newScale;
+        // עדכון תצוגה
+        if (this.controls.speedValue) {
+            this.controls.speedValue.textContent = scale.toFixed(1) + 'x';
         }
     }
 
-    toggleViewSetting(setting) {
+    toggleViewSetting(setting, method) {
         this.state[setting] = !this.state[setting];
         
-        if (this.app) {
-            this.app.setViewMode(setting, this.state[setting]);
+        // קריאה למתודה באפליקציה
+        if (this.app && typeof this.app[method] === 'function') {
+            this.app[method]();
         }
         
-        this.updateViewButtons();
-        this.emitEvent('viewSettingChanged', { setting, value: this.state[setting] });
+        // עדכון כפתור
+        this.updateToggleButton(setting);
     }
 
     selectPlanet(planetName) {
         this.state.selectedPlanet = planetName;
         
-        if (this.app) {
-            this.app.focusOnPlanet(planetName);
+        if (this.app && typeof this.app.selectPlanet === 'function') {
+            this.app.selectPlanet(planetName);
         }
         
         this.updatePlanetSelection(planetName);
-        this.emitEvent('planetSelected', { planet: planetName });
-    }
-
-    selectPlanetByIndex(index) {
-        const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
-        if (index >= 0 && index < planets.length) {
-            this.selectPlanet(planets[index]);
-        }
     }
 
     deselectPlanet() {
         this.state.selectedPlanet = null;
         
-        if (this.app) {
+        if (this.app && typeof this.app.deselectPlanet === 'function') {
             this.app.deselectPlanet();
         }
         
         this.updatePlanetSelection(null);
-        this.emitEvent('planetDeselected');
     }
 
-    highlightPlanet(planetName, highlight) {
-        // הדגשת כוכב לכת בסצנה (אם מוגדר)
-        if (this.app && this.app.scene) {
-            // כאן אפשר להוסיף לוגיקה להדגשה ויזואלית
-        }
-        
-        this.emitEvent('planetHighlighted', { planet: planetName, highlighted: highlight });
-    }
-
-    // עדכוני ממשק
+    // עדכון ממשק
     updateUI() {
         this.updatePlayPauseButton();
-        this.updateSpeedDisplay();
-        this.updateViewButtons();
-        this.updatePlanetSelection(this.state.selectedPlanet);
+        this.updateToggleButtons();
+        this.updateTimeScale();
     }
 
     updatePlayPauseButton() {
-        if (!this.controls.playPause) return;
+        if (!this.controls.playPause || !this.app) return;
         
-        const button = this.controls.playPause;
-        
-        if (this.state.isPaused) {
-            button.innerHTML = '▶️ המשך';
-            button.classList.add('paused');
-        } else {
-            button.innerHTML = '⏸️ השהה';
-            button.classList.remove('paused');
-        }
+        const isPaused = this.app.state ? this.app.state.isPaused : false;
+        this.controls.playPause.textContent = isPaused ? '▶️ המשך' : '⏸️ השהה';
+        this.controls.playPause.title = isPaused ? 'המשך' : 'השהה';
     }
 
-    updateSpeedDisplay() {
-        if (!this.controls.speedValue) return;
-        
-        const scale = this.state.timeScale;
-        let displayText;
-        
-        if (scale === 0) {
-            displayText = 'מושהה';
-        } else if (scale < 1) {
-            displayText = `${(scale * 100).toFixed(0)}%`;
-        } else if (scale === 1) {
-            displayText = '1x';
-        } else if (scale < 10) {
-            displayText = `${scale.toFixed(1)}x`;
-        } else {
-            displayText = `${Math.round(scale)}x`;
-        }
-        
-        this.controls.speedValue.textContent = displayText;
-        
-        // עדכון slider
-        if (this.controls.timeSpeed) {
-            this.controls.timeSpeed.value = scale;
-        }
-    }
-
-    updateViewButtons() {
-        const buttons = [
-            { element: this.controls.viewOrbits, setting: 'showOrbits' },
-            { element: this.controls.viewLabels, setting: 'showLabels' },
-            { element: this.controls.viewRealistic, setting: 'realisticMode' }
+    updateToggleButtons() {
+        const toggleButtons = [
+            { element: this.controls.viewOrbits, state: 'showOrbits' },
+            { element: this.controls.viewLabels, state: 'showLabels' },
+            { element: this.controls.viewRealistic, state: 'realisticMode' }
         ];
         
-        buttons.forEach(({ element, setting }) => {
-            if (element) {
-                if (this.state[setting]) {
-                    element.classList.add('active');
-                } else {
-                    element.classList.remove('active');
-                }
-            }
+        toggleButtons.forEach(({ element, state }) => {
+            this.updateToggleButton(state);
         });
+    }
+
+    updateToggleButton(stateName) {
+        const buttonMap = {
+            'showOrbits': this.controls.viewOrbits,
+            'showLabels': this.controls.viewLabels,
+            'realisticMode': this.controls.viewRealistic
+        };
+        
+        const button = buttonMap[stateName];
+        if (button) {
+            const isActive = this.state[stateName];
+            button.classList.toggle('active', isActive);
+        }
+    }
+
+    updateTimeScale() {
+        if (this.controls.timeSpeed) {
+            this.controls.timeSpeed.value = this.state.timeScale;
+        }
+        
+        if (this.controls.speedValue) {
+            this.controls.speedValue.textContent = this.state.timeScale.toFixed(1) + 'x';
+        }
     }
 
     updatePlanetSelection(planetName) {
-        // עדכון רשימת כוכבי הלכת
-        const planetItems = this.controls.planetList?.querySelectorAll('.planet-item');
-        
-        if (planetItems) {
-            planetItems.forEach(item => {
-                item.classList.remove('active');
-                
-                if (planetName && item.dataset.planet === planetName) {
-                    item.classList.add('active');
-                    
-                    // גלילה לכוכב הלכת הנבחר
-                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            });
-        }
-        
-        this.state.selectedPlanet = planetName;
-    }
-
-    updateUIFromState(data) {
-        // עדכון מהמידע שמגיע מהאפליקציה
-        Object.assign(this.state, data);
-        this.updateUI();
-    }
-
-    updateFPSDisplay(fps) {
-        // הצגת FPS (אם יש אלמנט מתאים)
-        const fpsElement = document.getElementById('fpsDisplay');
-        if (fpsElement) {
-            fpsElement.textContent = `${fps} FPS`;
-            
-            // צביעה לפי ביצועים
-            if (fps >= 50) {
-                fpsElement.className = 'fps-good';
-            } else if (fps >= 30) {
-                fpsElement.className = 'fps-medium';
-            } else {
-                fpsElement.className = 'fps-poor';
-            }
-        }
-    }
-
-    // הצגת הודעות למשתמש
-    showNotification(message, type = 'info', duration = 3000) {
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <span class="notification-message">${message}</span>
-                <button class="notification-close">✕</button>
-            </div>
-        `;
-        
-        // הוספה לDOM
-        document.body.appendChild(notification);
-        
-        // אנימציה כניסה
-        setTimeout(() => {
-            notification.classList.add('notification-visible');
-        }, 10);
-        
-        // כפתור סגירה
-        const closeButton = notification.querySelector('.notification-close');
-        closeButton.addEventListener('click', () => {
-            this.hideNotification(notification);
-        });
-        
-        // סגירה אוטומטית
-        if (duration > 0) {
-            setTimeout(() => {
-                this.hideNotification(notification);
-            }, duration);
-        }
-        
-        return notification;
-    }
-
-    hideNotification(notification) {
-        notification.classList.remove('notification-visible');
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }
-
-    // הצגת טיפים ועזרה
-    showTip(tip, element = null) {
-        const tipElement = document.createElement('div');
-        tipElement.className = 'tooltip';
-        tipElement.textContent = tip;
-        
-        if (element) {
-            // מיקום יחסית לאלמנט
-            const rect = element.getBoundingClientRect();
-            tipElement.style.position = 'fixed';
-            tipElement.style.left = `${rect.left + rect.width / 2}px`;
-            tipElement.style.top = `${rect.bottom + 10}px`;
-            tipElement.style.transform = 'translateX(-50%)';
-        } else {
-            // מיקום במרכז המסך
-            tipElement.style.position = 'fixed';
-            tipElement.style.top = '50%';
-            tipElement.style.left = '50%';
-            tipElement.style.transform = 'translate(-50%, -50%)';
-        }
-        
-        document.body.appendChild(tipElement);
-        
-        // הסרה אוטומטית
-        setTimeout(() => {
-            if (tipElement.parentNode) {
-                tipElement.parentNode.removeChild(tipElement);
-            }
-        }, 2000);
-    }
-
-    // הגדרות מתקדמות
-    showAdvancedSettings() {
-        // פתיחת חלון הגדרות מתקדמות
-        const settingsPanel = document.createElement('div');
-        settingsPanel.className = 'advanced-settings-panel';
-        settingsPanel.innerHTML = `
-            <div class="settings-content">
-                <div class="settings-header">
-                    <h3>הגדרות מתקדמות</h3>
-                    <button class="close-settings">✕</button>
-                </div>
-                <div class="settings-body">
-                    <div class="setting-group">
-                        <label>איכות רנדור:</label>
-                        <select id="renderQuality">
-                            <option value="low">נמוכה</option>
-                            <option value="medium" selected>בינונית</option>
-                            <option value="high">גבוהה</option>
-                        </select>
-                    </div>
-                    <div class="setting-group">
-                        <label>צפיפות אסטרואידים:</label>
-                        <input type="range" id="asteroidDensity" min="0.1" max="2" step="0.1" value="1">
-                    </div>
-                    <div class="setting-group">
-                        <label>הצגת FPS:</label>
-                        <input type="checkbox" id="showFPS">
-                    </div>
-                </div>
-                <div class="settings-footer">
-                    <button class="btn" id="resetToDefaults">איפוס לברירת מחדל</button>
-                    <button class="btn primary" id="applySettings">החל</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(settingsPanel);
-        
-        // הוספת מאזינים
-        const closeButton = settingsPanel.querySelector('.close-settings');
-        closeButton.addEventListener('click', () => {
-            document.body.removeChild(settingsPanel);
-        });
-        
-        const applyButton = settingsPanel.querySelector('#applySettings');
-        applyButton.addEventListener('click', () => {
-            this.applyAdvancedSettings(settingsPanel);
-            document.body.removeChild(settingsPanel);
-        });
-    }
-
-    applyAdvancedSettings(settingsPanel) {
-        const renderQuality = settingsPanel.querySelector('#renderQuality').value;
-        const asteroidDensity = parseFloat(settingsPanel.querySelector('#asteroidDensity').value);
-        const showFPS = settingsPanel.querySelector('#showFPS').checked;
-        
-        // החלת ההגדרות
-        if (this.app) {
-            if (this.app.scene && this.app.scene.setRenderQuality) {
-                this.app.scene.setRenderQuality(renderQuality);
-            }
-            
-            if (this.app.asteroidBelt && this.app.asteroidBelt.setDensity) {
-                this.app.asteroidBelt.setDensity(asteroidDensity);
-            }
-        }
-        
-        // הצגת/הסתרת FPS
-        const fpsElement = document.getElementById('fpsDisplay');
-        if (fpsElement) {
-            fpsElement.style.display = showFPS ? 'block' : 'none';
-        }
-        
-        this.showNotification('הגדרות נשמרו בהצלחה!', 'success');
-    }
-
-    // מערכת אירועים פנימית
-    emitEvent(eventType, data = {}) {
-        const event = new CustomEvent(eventType, { detail: data });
-        document.dispatchEvent(event);
-        
-        // שליחה גם למאזינים פנימיים
-        if (this.eventListeners.has(eventType)) {
-            this.eventListeners.get(eventType).forEach(callback => {
-                callback(data);
+        // עדכון כפתורי כוכבי הלכת
+        if (this.controls.planetList) {
+            this.controls.planetList.forEach(button => {
+                const buttonPlanet = button.getAttribute('data-planet');
+                button.classList.toggle('selected', buttonPlanet === planetName);
             });
         }
     }
 
-    addEventListener(eventType, callback) {
-        if (!this.eventListeners.has(eventType)) {
-            this.eventListeners.set(eventType, []);
-        }
-        this.eventListeners.get(eventType).push(callback);
-    }
-
-    removeEventListener(eventType, callback) {
-        if (this.eventListeners.has(eventType)) {
-            const listeners = this.eventListeners.get(eventType);
-            const index = listeners.indexOf(callback);
-            if (index > -1) {
-                listeners.splice(index, 1);
+    // עדכון מתמיד - קריאה מlucky render loop
+    update(deltaTime) {
+        // סנכרון מצב עם האפליקציה
+        if (this.app && this.app.state) {
+            const appState = this.app.state;
+            
+            // בדיקה אם צריך לעדכן UI
+            if (this.state.isPaused !== appState.isPaused) {
+                this.state.isPaused = appState.isPaused;
+                this.updatePlayPauseButton();
+            }
+            
+            if (this.state.selectedPlanet !== appState.selectedPlanet) {
+                this.state.selectedPlanet = appState.selectedPlanet;
+                this.updatePlanetSelection(appState.selectedPlanet);
             }
         }
     }
 
-    // שמירה וטעינה של הגדרות
+    // שמירת הגדרות
     saveSettings() {
-        const settings = {
-            timeScale: this.state.timeScale,
-            showOrbits: this.state.showOrbits,
-            showLabels: this.state.showLabels,
-            realisticMode: this.state.realisticMode,
-            version: '1.0'
-        };
-        
         try {
-            const settingsData = JSON.stringify(settings);
-            document.cookie = `solarSystemSettings=${settingsData}; expires=${new Date(Date.now() + 365*24*60*60*1000).toUTCString()}; path=/`;
+            const settings = {
+                timeScale: this.state.timeScale,
+                showOrbits: this.state.showOrbits,
+                showLabels: this.state.showLabels,
+                realisticMode: this.state.realisticMode
+            };
+            
+            localStorage.setItem('solarSystemSettings', JSON.stringify(settings));
             return true;
         } catch (error) {
             console.warn('Failed to save settings:', error);
@@ -715,14 +371,12 @@ class UIControls {
         }
     }
 
+    // טעינת הגדרות
     loadSettings() {
         try {
-            const cookies = document.cookie.split(';');
-            const settingsCookie = cookies.find(cookie => cookie.trim().startsWith('solarSystemSettings='));
-            
-            if (settingsCookie) {
-                const settingsData = settingsCookie.split('=')[1];
-                const settings = JSON.parse(decodeURIComponent(settingsData));
+            const saved = localStorage.getItem('solarSystemSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
                 
                 // החלת ההגדרות
                 Object.assign(this.state, settings);
@@ -735,12 +389,6 @@ class UIControls {
         }
         
         return false;
-    }
-
-    // עדכון מתמיד
-    update(deltaTime) {
-        // עדכונים שצריכים להתבצע בכל פריים
-        // (כרגע אין צורך באף עדכון)
     }
 
     // קבלת מידע על מצב הממשק
