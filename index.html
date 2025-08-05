@@ -123,9 +123,9 @@
     <!-- Load Three.js FIRST -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
-    <!-- Fallback OrbitControls implementation -->
+    <!-- Enhanced OrbitControls fallback with proper mobile zoom -->
     <script>
-        // Custom OrbitControls fallback for when CDN fails
+        // Advanced OrbitControls fallback with mobile pinch zoom
         window.createFallbackOrbitControls = function(camera, domElement) {
             const controls = {
                 enabled: true,
@@ -134,6 +134,10 @@
                 enableZoom: true,
                 enableRotate: true,
                 enablePan: true,
+                
+                // Zoom limits
+                minDistance: 10,
+                maxDistance: 2000,
                 
                 // Internal state
                 _spherical: new THREE.Spherical(),
@@ -149,9 +153,6 @@
                     const quat = new THREE.Quaternion().setFromUnitVectors(camera.up, new THREE.Vector3(0, 1, 0));
                     const quatInverse = quat.clone().invert();
                     
-                    const lastPosition = new THREE.Vector3();
-                    const lastQuaternion = new THREE.Quaternion();
-                    
                     offset.copy(camera.position).sub(this.target);
                     offset.applyQuaternion(quat);
                     
@@ -164,7 +165,9 @@
                         this._sphericalDelta.phi *= (1 - this.dampingFactor);
                     }
                     
+                    // Apply zoom with limits
                     this._spherical.radius *= this._scale;
+                    this._spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this._spherical.radius));
                     this._scale = 1;
                     
                     offset.setFromSpherical(this._spherical);
@@ -177,12 +180,21 @@
                 }
             };
             
-            // Mouse and touch event handlers
+            // Enhanced mouse and touch handling
             let isMouseDown = false;
             let mouseButton = null;
             let lastMouseX = 0, lastMouseY = 0;
             
+            // Touch state for pinch zoom
+            let touches = [];
+            let lastTouchDistance = 0;
+            let isRotating = false;
+            let isPinching = false;
+            
+            // Mouse events
             domElement.addEventListener('mousedown', (event) => {
+                if (!controls.enabled) return;
+                
                 isMouseDown = true;
                 mouseButton = event.button;
                 lastMouseX = event.clientX;
@@ -196,7 +208,7 @@
                 const deltaX = event.clientX - lastMouseX;
                 const deltaY = event.clientY - lastMouseY;
                 
-                if (mouseButton === 0 && controls.enableRotate) { // Left button - rotate
+                if (mouseButton === 0 && controls.enableRotate) {
                     controls._sphericalDelta.theta -= 2 * Math.PI * deltaX / domElement.clientHeight;
                     controls._sphericalDelta.phi -= 2 * Math.PI * deltaY / domElement.clientHeight;
                 }
@@ -224,32 +236,81 @@
                 event.preventDefault();
             });
             
-            // Touch events for mobile
-            let touchStart = {};
-            
+            // Enhanced touch events with pinch zoom
             domElement.addEventListener('touchstart', (event) => {
-                if (event.touches.length === 1) {
-                    touchStart = {
-                        x: event.touches[0].pageX,
-                        y: event.touches[0].pageY
-                    };
+                if (!controls.enabled) return;
+                
+                touches = Array.from(event.touches);
+                
+                if (touches.length === 1) {
+                    // Single touch - rotation
+                    isRotating = true;
+                    isPinching = false;
+                    lastMouseX = touches[0].pageX;
+                    lastMouseY = touches[0].pageY;
+                } else if (touches.length === 2) {
+                    // Two touches - pinch zoom
+                    isRotating = false;
+                    isPinching = true;
+                    
+                    const dx = touches[0].pageX - touches[1].pageX;
+                    const dy = touches[0].pageY - touches[1].pageY;
+                    lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
                 }
+                
                 event.preventDefault();
             });
             
             domElement.addEventListener('touchmove', (event) => {
                 if (!controls.enabled) return;
                 
-                if (event.touches.length === 1 && controls.enableRotate) {
-                    const deltaX = event.touches[0].pageX - touchStart.x;
-                    const deltaY = event.touches[0].pageY - touchStart.y;
+                touches = Array.from(event.touches);
+                
+                if (touches.length === 1 && isRotating && controls.enableRotate) {
+                    // Single touch rotation
+                    const deltaX = touches[0].pageX - lastMouseX;
+                    const deltaY = touches[0].pageY - lastMouseY;
                     
                     controls._sphericalDelta.theta -= 2 * Math.PI * deltaX / domElement.clientHeight;
                     controls._sphericalDelta.phi -= 2 * Math.PI * deltaY / domElement.clientHeight;
                     
-                    touchStart.x = event.touches[0].pageX;
-                    touchStart.y = event.touches[0].pageY;
+                    lastMouseX = touches[0].pageX;
+                    lastMouseY = touches[0].pageY;
+                    
+                } else if (touches.length === 2 && isPinching && controls.enableZoom) {
+                    // Pinch zoom
+                    const dx = touches[0].pageX - touches[1].pageX;
+                    const dy = touches[0].pageY - touches[1].pageY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (lastTouchDistance > 0) {
+                        const scale = distance / lastTouchDistance;
+                        controls._scale /= scale;
+                        controls._zoomChanged = true;
+                    }
+                    
+                    lastTouchDistance = distance;
                 }
+                
+                event.preventDefault();
+            });
+            
+            domElement.addEventListener('touchend', (event) => {
+                touches = Array.from(event.touches);
+                
+                if (touches.length === 0) {
+                    isRotating = false;
+                    isPinching = false;
+                    lastTouchDistance = 0;
+                } else if (touches.length === 1) {
+                    // Switch from pinch to rotate
+                    isPinching = false;
+                    isRotating = true;
+                    lastMouseX = touches[0].pageX;
+                    lastMouseY = touches[0].pageY;
+                    lastTouchDistance = 0;
+                }
+                
                 event.preventDefault();
             });
             
