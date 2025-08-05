@@ -1,4 +1,4 @@
-// מערכת השמש - אפליקציה משופרת עם תיקוני PWA
+// מערכת השמש - אפליקציה משופרת עם תיקוני PWA מלאים
 class ImprovedSolarSystemApp {
     constructor() {
         this.isInitialized = false;
@@ -523,22 +523,22 @@ class ImprovedSolarSystemApp {
         this.updateLoadingProgress('חגורת אסטרואידים נוצרה', 90);
     }
 
-    // יצירת השמש
-     async createSun() {
-    const sunGeometry = new THREE.SphereGeometry(20, 32, 32);
-    // תיקון: השתמש ב-MeshStandardMaterial במקום MeshBasicMaterial
-    const sunMaterial = new THREE.MeshStandardMaterial({
-        color: 0xffd700,
-        emissive: 0xff8800,
-        emissiveIntensity: 0.3,
-        roughness: 0.2,
-        metalness: 0.1
-    });
-    
-    this.sun = new THREE.Mesh(sunGeometry, sunMaterial);
-    this.sun.name = 'sun';
-    this.scene.add(this.sun);
-}
+    // יצירת השמש - תיקון
+    async createSun() {
+        const sunGeometry = new THREE.SphereGeometry(20, 32, 32);
+        // תיקון: השתמש ב-MeshStandardMaterial במקום MeshBasicMaterial
+        const sunMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffd700,
+            emissive: 0xff8800,
+            emissiveIntensity: 0.3,
+            roughness: 0.2,
+            metalness: 0.1
+        });
+        
+        this.sun = new THREE.Mesh(sunGeometry, sunMaterial);
+        this.sun.name = 'sun';
+        this.scene.add(this.sun);
+    }
 
     // יצירת כוכבי הלכת
     async createPlanets() {
@@ -660,7 +660,7 @@ class ImprovedSolarSystemApp {
         this.setupWindowEvents();
     }
 
-    // התחלת לולאת רנדור
+    // התחלת לולאת רנדור - מתוקן
     startRenderLoop() {
         const animate = (currentTime) => {
             if (!this.isInitialized) return;
@@ -668,9 +668,15 @@ class ImprovedSolarSystemApp {
             // עדכון ביצועים
             this.updatePerformance(currentTime);
             
-            // עדכון בקרות
+            // עדכון בקרות מצלמה
             if (this.controls && this.controls.update) {
                 this.controls.update();
+            }
+            
+            // עדכון בקרות UI - תיקון חשוב
+            if (this.ui && this.ui.update) {
+                const deltaTime = currentTime - this.performance.lastTime;
+                this.ui.update(deltaTime);
             }
             
             // עדכון אנימציות
@@ -1000,6 +1006,37 @@ class ImprovedSolarSystemApp {
         if (loading) loading.style.display = 'none';
     }
 
+    // הצגת הודעות
+    showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196f3'};
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            z-index: 1000;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            animation: slideInRight 0.3s ease-out;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.parentElement.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+
     // אתחול מנוע פיזיקה
     initPhysicsEngine() {
         // placeholder לעתיד
@@ -1232,6 +1269,20 @@ class ImprovedInfoPanel {
         }
     }
 }
+
+// הוספת CSS לאנימציות הודעות
+const notificationStyles = document.createElement('style');
+notificationStyles.textContent = `
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(notificationStyles);
 
 // ייצוא לשימוש במודולים אחרים
 if (typeof module !== 'undefined' && module.exports) {
