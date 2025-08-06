@@ -1,4 +1,4 @@
-// פאנל מידע על כוכבי הלכת
+// פאנל מידע על כוכבי הלכת - מתוקן
 class InfoPanel {
     constructor() {
         this.app = null;
@@ -19,7 +19,12 @@ class InfoPanel {
         // אנימציות
         this.animations = {
             showHide: null,
-            planetRotation: null
+            planetRotation: {
+                angle: 0,
+                speed: 0.01,
+                active: false
+            },
+            planetElement: null
         };
         
         // הגדרות
@@ -40,17 +45,17 @@ class InfoPanel {
             // איתור אלמנטים בDOM
             this.findDOMElements();
             
-            // הגדרת מאזיני אירועים
+            // הגדרת מאזיני אירועים - מתוקן
             this.setupEventListeners();
             
             // הכנת אנימציות
             this.setupAnimations();
             
             this.isInitialized = true;
-            console.log('Info Panel initialized successfully');
+            console.log('✅ Info Panel initialized successfully');
             
         } catch (error) {
-            console.error('Failed to initialize Info Panel:', error);
+            console.error('❌ Failed to initialize Info Panel:', error);
             throw error;
         }
     }
@@ -73,11 +78,11 @@ class InfoPanel {
         });
         
         if (!this.elements.panel) {
-            throw new Error('Info panel element not found');
+            console.warn('Info panel element not found - will create dynamically if needed');
         }
     }
 
-    // הגדרת מאזיני אירועים
+    // **תיקון עיקרי: הגדרת מאזיני אירועים ללא app.on()**
     setupEventListeners() {
         // כפתור סגירה
         if (this.elements.closeButton) {
@@ -102,22 +107,25 @@ class InfoPanel {
             }
         });
         
-        // אירועי אפליקציה
-        if (this.app) {
-            this.app.on('planetSelected', (data) => {
-                this.showPlanetInfo(data.planet);
-            });
-            
-            this.app.on('planetDeselected', () => {
-                this.hide();
-            });
-        }
+        // **תיקון: הוסרו שורות this.app.on() שגרמו לשגיאה**
+        // במקום להסתמך על event emitter, נשתמש בפונקציות ישירות
+    }
+
+    // **הוספה: פונקציה שתיקרא כשכוכב לכת נבחר**
+    onPlanetSelected(planetName) {
+        this.showPlanetInfo(planetName);
+    }
+
+    // **הוספה: פונקציה שתיקרא כשכוכב לכת מבוטל**
+    onPlanetDeselected() {
+        this.hide();
     }
 
     // הכנת אנימציות
     setupAnimations() {
         // אנימציית סיבוב כוכב הלכת בתצוגה מקדימה
         if (this.elements.planetPreview) {
+            this.animations.planetElement = this.elements.planetPreview;
             this.animations.planetRotation = {
                 angle: 0,
                 speed: 0.01,
@@ -128,119 +136,49 @@ class InfoPanel {
 
     // הצגת מידע על כוכב לכת
     showPlanetInfo(planetName) {
+        if (typeof PLANETS_DATA === 'undefined') {
+            console.error('PLANETS_DATA not found');
+            return;
+        }
+        
         const planetData = PLANETS_DATA[planetName];
         if (!planetData || !this.elements.panel) return;
         
         this.currentPlanet = planetName;
         
-        // עדכון תוכן הפאנל
-        this.updatePlanetContent(planetData);
+        // עדכון כותרת
+        if (this.elements.planetName) {
+            this.elements.planetName.textContent = planetData.name || planetName;
+        }
+        
+        // עדכון נתונים
+        this.updatePlanetData(planetData);
+        
+        // עדכון תיאור
+        this.updateDescription(planetData);
         
         // הצגת הפאנל
         this.show();
         
-        // התחלת אנימציה
-        this.startPlanetAnimation();
+        console.log(`Displaying info for: ${planetName}`);
     }
 
-    // עדכון תוכן הפאנל
-    updatePlanetContent(planetData) {
-        // שם כוכב הלכת
-        if (this.elements.planetName) {
-            this.elements.planetName.textContent = planetData.name;
-        }
-        
-        // תצוגה מקדימה של כוכב הלכת
-        this.updatePlanetPreview(planetData);
-        
-        // נתונים מספריים
-        this.updatePlanetData(planetData);
-        
-        // תיאור
-        if (this.elements.descriptionElement) {
-            this.elements.descriptionElement.textContent = planetData.description;
-        }
-        
-        // הוספת מחלקת CSS לעיצוב ספציפי לכוכב הלכת
-        if (this.elements.panel) {
-            // הסרת מחלקות קודמות
-            this.elements.panel.className = this.elements.panel.className.replace(/planet-\w+/g, '');
-            this.elements.panel.classList.add(`planet-${this.currentPlanet}`);
-        }
-    }
-
-    // עדכון תצוגה מקדימה
-    updatePlanetPreview(planetData) {
-        if (!this.elements.planetPreview) return;
-        
-        // ניקוי תוכן קיים
-        this.elements.planetPreview.innerHTML = '';
-        
-        // יצירת אלמנט כוכב הלכת
-        const planetElement = document.createElement('div');
-        planetElement.className = 'planet-sphere';
-        
-        // צבע רקע
-        const color = `#${planetData.color.toString(16).padStart(6, '0')}`;
-        planetElement.style.background = `radial-gradient(circle at 30% 30%, ${color}dd, ${color}88, ${color}44)`;
-        
-        // אפקטים מיוחדים לכוכבי לכת ספציפיים
-        this.addSpecialEffects(planetElement, this.currentPlanet);
-        
-        this.elements.planetPreview.appendChild(planetElement);
-        
-        // שמירת רפרנס לאנימציה
-        this.animations.planetElement = planetElement;
-    }
-
-    // הוספת אפקטים מיוחדים
-    addSpecialEffects(planetElement, planetName) {
-        switch (planetName) {
-            case 'saturn':
-                // טבעות שבתאי
-                const rings = document.createElement('div');
-                rings.className = 'saturn-rings';
-                planetElement.appendChild(rings);
-                break;
-                
-            case 'earth':
-                // עננים כדור הארץ
-                const clouds = document.createElement('div');
-                clouds.className = 'earth-clouds';
-                planetElement.appendChild(clouds);
-                break;
-                
-            case 'jupiter':
-                // רצועות צדק
-                const bands = document.createElement('div');
-                bands.className = 'jupiter-bands';
-                planetElement.appendChild(bands);
-                break;
-                
-            case 'sun':
-                // קורונה השמש
-                const corona = document.createElement('div');
-                corona.className = 'sun-corona';
-                planetElement.appendChild(corona);
-                break;
-        }
-    }
-
-    // עדכון נתונים מספריים
+    // עדכון נתוני כוכב הלכת
     updatePlanetData(planetData) {
+        // פונקציות עיצוב נתונים
         const dataFormatters = {
-            distance: (value) => this.formatDistance(value),
-            diameter: (value) => this.formatDiameter(value),
-            mass: (value) => this.formatMass(value),
-            period: (value) => this.formatPeriod(value),
-            temperature: (value) => this.formatTemperature(value)
+            distance: (dist) => this.formatDistance(dist),
+            diameter: (radius) => this.formatDiameter(radius * 2),
+            mass: (mass) => this.formatMass(mass),
+            period: (period) => this.formatPeriod(period),
+            temperature: (temp) => this.formatTemperature(temp)
         };
         
-        // עדכון כל שדה נתונים
+        // עדכון כל אלמנט נתונים
         this.elements.dataElements.forEach((element, dataType) => {
             let value;
             
-            switch (dataType) {
+            switch(dataType) {
                 case 'distance':
                     value = planetData.distance;
                     break;
@@ -319,68 +257,13 @@ class InfoPanel {
         const densityEl = advancedSection.querySelector('#density');
         const moonsEl = advancedSection.querySelector('#moons');
         
-        if (gravityEl) gravityEl.textContent = gravity ? `${gravity.toFixed(1)} מ/ש²` : 'לא זמין';
-        if (escapeVelEl) escapeVelEl.textContent = escapeVel ? `${(escapeVel/1000).toFixed(1)} קמ/ש` : 'לא זמין';
-        if (densityEl) densityEl.textContent = density ? `${density.toFixed(2)} ג/סמ³` : 'לא זמין';
-        if (moonsEl) moonsEl.textContent = planetData.moons || '0';
+        if (gravityEl) gravityEl.textContent = gravity ? `${gravity.toFixed(1)} m/s²` : 'לא זמין';
+        if (escapeVelEl) escapeVelEl.textContent = escapeVel ? `${(escapeVel/1000).toFixed(1)} km/s` : 'לא זמין';
+        if (densityEl) densityEl.textContent = density ? `${density.toFixed(2)} g/cm³` : 'לא זמין';
+        if (moonsEl) moonsEl.textContent = planetData.moons || planetData.moonCount || '0';
     }
 
-    // פונקציות עיצוב נתונים
-    formatDistance(distance) {
-        if (!distance) return 'לא זמין';
-        const distanceInMillion = distance / 1e6;
-        return `${distanceInMillion.toFixed(1)} מיליון ק"מ`;
-    }
-
-    formatDiameter(diameter) {
-        if (!diameter) return 'לא זמין';
-        if (diameter >= 1000) {
-            return `${(diameter / 1000).toFixed(1)} אלף ק"מ`;
-        }
-        return `${diameter.toLocaleString()} ק"מ`;
-    }
-
-    formatMass(mass) {
-        if (!mass) return 'לא זמין';
-        const earthMass = 5.972e24;
-        const ratio = mass / earthMass;
-        
-        if (ratio > 1) {
-            return `${ratio.toFixed(2)} × מסת כדור הארץ`;
-        } else {
-            return `${(ratio * 100).toFixed(1)}% ממסת כדור הארץ`;
-        }
-    }
-
-    formatPeriod(period) {
-        if (!period) return 'לא זמין';
-        
-        if (period < 1) {
-            const hours = period * 24;
-            return `${hours.toFixed(1)} שעות`;
-        } else if (period < 365) {
-            return `${Math.round(period)} ימים`;
-        } else {
-            const years = period / 365.25;
-            return `${years.toFixed(1)} שנים`;
-        }
-    }
-
-    formatTemperature(temp) {
-        if (!temp) return 'לא זמין';
-        
-        if (typeof temp === 'object') {
-            if (temp.avg) {
-                return `${temp.avg}°C`;
-            } else if (temp.min !== undefined && temp.max !== undefined) {
-                return `${temp.min}°C עד ${temp.max}°C`;
-            }
-        }
-        
-        return `${temp}°C`;
-    }
-
-    // חישובים מתקדמים
+    // חישוב כבידת פני השטח
     calculateSurfaceGravity(planetData) {
         if (!planetData.mass || !planetData.radius) return null;
         
@@ -391,6 +274,7 @@ class InfoPanel {
         return (G * mass) / (radius * radius);
     }
 
+    // חישוב מהירות בריחה
     calculateEscapeVelocity(planetData) {
         if (!planetData.mass || !planetData.radius) return null;
         
@@ -401,11 +285,178 @@ class InfoPanel {
         return Math.sqrt(2 * G * mass / radius);
     }
 
+    // חישוב צפיפות
     calculateDensity(planetData) {
         if (!planetData.mass || !planetData.radius) return null;
         
         const volume = (4/3) * Math.PI * Math.pow(planetData.radius * 1000, 3);
         return (planetData.mass / volume) / 1000; // המרה לג/סמ³
+    }
+
+    // עדכון תיאור
+    updateDescription(planetData) {
+        if (this.elements.descriptionElement && planetData.description) {
+            this.elements.descriptionElement.textContent = planetData.description;
+        }
+    }
+
+    // פונקציות עיצוב נתונים
+    formatDistance(distance) {
+        if (distance < 1) {
+            return `${(distance * 1000).toFixed(0)} אלף ק"מ`;
+        } else {
+            return `${distance.toFixed(1)} מיליון ק"מ`;
+        }
+    }
+
+    formatDiameter(diameter) {
+        return `${diameter.toLocaleString()} ק"מ`;
+    }
+
+    formatMass(mass) {
+        const earthMass = 5.972e24;
+        const relativeToEarth = mass / earthMass;
+        
+        if (relativeToEarth < 0.1) {
+            return `${relativeToEarth.toFixed(3)} מסות כדור הארץ`;
+        } else {
+            return `${relativeToEarth.toFixed(1)} מסות כדור הארץ`;
+        }
+    }
+
+    formatPeriod(period) {
+        if (period < 1) {
+            return `${(period * 365).toFixed(0)} ימים`;
+        } else {
+            return `${period.toFixed(1)} שנות כדור הארץ`;
+        }
+    }
+
+    formatTemperature(temp) {
+        if (typeof temp === 'number') {
+            return `${temp}°C`;
+        } else if (typeof temp === 'object') {
+            if (temp.avg !== undefined) return `${temp.avg}°C ממוצע`;
+            if (temp.surface !== undefined) return `${temp.surface}°C פני השטח`;
+            if (temp.min !== undefined && temp.max !== undefined) {
+                return `${temp.min}°C עד ${temp.max}°C`;
+            }
+        }
+        return 'לא ידוע';
+    }
+
+    // הוספת עובדות מעניינות
+    addInterestingFacts(planetData) {
+        if (!planetData.facts || !Array.isArray(planetData.facts)) return;
+        
+        let factsSection = this.elements.panel.querySelector('.interesting-facts');
+        
+        if (!factsSection) {
+            factsSection = document.createElement('div');
+            factsSection.className = 'interesting-facts';
+            factsSection.innerHTML = '<h4>עובדות מעניינות</h4><ul class="facts-list"></ul>';
+            
+            const infoContent = this.elements.panel.querySelector('.info-content');
+            if (infoContent) {
+                infoContent.appendChild(factsSection);
+            }
+        }
+        
+        const factsList = factsSection.querySelector('.facts-list');
+        factsList.innerHTML = '';
+        
+        planetData.facts.forEach(fact => {
+            const factItem = document.createElement('li');
+            factItem.textContent = fact;
+            factsList.appendChild(factItem);
+        });
+    }
+
+    // הוספת השוואה לכדור הארץ
+    addEarthComparison(planetData) {
+        if (planetData.name === 'earth') return; // לא להשוות כדור הארץ לעצמו
+        
+        let comparisonSection = this.elements.panel.querySelector('.earth-comparison');
+        
+        if (!comparisonSection) {
+            comparisonSection = document.createElement('div');
+            comparisonSection.className = 'earth-comparison';
+            comparisonSection.innerHTML = '<h4>השוואה לכדור הארץ</h4><div class="comparison-grid"></div>';
+            
+            const infoContent = this.elements.panel.querySelector('.info-content');
+            if (infoContent) {
+                infoContent.appendChild(comparisonSection);
+            }
+        }
+        
+        const comparisonGrid = comparisonSection.querySelector('.comparison-grid');
+        comparisonGrid.innerHTML = '';
+        
+        // נתוני כדור הארץ להשוואה
+        const earthData = PLANETS_DATA.earth;
+        if (!earthData) return;
+        
+        // חישוב יחסים
+        const sizeRatio = planetData.radius / earthData.radius;
+        const massRatio = planetData.mass / earthData.mass;
+        const distanceRatio = planetData.distance / earthData.distance;
+        
+        // יצירת פריטי השוואה
+        const comparisons = [
+            {
+                label: 'גודל יחסי:',
+                value: sizeRatio > 1 ? 
+                    `${sizeRatio.toFixed(1)} פעמים יותר גדול` : 
+                    `${(1/sizeRatio).toFixed(1)} פעמים יותר קטן`
+            },
+            {
+                label: 'מסה יחסית:',
+                value: massRatio > 1 ? 
+                    `${massRatio.toFixed(1)} פעמים יותר כבד` : 
+                    `${(1/massRatio).toFixed(1)} פעמים יותר קל`
+            },
+            {
+                label: 'מרחק יחסי:',
+                value: distanceRatio > 1 ? 
+                    `${distanceRatio.toFixed(1)} פעמים יותר רחוק` : 
+                    `${(1/distanceRatio).toFixed(1)} פעמים יותר קרוב`
+            }
+        ];
+        
+        comparisons.forEach(comp => {
+            const compItem = document.createElement('div');
+            compItem.className = 'comparison-item';
+            compItem.innerHTML = `<span class="label">${comp.label}</span> <span class="value">${comp.value}</span>`;
+            comparisonGrid.appendChild(compItem);
+        });
+    }
+
+    // הוספת מידע על ירחים
+    addMoonsInfo(planetData) {
+        if (!planetData.majorMoons || planetData.majorMoons.length === 0) return;
+        
+        let moonsSection = this.elements.panel.querySelector('.moons-info');
+        
+        if (!moonsSection) {
+            moonsSection = document.createElement('div');
+            moonsSection.className = 'moons-info';
+            moonsSection.innerHTML = '<h4>ירחים עיקריים</h4><div class="moons-list"></div>';
+            
+            const infoContent = this.elements.panel.querySelector('.info-content');
+            if (infoContent) {
+                infoContent.appendChild(moonsSection);
+            }
+        }
+        
+        const moonsList = moonsSection.querySelector('.moons-list');
+        moonsList.innerHTML = '';
+        
+        planetData.majorMoons.forEach(moonName => {
+            const moonItem = document.createElement('div');
+            moonItem.className = 'moon-item';
+            moonItem.textContent = moonName;
+            moonsList.appendChild(moonItem);
+        });
     }
 
     // הצגת הפאנל
@@ -437,8 +488,8 @@ class InfoPanel {
         // ניקוי מצב
         this.currentPlanet = null;
         
-        // הודעה לאפליקציה
-        if (this.app) {
+        // **תיקון: הודעה ישירה לאפליקציה במקום event emitter**
+        if (this.app && typeof this.app.deselectPlanet === 'function') {
             this.app.deselectPlanet();
         }
     }
@@ -502,126 +553,6 @@ class InfoPanel {
         requestAnimationFrame(() => this.updatePlanetAnimation());
     }
 
-    // הוספת עובדות מעניינות
-    addInterestingFacts(planetData) {
-        if (!planetData.facts || !Array.isArray(planetData.facts)) return;
-        
-        let factsSection = this.elements.panel.querySelector('.interesting-facts');
-        
-        if (!factsSection) {
-            factsSection = document.createElement('div');
-            factsSection.className = 'interesting-facts';
-            factsSection.innerHTML = '<h4>עובדות מעניינות</h4><ul class="facts-list"></ul>';
-            
-            const infoContent = this.elements.panel.querySelector('.info-content');
-            if (infoContent) {
-                infoContent.appendChild(factsSection);
-            }
-        }
-        
-        const factsList = factsSection.querySelector('.facts-list');
-        factsList.innerHTML = '';
-        
-        planetData.facts.forEach(fact => {
-            const factItem = document.createElement('li');
-            factItem.textContent = fact;
-            factsList.appendChild(factItem);
-        });
-    }
-
-    // הוספת השוואה לכדור הארץ
-    addEarthComparison(planetData) {
-        if (this.currentPlanet === 'earth') return; // לא להשוות כדור הארץ לעצמו
-        
-        const earthData = PLANETS_DATA.earth;
-        if (!earthData) return;
-        
-        let comparisonSection = this.elements.panel.querySelector('.earth-comparison');
-        
-        if (!comparisonSection) {
-            comparisonSection = document.createElement('div');
-            comparisonSection.className = 'earth-comparison';
-            comparisonSection.innerHTML = `
-                <h4>השוואה לכדור הארץ</h4>
-                <div class="comparison-grid">
-                    <div class="comparison-item">
-                        <span class="label">גודל:</span>
-                        <span class="value" id="sizeComparison">-</span>
-                    </div>
-                    <div class="comparison-item">
-                        <span class="label">מסה:</span>
-                        <span class="value" id="massComparison">-</span>
-                    </div>
-                    <div class="comparison-item">
-                        <span class="label">מרחק מהשמש:</span>
-                        <span class="value" id="distanceComparison">-</span>
-                    </div>
-                </div>
-            `;
-            
-            const infoContent = this.elements.panel.querySelector('.info-content');
-            if (infoContent) {
-                infoContent.appendChild(comparisonSection);
-            }
-        }
-        
-        // חישוב השוואות
-        const sizeRatio = planetData.radius / earthData.radius;
-        const massRatio = planetData.mass / earthData.mass;
-        const distanceRatio = planetData.distance / earthData.distance;
-        
-        // עדכון ערכים
-        const sizeEl = comparisonSection.querySelector('#sizeComparison');
-        const massEl = comparisonSection.querySelector('#massComparison');
-        const distanceEl = comparisonSection.querySelector('#distanceComparison');
-        
-        if (sizeEl) {
-            sizeEl.textContent = sizeRatio > 1 ? 
-                `${sizeRatio.toFixed(1)} פעמים יותר גדול` : 
-                `${(1/sizeRatio).toFixed(1)} פעמים יותר קטן`;
-        }
-        
-        if (massEl) {
-            massEl.textContent = massRatio > 1 ? 
-                `${massRatio.toFixed(1)} פעמים יותר כבד` : 
-                `${(1/massRatio).toFixed(1)} פעמים יותר קל`;
-        }
-        
-        if (distanceEl) {
-            distanceEl.textContent = distanceRatio > 1 ? 
-                `${distanceRatio.toFixed(1)} פעמים יותר רחוק` : 
-                `${(1/distanceRatio).toFixed(1)} פעמים יותר קרוב`;
-        }
-    }
-
-    // הוספת מידע על ירחים
-    addMoonsInfo(planetData) {
-        if (!planetData.majorMoons || planetData.majorMoons.length === 0) return;
-        
-        let moonsSection = this.elements.panel.querySelector('.moons-info');
-        
-        if (!moonsSection) {
-            moonsSection = document.createElement('div');
-            moonsSection.className = 'moons-info';
-            moonsSection.innerHTML = '<h4>ירחים עיקריים</h4><div class="moons-list"></div>';
-            
-            const infoContent = this.elements.panel.querySelector('.info-content');
-            if (infoContent) {
-                infoContent.appendChild(moonsSection);
-            }
-        }
-        
-        const moonsList = moonsSection.querySelector('.moons-list');
-        moonsList.innerHTML = '';
-        
-        planetData.majorMoons.forEach(moonName => {
-            const moonItem = document.createElement('div');
-            moonItem.className = 'moon-item';
-            moonItem.textContent = moonName;
-            moonsList.appendChild(moonItem);
-        });
-    }
-
     // הגדלת/הקטנת פאנל
     toggleSize() {
         if (!this.elements.panel) return;
@@ -643,10 +574,17 @@ class InfoPanel {
         }
     }
 
+    // עדכון תוכן כוכב הלכת
+    updatePlanetContent(planetData) {
+        if (!planetData) return;
+        
+        console.log('Updating planet content for:', planetData.name);
+    }
+
     // עדכון מתמיד
     update(deltaTime) {
         // עדכון אנימציות אם נדרש
-        if (this.isVisible && this.animations.planetRotation.active) {
+        if (this.isVisible && this.animations.planetRotation && this.animations.planetRotation.active) {
             // האנימציה כבר רצה ב-requestAnimationFrame
         }
     }
@@ -704,4 +642,9 @@ class InfoPanel {
 // ייצוא המחלקה
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = InfoPanel;
+}
+
+// הפוך את המחלקה זמינה גלובלית
+if (typeof window !== 'undefined') {
+    window.InfoPanel = InfoPanel;
 }
