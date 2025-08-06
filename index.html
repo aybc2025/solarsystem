@@ -2,558 +2,533 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת השמש | Solar System PWA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>סימולציית מערכת השמש תלת ממדית</title>
     
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#0a0a0a">
-    <meta name="description" content="חקור את מערכת השמש בתלת מימד - אפליקציה חינוכית אינטראקטיבית">
-    <link rel="manifest" href="manifest.json">
+    <!-- Meta Tags -->
+    <meta name="description" content="סימולציה אינטראקטיבית תלת ממדית של מערכת השמש עם מידע מפורט על כוכבי הלכת">
+    <meta name="keywords" content="מערכת השמש, כוכבי לכת, אסטרונומיה, סימולציה, 3D">
+    <meta name="author" content="Solar System Simulator">
     
-    <!-- Fallback icon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ffd700'/></svg>">
+    <!-- PWA Support -->
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- Styles with fallback -->
-    <link rel="stylesheet" href="styles/main.css" onerror="console.warn('main.css not loaded')">
-    <link rel="stylesheet" href="styles/controls.css" onerror="console.warn('controls.css not loaded')">
-    <link rel="stylesheet" href="styles/info-panel.css" onerror="console.warn('info-panel.css not loaded')">
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" as="script">
+    
+    <!-- CSS Files - סדר חשוב לz-index -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="controls.css">
+    <link rel="stylesheet" href="info-panel.css"> <!-- אחרון כדי לדרוס z-index -->
+    
+    <!-- Inline Critical CSS -->
+    <style>
+        /* Critical CSS לטעינה מהירה */
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        #scene {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+        
+        /* תיקון: ודוא שמסך הטעינה מעל הכל */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000; /* מעל הכל */
+            color: #ffd700;
+            font-size: 18px;
+        }
+        
+        /* אנימציה לטעינה */
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 215, 0, 0.3);
+            border-top: 3px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-    <div id="container">
-        <!-- Loading Screen -->
-        <div id="loading">
-            <div class="loading-content">
-                <div class="sun-loader"></div>
-                <h2>טוען את מערכת השמש...</h2>
-                <div class="loading-bar">
-                    <div class="loading-progress" id="loadingProgress"></div>
-                </div>
-                <div id="loadingText">מאתחל...</div>
+    <!-- Canvas ראשי -->
+    <canvas id="scene"></canvas>
+
+    <!-- מסך טעינה -->
+    <div id="loading">
+        <div class="loading-spinner"></div>
+        <div id="loadingText">טוען מערכת השמש...</div>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div id="progressBar" style="width: 0%"></div>
             </div>
-        </div>
-
-        <!-- 3D Scene -->
-        <canvas id="scene"></canvas>
-
-        <!-- Mobile Menu Toggle Button -->
-        <button id="mobileMenuToggle" class="mobile-menu-toggle" aria-label="תפריט">
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-            <span class="hamburger-line"></span>
-        </button>
-
-        <!-- Control Panel -->
-        <div id="controls" class="controls-panel">
-            <div class="controls-header">
-                <h3>בקרות</h3>
-                <button id="closeControls" class="close-controls">&times;</button>
-            </div>
-            
-            <div class="controls-content">
-                <div class="control-section">
-                    <div class="time-controls">
-                        <button id="playPause" class="btn">⏸️ השהה</button>
-                        <button id="resetView" class="btn">🔄 איפוס תצוגה</button>
-                    </div>
-                    
-                    <div class="speed-control">
-                        <label for="timeSpeed">מהירות זמן:</label>
-                        <input type="range" id="timeSpeed" min="0" max="10" value="1" step="0.1">
-                        <span id="timeScaleValue">1x</span>
-                    </div>
-                </div>
-                
-                <div class="control-section">
-                    <div class="view-options">
-                        <label><input type="checkbox" id="showOrbits" checked> הצג מסלולים</label>
-                        <label><input type="checkbox" id="showLabels" checked> הצג תוויות</label>
-                        <label><input type="checkbox" id="realisticMode"> מצב ריאליסטי</label>
-                    </div>
-                </div>
-                
-                <div class="control-section">
-                    <h4>כוכבי לכת</h4>
-                    <div class="planets-grid">
-                        <button class="planet-btn" data-planet="sun">☀️ שמש</button>
-                        <button class="planet-btn" data-planet="mercury">☿️ כוכב חמה</button>
-                        <button class="planet-btn" data-planet="venus">♀️ נוגה</button>
-                        <button class="planet-btn" data-planet="earth">🌍 כדור הארץ</button>
-                        <button class="planet-btn" data-planet="mars">♂️ מאדים</button>
-                        <button class="planet-btn" data-planet="jupiter">♃ צדק</button>
-                        <button class="planet-btn" data-planet="saturn">♄ שבתאי</button>
-                        <button class="planet-btn" data-planet="uranus">♅ אורנוס</button>
-                        <button class="planet-btn" data-planet="neptune">♆ נפטון</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Info Panel -->
-        <div id="infoPanel" class="hidden">
-            <div class="info-header">
-                <h3 id="planetName">מידע על כוכב הלכת</h3>
-                <button class="close-btn">&times;</button>
-            </div>
-            <div class="info-content">
-                <div id="planetPreview"></div>
-                <div id="planetData"></div>
-            </div>
-        </div>
-
-        <!-- Quick Controls -->
-        <div id="quickControls" class="quick-controls">
-            <button class="quick-btn" id="quickPause" title="השהה/המשך">⏯️</button>
-            <button class="quick-btn" id="quickReset" title="איפוס תצוגה">🔄</button>
-        </div>
-
-        <!-- Navigation Help -->
-        <div id="navHelp" class="nav-help">
-            <div class="help-item mobile-only">📱 מגע: סובב וזום</div>
-            <div class="help-item desktop-only">⌨️ רווח: השהה/המשך</div>
-            <div class="help-item desktop-only">⌨️ R: איפוס תצוגה</div>
-        </div>
-
-        <!-- Performance Stats -->
-        <div id="stats" class="performance-stats">
-            <div>FPS: <span id="fpsCounter">60</span></div>
-            <div class="desktop-only">Objects: <span id="objectCount">0</span></div>
         </div>
     </div>
 
-    <!-- Load Three.js FIRST -->
+    <!-- כפתור תפריט נייד -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="פתח תפריט">
+        <div class="hamburger-line"></div>
+        <div class="hamburger-line"></div>
+        <div class="hamburger-line"></div>
+    </button>
+
+    <!-- פאנל בקרות ראשי -->
+    <div class="controls-panel" id="controlsPanel">
+        <div class="controls-header">
+            <h3>בקרות</h3>
+            <button class="close-controls" id="closeControls" aria-label="סגור תפריט">&times;</button>
+        </div>
+        
+        <div class="controls-content">
+            <!-- בקרות עיקריות -->
+            <div class="control-section">
+                <div class="main-controls">
+                    <button class="control-btn" id="playPause">⏸️ השהה</button>
+                    <button class="control-btn" id="resetView">🔄 איפוס</button>
+                </div>
+                
+                <div class="time-control">
+                    <label for="timeSpeed">מהירות זמן:</label>
+                    <input type="range" id="timeSpeed" min="0" max="10" value="1" step="0.1" aria-label="מהירות זמן">
+                    <span id="timeScaleValue">1.0x</span>
+                </div>
+            </div>
+            
+            <!-- אפשרויות תצוגה -->
+            <div class="control-section">
+                <h4>תצוגה</h4>
+                <div class="view-options">
+                    <label>
+                        <input type="checkbox" id="showOrbits" checked aria-label="הצג מסלולים"> 
+                        הצג מסלולים
+                    </label>
+                    <label>
+                        <input type="checkbox" id="showLabels" checked aria-label="הצג תוויות"> 
+                        הצג תוויות
+                    </label>
+                    <label>
+                        <input type="checkbox" id="showAsteroids" checked aria-label="הצג אסטרואידים"> 
+                        הצג אסטרואידים
+                    </label>
+                    <label>
+                        <input type="checkbox" id="realisticMode" aria-label="מצב ריאליסטי"> 
+                        מצב ריאליסטי
+                    </label>
+                </div>
+            </div>
+            
+            <!-- כוכבי לכת -->
+            <div class="control-section">
+                <h4>כוכבי לכת</h4>
+                <div class="planets-grid">
+                    <button class="planet-btn" data-planet="sun" aria-label="השמש">☀️ שמש</button>
+                    <button class="planet-btn" data-planet="mercury" aria-label="כוכב חמה">☿️ כוכב חמה</button>
+                    <button class="planet-btn" data-planet="venus" aria-label="נוגה">♀️ נוגה</button>
+                    <button class="planet-btn" data-planet="earth" aria-label="כדור הארץ">🌍 כדור הארץ</button>
+                    <button class="planet-btn" data-planet="mars" aria-label="מאדים">♂️ מאדים</button>
+                    <button class="planet-btn" data-planet="jupiter" aria-label="צדק">♃ צדק</button>
+                    <button class="planet-btn" data-planet="saturn" aria-label="שבתאי">♄ שבתאי</button>
+                    <button class="planet-btn" data-planet="uranus" aria-label="אורנוס">♅ אורנוס</button>
+                    <button class="planet-btn" data-planet="neptune" aria-label="נפטון">♆ נפטון</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- פאנל מידע על כוכבי הלכת - z-index הכי גבוה -->
+    <div id="infoPanel" class="hidden" role="dialog" aria-labelledby="planetName" aria-hidden="true">
+        <div class="info-header">
+            <h3 id="planetName">מידע על כוכב הלכת</h3>
+            <button class="close-btn" aria-label="סגור פאנל מידע">&times;</button>
+        </div>
+        <div class="info-content">
+            <div id="planetPreview" class="planet-image" aria-label="תצוגה מקדימה של כוכב הלכת"></div>
+            <div id="planetData" class="planet-data"></div>
+        </div>
+    </div>
+
+    <!-- בקרות מהירות -->
+    <div id="quickControls" class="quick-controls" role="toolbar" aria-label="בקרות מהירות">
+        <button class="quick-btn" id="quickPause" title="השהה/המשך (רווח)" aria-label="השהה או המשך">⏯️</button>
+        <button class="quick-btn" id="quickReset" title="איפוס תצוגה (R)" aria-label="איפוס תצוגה">🔄</button>
+        <button class="quick-btn" id="quickInfo" title="מידע מהיר (I)" aria-label="מידע מהיר">ℹ️</button>
+    </div>
+
+    <!-- עזרת ניווט -->
+    <div class="nav-help" id="navHelp" role="complementary" aria-label="עזרת ניווט">
+        <div class="help-item"><strong>עכבר:</strong> גרור לסיבוב, גלגל לזום</div>
+        <div class="help-item"><strong>מגע:</strong> אצבע אחת לסיבוב, שתיים לזום</div>
+        <div class="help-item"><strong>לחיצה:</strong> על כוכב לכת למידע</div>
+        <div class="help-item"><strong>רווח:</strong> השהיה, <strong>R:</strong> איפוס, <strong>I:</strong> מידע</div>
+    </div>
+
+    <!-- סטטיסטיקות ביצועים -->
+    <div class="performance-stats" id="performanceStats" role="complementary" aria-label="סטטיסטיקות ביצועים">
+        <div class="stats-item" id="fps">FPS: --</div>
+        <div class="stats-item" id="objectCount">אובייקטים: --</div>
+        <div class="stats-item" id="timeScale">זמן: 1.0x</div>
+    </div>
+
+    <!-- הודעות שגיאה -->
+    <div id="errorContainer" class="error-container" role="alert" aria-live="assertive"></div>
+
+    <!-- JavaScript Libraries - סדר טעינה חשוב -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
     
-    <!-- Enhanced OrbitControls fallback with proper mobile zoom -->
-    <script>
-        // Advanced OrbitControls fallback with mobile pinch zoom
-        window.createFallbackOrbitControls = function(camera, domElement) {
-            const controls = {
-                enabled: true,
-                enableDamping: true,
-                dampingFactor: 0.05,
-                enableZoom: true,
-                enableRotate: true,
-                enablePan: true,
-                
-                // Zoom limits
-                minDistance: 10,
-                maxDistance: 2000,
-                
-                // Internal state
-                _spherical: new THREE.Spherical(),
-                _sphericalDelta: new THREE.Spherical(),
-                _scale: 1,
-                _panOffset: new THREE.Vector3(),
-                _zoomChanged: false,
-                
-                target: new THREE.Vector3(),
-                
-                update: function() {
-                    const offset = new THREE.Vector3();
-                    const quat = new THREE.Quaternion().setFromUnitVectors(camera.up, new THREE.Vector3(0, 1, 0));
-                    const quatInverse = quat.clone().invert();
-                    
-                    offset.copy(camera.position).sub(this.target);
-                    offset.applyQuaternion(quat);
-                    
-                    this._spherical.setFromVector3(offset);
-                    
-                    if (this.enableDamping) {
-                        this._spherical.theta += this._sphericalDelta.theta * this.dampingFactor;
-                        this._spherical.phi += this._sphericalDelta.phi * this.dampingFactor;
-                        this._sphericalDelta.theta *= (1 - this.dampingFactor);
-                        this._sphericalDelta.phi *= (1 - this.dampingFactor);
-                    }
-                    
-                    // Apply zoom with limits
-                    this._spherical.radius *= this._scale;
-                    this._spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this._spherical.radius));
-                    this._scale = 1;
-                    
-                    offset.setFromSpherical(this._spherical);
-                    offset.applyQuaternion(quatInverse);
-                    
-                    camera.position.copy(this.target).add(offset);
-                    camera.lookAt(this.target);
-                    
-                    return this._zoomChanged;
-                }
-            };
-            
-            // Enhanced mouse and touch handling
-            let isMouseDown = false;
-            let mouseButton = null;
-            let lastMouseX = 0, lastMouseY = 0;
-            
-            // Touch state for pinch zoom
-            let touches = [];
-            let lastTouchDistance = 0;
-            let isRotating = false;
-            let isPinching = false;
-            
-            // Mouse events
-            domElement.addEventListener('mousedown', (event) => {
-                if (!controls.enabled) return;
-                
-                isMouseDown = true;
-                mouseButton = event.button;
-                lastMouseX = event.clientX;
-                lastMouseY = event.clientY;
-                event.preventDefault();
-            });
-            
-            domElement.addEventListener('mousemove', (event) => {
-                if (!isMouseDown || !controls.enabled) return;
-                
-                const deltaX = event.clientX - lastMouseX;
-                const deltaY = event.clientY - lastMouseY;
-                
-                if (mouseButton === 0 && controls.enableRotate) {
-                    controls._sphericalDelta.theta -= 2 * Math.PI * deltaX / domElement.clientHeight;
-                    controls._sphericalDelta.phi -= 2 * Math.PI * deltaY / domElement.clientHeight;
-                }
-                
-                lastMouseX = event.clientX;
-                lastMouseY = event.clientY;
-                event.preventDefault();
-            });
-            
-            domElement.addEventListener('mouseup', () => {
-                isMouseDown = false;
-                mouseButton = null;
-            });
-            
-            domElement.addEventListener('wheel', (event) => {
-                if (!controls.enabled || !controls.enableZoom) return;
-                
-                if (event.deltaY < 0) {
-                    controls._scale /= 0.95;
-                } else {
-                    controls._scale *= 0.95;
-                }
-                
-                controls._zoomChanged = true;
-                event.preventDefault();
-            });
-            
-            // Enhanced touch events with pinch zoom
-            domElement.addEventListener('touchstart', (event) => {
-                if (!controls.enabled) return;
-                
-                touches = Array.from(event.touches);
-                
-                if (touches.length === 1) {
-                    // Single touch - rotation
-                    isRotating = true;
-                    isPinching = false;
-                    lastMouseX = touches[0].pageX;
-                    lastMouseY = touches[0].pageY;
-                } else if (touches.length === 2) {
-                    // Two touches - pinch zoom
-                    isRotating = false;
-                    isPinching = true;
-                    
-                    const dx = touches[0].pageX - touches[1].pageX;
-                    const dy = touches[0].pageY - touches[1].pageY;
-                    lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
-                }
-                
-                event.preventDefault();
-            });
-            
-            domElement.addEventListener('touchmove', (event) => {
-                if (!controls.enabled) return;
-                
-                touches = Array.from(event.touches);
-                
-                if (touches.length === 1 && isRotating && controls.enableRotate) {
-                    // Single touch rotation
-                    const deltaX = touches[0].pageX - lastMouseX;
-                    const deltaY = touches[0].pageY - lastMouseY;
-                    
-                    controls._sphericalDelta.theta -= 2 * Math.PI * deltaX / domElement.clientHeight;
-                    controls._sphericalDelta.phi -= 2 * Math.PI * deltaY / domElement.clientHeight;
-                    
-                    lastMouseX = touches[0].pageX;
-                    lastMouseY = touches[0].pageY;
-                    
-                } else if (touches.length === 2 && isPinching && controls.enableZoom) {
-                    // Pinch zoom
-                    const dx = touches[0].pageX - touches[1].pageX;
-                    const dy = touches[0].pageY - touches[1].pageY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (lastTouchDistance > 0) {
-                        const scale = distance / lastTouchDistance;
-                        controls._scale /= scale;
-                        controls._zoomChanged = true;
-                    }
-                    
-                    lastTouchDistance = distance;
-                }
-                
-                event.preventDefault();
-            });
-            
-            domElement.addEventListener('touchend', (event) => {
-                touches = Array.from(event.touches);
-                
-                if (touches.length === 0) {
-                    isRotating = false;
-                    isPinching = false;
-                    lastTouchDistance = 0;
-                } else if (touches.length === 1) {
-                    // Switch from pinch to rotate
-                    isPinching = false;
-                    isRotating = true;
-                    lastMouseX = touches[0].pageX;
-                    lastMouseY = touches[0].pageY;
-                    lastTouchDistance = 0;
-                }
-                
-                event.preventDefault();
-            });
-            
-            return controls;
-        };
-    </script>
-    
-    <!-- Try to load OrbitControls, fallback to custom implementation -->
-    <script>
-        // Try loading OrbitControls from CDN with timeout
-        const orbitControlsScript = document.createElement('script');
-        orbitControlsScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js';
-        orbitControlsScript.onerror = function() {
-            console.warn('OrbitControls CDN failed, using fallback');
-            window.OrbitControlsLoaded = false;
-        };
-        orbitControlsScript.onload = function() {
-            console.log('OrbitControls loaded from CDN');
-            window.OrbitControlsLoaded = true;
-        };
-        document.head.appendChild(orbitControlsScript);
-        
-        // Timeout fallback
-        setTimeout(() => {
-            if (typeof THREE.OrbitControls === 'undefined') {
-                console.warn('OrbitControls timeout, using fallback');
-                window.OrbitControlsLoaded = false;
-            }
-        }, 3000);
-    </script>
-    
-    <!-- Load only existing files, skip missing ones -->
-    <script src="js/data/planets-improved.js" onerror="console.warn('planets-improved.js not loaded')"></script>
-    <script src="js/utils/math.js" onerror="console.warn('math.js not loaded')"></script>
-    <script src="js/objects/sun.js" onerror="console.warn('sun.js not loaded')"></script>
-    <script src="js/objects/planet.js" onerror="console.warn('planet.js not loaded')"></script>
-    <script src="js/ui/controls.js" onerror="console.warn('controls.js not loaded')"></script>
-    <script src="js/main-improved.js" onerror="console.warn('main-improved.js not loaded')"></script>
+    <!-- Application JavaScript Files - סדר חשוב -->
+    <script src="planets-improved.js"></script>
+    <script src="planet.js"></script>
+    <script src="asteroid-belt.js"></script>
+    <script src="camera.js"></script>
+    <script src="scene.js"></script>
+    <script src="info-panel.js"></script>
+    <script src="controls.js"></script>
+    <script src="orbit-controls.js"></script>
+    <script src="main-improved.js"></script>
 
+    <!-- Application Initialization -->
     <script>
-        // Enhanced error handling and initialization
-        window.addEventListener('error', (event) => {
-            console.error('Global error:', event.error);
-            showError(`Error: ${event.error.message}`);
-        });
-        
-        function showError(message) {
-            console.error('Solar System Error:', message);
-            
-            const existing = document.querySelector('.error-message');
-            if (existing) existing.remove();
-            
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.innerHTML = `
-                <h3>⚠️ שגיאה באפליקציה</h3>
-                <p>${message}</p>
-                <button onclick="location.reload()">🔄 טען מחדש</button>
-            `;
-            errorDiv.style.cssText = `
-                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                background: rgba(255, 0, 0, 0.95); color: white; padding: 30px;
-                border-radius: 15px; text-align: center; z-index: 2001;
-                max-width: 450px; width: 90%; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
-            `;
-            document.body.appendChild(errorDiv);
-        }
-        
-        function updateLoadingProgress(text, percent) {
-            const progressBar = document.getElementById('loadingProgress');
-            const loadingText = document.getElementById('loadingText');
-            
-            if (progressBar) progressBar.style.width = percent + '%';
-            if (loadingText) loadingText.textContent = text;
-        }
+        // הגדרות גלובליות
+        let solarSystemApp = null;
+        let uiControls = null;
+        let infoPanel = null;
 
-        // Main initialization
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🌟 Initializing Solar System PWA...');
-            
+        // אתחול האפליקציה
+        async function initializeApp() {
             try {
-                if (!checkWebGLSupport()) {
-                    showError('הדפדפן שלך לא תומך בWebGL. אנא השתמש בדפדפן מודרני יותר.');
-                    return;
-                }
+                console.log('🚀 Starting Solar System Application...');
                 
-                updateLoadingProgress('טוען ספריות...', 15);
-                
-                // Wait for Three.js to load
-                await waitForLibrary('THREE', 'Three.js', 5000);
-                
-                // Setup OrbitControls fallback if CDN failed
-                if (typeof THREE.OrbitControls === 'undefined') {
-                    console.warn('OrbitControls not available, setting up fallback');
-                    THREE.OrbitControls = function(camera, domElement) {
-                        return window.createFallbackOrbitControls(camera, domElement);
-                    };
-                }
-                
-                updateLoadingProgress('מאתחל מערכת...', 25);
-                
-                // Wait for required classes with longer timeout
-                await waitForClasses();
-                
-                // Initialize the app
-                const app = new ImprovedSolarSystemApp();
-                window.solarSystemApp = app;
-                
-                await app.init();
-                
-                // Initialize mobile menu
-                initializeMobileMenu();
-                
-                // Hide loading screen
-                const loading = document.getElementById('loading');
-                if (loading) {
-                    loading.style.opacity = '0';
-                    setTimeout(() => loading.style.display = 'none', 500);
-                }
-                
-                console.log('🎉 Solar System PWA ready!');
-                
-            } catch (error) {
-                console.error('Initialization failed:', error);
-                showError('כשל באתחול האפליקציה: ' + error.message);
-            }
-        });
-        
-        // Wait for library to load
-        async function waitForLibrary(globalName, displayName, timeout = 5000) {
-            return new Promise((resolve, reject) => {
-                if (typeof window[globalName] !== 'undefined') {
-                    resolve();
-                    return;
-                }
-                
-                const startTime = Date.now();
-                const checkInterval = setInterval(() => {
-                    if (typeof window[globalName] !== 'undefined') {
-                        clearInterval(checkInterval);
-                        console.log(`✅ ${displayName} loaded`);
-                        resolve();
-                    } else if (Date.now() - startTime > timeout) {
-                        clearInterval(checkInterval);
-                        reject(new Error(`לא ניתן לטעון את ${displayName}`));
-                    }
-                }, 100);
-            });
-        }
-        
-        // Wait for all required classes to load - FIXED VERSION
-        async function waitForClasses() {
-            const requiredClasses = [
-                'ImprovedSolarSystemApp'
-            ];
-            
-            // Optional classes - don't fail if missing
-            const optionalClasses = [
-                'SolarSystemScene', 
-                'SolarSystemSun',
-                'SolarSystemPlanet',
-                'UIControls'
-            ];
-            
-            const maxWait = 15000; // Extended to 15 seconds
-            const startTime = Date.now();
-            
-            while (Date.now() - startTime < maxWait) {
-                const requiredLoaded = requiredClasses.every(className => 
-                    typeof window[className] !== 'undefined'
-                );
-                
-                if (requiredLoaded) {
-                    console.log('✅ All required classes loaded');
+                // יצירת אפליקציה ראשית
+                if (typeof ImprovedSolarSystemApp !== 'undefined') {
+                    solarSystemApp = new ImprovedSolarSystemApp();
                     
-                    // Log which optional classes are available
-                    optionalClasses.forEach(className => {
-                        if (typeof window[className] !== 'undefined') {
-                            console.log(`✅ Optional class loaded: ${className}`);
-                        } else {
-                            console.warn(`⚠️ Optional class missing: ${className}`);
+                    // אתחול
+                    await solarSystemApp.init();
+                    
+                    // יצירת ממשק משתמש
+                    if (typeof UIControls !== 'undefined') {
+                        uiControls = new UIControls();
+                        await uiControls.init(solarSystemApp);
+                    }
+                    
+                    // יצירת פאנל מידע
+                    if (typeof InfoPanel !== 'undefined') {
+                        infoPanel = new InfoPanel();
+                        await infoPanel.init(solarSystemApp);
+                        
+                        // חיבור בין הרכיבים
+                        if (uiControls) {
+                            uiControls.infoPanel = infoPanel;
                         }
+                        
+                        // הפוך זמין גלובלית לשימוש בmain-improved.js
+                        window.infoPanel = infoPanel;
+                    }
+                    
+                    console.log('✅ Solar System Application loaded successfully!');
+                    
+                    // הוספת מאזין לשגיאות לא צפויות
+                    window.addEventListener('error', (event) => {
+                        console.error('Application error:', event.error);
+                        showErrorMessage(`שגיאה באפליקציה: ${event.error.message}`);
                     });
                     
-                    return true;
+                } else {
+                    throw new Error('ImprovedSolarSystemApp class not found');
                 }
                 
-                await new Promise(resolve => setTimeout(resolve, 100));
+            } catch (error) {
+                console.error('❌ Failed to initialize application:', error);
+                showErrorMessage(`שגיאה באתחול: ${error.message}`);
+            }
+        }
+
+        // הצגת הודעת שגיאה
+        function showErrorMessage(message) {
+            // הסתרת מסך טעינה
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.style.display = 'none';
             }
             
-            // List what's actually missing
-            const missingRequired = requiredClasses.filter(className => 
-                typeof window[className] === 'undefined'
-            );
+            // יצירת הודעת שגיאה
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(139, 0, 0, 0.9);
+                color: white;
+                padding: 30px;
+                border-radius: 15px;
+                border: 2px solid #ff4444;
+                text-align: center;
+                z-index: 3000;
+                max-width: 400px;
+                font-family: Arial, sans-serif;
+            `;
             
-            if (missingRequired.length > 0) {
-                throw new Error(`חסרות מחלקות חיוניות: ${missingRequired.join(', ')}`);
+            errorDiv.innerHTML = `
+                <h3 style="margin: 0 0 15px 0; color: #ff6666;">⚠️ שגיאה</h3>
+                <p style="margin: 0 0 20px 0; line-height: 1.5;">${message}</p>
+                <button onclick="location.reload()" style="
+                    background: #ff4444;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-size: 14px;
+                ">🔄 טען מחדש</button>
+            `;
+            
+            document.body.appendChild(errorDiv);
+        }
+
+        // בדיקת תמיכה בדפדפן
+        function checkBrowserSupport() {
+            // בדיקת WebGL
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) {
+                showErrorMessage('הדפדפן שלך לא תומך ב-WebGL. אנא השתמש בדפדפן מודרני יותר.');
+                return false;
+            }
+            
+            // בדיקת ES6
+            try {
+                eval('const test = () => {};');
+            } catch (e) {
+                showErrorMessage('הדפדפן שלך לא תומך ב-ES6. אנא עדכן את הדפדפן.');
+                return false;
             }
             
             return true;
         }
-        
-        function checkWebGLSupport() {
-            try {
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                return context !== null;
-            } catch (e) {
-                return false;
-            }
-        }
 
-        // Mobile menu functionality
-        function initializeMobileMenu() {
-            const mobileToggle = document.getElementById('mobileMenuToggle');
-            const controlsPanel = document.getElementById('controls');
-            const closeControls = document.getElementById('closeControls');
+        // אתחול כשהעמוד נטען
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('📄 DOM Content Loaded');
             
-            if (mobileToggle && controlsPanel) {
-                mobileToggle.addEventListener('click', () => {
-                    controlsPanel.classList.toggle('open');
-                    mobileToggle.classList.toggle('active');
-                    document.body.classList.toggle('menu-open');
-                });
+            // בדיקת תמיכה
+            if (!checkBrowserSupport()) {
+                return;
             }
             
-            if (closeControls && controlsPanel) {
-                closeControls.addEventListener('click', () => {
-                    controlsPanel.classList.remove('open');
-                    mobileToggle.classList.remove('active');
-                    document.body.classList.remove('menu-open');
-                });
+            // המתנה לטעינת Three.js
+            if (typeof THREE === 'undefined') {
+                console.log('⏳ Waiting for Three.js to load...');
+                
+                // המתנה עד 5 שניות
+                let attempts = 0;
+                const maxAttempts = 50;
+                
+                const waitForThree = () => {
+                    if (typeof THREE !== 'undefined') {
+                        console.log('✅ Three.js loaded');
+                        initializeApp();
+                    } else if (attempts < maxAttempts) {
+                        attempts++;
+                        setTimeout(waitForThree, 100);
+                    } else {
+                        showErrorMessage('שגיאה בטעינת Three.js. אנא רענן את העמוד.');
+                    }
+                };
+                
+                waitForThree();
+            } else {
+                // Three.js כבר טעון
+                initializeApp();
             }
-        }
+        });
 
-        // Service worker registration
+        // טיפול בשינוי גודל חלון
+        window.addEventListener('resize', () => {
+            if (solarSystemApp && solarSystemApp.onWindowResize) {
+                solarSystemApp.onWindowResize();
+            }
+        });
+
+        // טיפול בשינוי orientation במובייל
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (solarSystemApp && solarSystemApp.onWindowResize) {
+                    solarSystemApp.onWindowResize();
+                }
+            }, 100);
+        });
+
+        // מניעת התנהגות ברירת מחדל במגע
+        document.addEventListener('touchstart', (e) => {
+            // מניעת zoom כפול בלחיצה כפולה
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            // אפשר scroll רק באלמנטים מסוימים
+            const allowScrollElements = ['.info-content', '.controls-content'];
+            const isScrollable = allowScrollElements.some(selector => 
+                e.target.closest(selector)
+            );
+            
+            if (!isScrollable && e.touches.length === 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // קיצורי מקלדת גלובליים
+        document.addEventListener('keydown', (event) => {
+            // מניעת F5, Ctrl+R במקרה של שגיאות
+            if ((event.code === 'F5') || (event.ctrlKey && event.code === 'KeyR')) {
+                if (solarSystemApp && solarSystemApp.isInitialized) {
+                    // האפליקציה פועלת, אפשר רענון
+                    return;
+                } else {
+                    // האפליקציה לא פועלת, מניעת רענון אוטומטי
+                    event.preventDefault();
+                }
+            }
+            
+            // קיצורי דרך נוספים
+            if (event.altKey && event.code === 'KeyH') {
+                // Alt+H - הצגה/הסתרת עזרה
+                event.preventDefault();
+                const helpElement = document.getElementById('navHelp');
+                if (helpElement) {
+                    helpElement.style.display = helpElement.style.display === 'none' ? 'block' : 'none';
+                }
+            }
+            
+            if (event.altKey && event.code === 'KeyP') {
+                // Alt+P - הצגה/הסתרת סטטיסטיקות ביצועים
+                event.preventDefault();
+                const statsElement = document.getElementById('performanceStats');
+                if (statsElement) {
+                    statsElement.style.display = statsElement.style.display === 'none' ? 'block' : 'none';
+                }
+            }
+        });
+
+        // הוספת מאזיני accessibility
+        document.addEventListener('focus', (event) => {
+            // הוספת focus visible לאלמנטים אינטראקטיביים
+            if (event.target.matches('button, input, [tabindex]')) {
+                event.target.classList.add('focus-visible');
+            }
+        });
+
+        document.addEventListener('blur', (event) => {
+            event.target.classList.remove('focus-visible');
+        });
+
+        // **הוספה: פונקציות עזר גלובליות לממשק**
+        window.appHelpers = {
+            // פתיחת מידע על כוכב לכת מהקונסולה
+            showPlanetInfo: (planetName) => {
+                if (window.infoPanel) {
+                    window.infoPanel.showPlanetInfo(planetName);
+                }
+            },
+            
+            // קיצור למעבר לכוכב לכת
+            goToPlanet: (planetName) => {
+                if (solarSystemApp && solarSystemApp.selectPlanet) {
+                    solarSystemApp.selectPlanet(planetName);
+                }
+            },
+            
+            // שליטה במהירות זמן
+            setSpeed: (speed) => {
+                if (solarSystemApp && solarSystemApp.setTimeScale) {
+                    solarSystemApp.setTimeScale(speed);
+                }
+            },
+            
+            // קבלת מידע על מצב האפליקציה
+            getStatus: () => {
+                if (!solarSystemApp) return 'Application not loaded';
+                
+                return {
+                    isLoaded: solarSystemApp.isInitialized,
+                    isPaused: solarSystemApp.state.isPaused,
+                    timeScale: solarSystemApp.state.timeScale,
+                    selectedPlanet: solarSystemApp.state.selectedPlanet,
+                    planetsCount: solarSystemApp.planets.size,
+                    fps: solarSystemApp.performance.fps
+                };
+            }
+        };
+
+        // הדפסת הודעת ברוכים הבאים לקונסולה
+        console.log(`
+🌌 ברוכים הבאים לסימולציית מערכת השמש!
+
+פקודות זמינות:
+- appHelpers.showPlanetInfo('earth') - הצגת מידע על כוכב לכת
+- appHelpers.goToPlanet('mars') - מעבר לכוכב לכת
+- appHelpers.setSpeed(2.5) - שינוי מהירות זמן
+- appHelpers.getStatus() - מידע על מצב האפליקציה
+
+קיצורי מקלדת:
+- רווח: השהיה/המשכה
+- R: איפוס תצוגה  
+- I: מידע מהיר
+- O: הצגת מסלולים
+- L: הצגת תוויות
+- Escape: סגירת פאנלים
+
+לחץ על כוכב לכת כלשהו כדי לקבל מידע עליו!
+        `);
+    </script>
+
+    <!-- Service Worker לPWA (אופציונלי) -->
+    <script>
+        // רישום Service Worker אם זמין
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(registration => console.log('SW registered'))
-                    .catch(error => console.log('SW registration failed'));
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
             });
         }
     </script>
+
+    <!-- Analytics או Script נוספים כאן -->
+    
 </body>
 </html>
