@@ -1,710 +1,647 @@
-// מחלקת פאנל מידע על כוכבי הלכת - מתוקנת ומשופרת
-class InfoPanel {
-    constructor() {
-        this.app = null;
-        this.isVisible = false;
-        this.currentPlanet = null;
-        
-        // אלמנטים
-        this.elements = {
-            panel: null,
-            header: null,
-            title: null,
-            closeButton: null,
-            content: null,
-            preview: null,
-            data: null,
-            dataElements: new Map()
-        };
-        
-        // אנימציות
-        this.animations = {
-            planetRotation: null,
-            fadeIn: null,
-            fadeOut: null
-        };
-        
-        this.isInitialized = false;
+/* פאנל מידע על כוכבי הלכת - מותאם למובייל עם z-index מתוקן */
+
+/* פאנל מידע ראשי */
+#infoPanel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 500px;
+    max-width: 90vw;
+    max-height: 85vh;
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #ffd700;
+    border-radius: 15px;
+    z-index: 1500; /* תיקון: הגדלה מ-1100 ל-1500 */
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(20px);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#infoPanel.hidden {
+    display: none;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+}
+
+/* כותרת הפאנל */
+.info-header {
+    background: linear-gradient(135deg, #1a1a2e, #0a0a0a);
+    padding: 20px;
+    border-bottom: 2px solid #ffd700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1510; /* תיקון: ודוא שהכותרת מעל הכל */
+}
+
+.info-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+    pointer-events: none;
+}
+
+#planetName {
+    margin: 0;
+    color: #ffd700;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    flex: 1;
+}
+
+.close-btn {
+    background: none;
+    border: 2px solid #ffd700;
+    color: #ffd700;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 1520; /* ודוא שכפתור הסגירה מעל הכל */
+    position: relative;
+}
+
+.close-btn:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: rotate(90deg) scale(1.1);
+}
+
+.close-btn:active {
+    transform: rotate(90deg) scale(0.95);
+}
+
+/* תוכן הפאנל */
+.info-content {
+    padding: 20px;
+    max-height: calc(85vh - 100px);
+    overflow-y: auto;
+    direction: rtl;
+    z-index: 1505; /* ודוא שהתוכן מעל הרקע */
+    position: relative;
+}
+
+/* תמונת כוכב הלכת */
+.planet-image {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#planetPreview {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+}
+
+.planet-sphere {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    animation: planetRotate 20s linear infinite;
+}
+
+/* אנימציית סיבוב כוכב הלכת */
+@keyframes planetRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* טבעות לשבתאי */
+.saturn-rings {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px;
+    height: 180px;
+    border: 8px solid rgba(245, 245, 220, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* נתוני כוכב הלכת */
+.planet-data {
+    margin-bottom: 20px;
+}
+
+.data-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.data-item:last-child {
+    border-bottom: none;
+}
+
+.data-item .label {
+    font-weight: bold;
+    color: #ffd700;
+    flex: 1;
+}
+
+.data-item .value {
+    text-align: left;
+    direction: ltr;
+    flex: 1;
+    color: #ffffff;
+}
+
+/* תיאור כוכב הלכת */
+.planet-description {
+    margin-bottom: 20px;
+}
+
+.planet-description p {
+    line-height: 1.6;
+    color: #e0e0e0;
+    font-size: 14px;
+    text-align: justify;
+}
+
+/* עובדות מעניינות */
+.interesting-facts {
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.interesting-facts h4 {
+    color: #ffd700;
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.interesting-facts ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.interesting-facts li {
+    padding: 8px 0;
+    position: relative;
+    padding-right: 20px;
+    color: #e0e0e0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.interesting-facts li::before {
+    content: '★';
+    position: absolute;
+    right: 0;
+    color: #ffd700;
+    font-size: 12px;
+}
+
+/* נתונים מתקדמים */
+.advanced-data {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.advanced-data h4 {
+    color: #ffd700;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.advanced-data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+/* השוואה לכדור הארץ */
+.earth-comparison {
+    background: rgba(107, 147, 214, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(107, 147, 214, 0.3);
+}
+
+.earth-comparison h4 {
+    color: #6b93d6;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.comparison-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    color: #e0e0e0;
+    font-size: 13px;
+}
+
+.comparison-item .label {
+    color: #6b93d6;
+    font-weight: 500;
+}
+
+/* מידע על ירחים */
+.moons-info {
+    background: rgba(150, 150, 150, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(150, 150, 150, 0.3);
+}
+
+.moons-info h4 {
+    color: #cccccc;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.moons-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.moon-item {
+    background: rgba(200, 200, 200, 0.2);
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    color: #e0e0e0;
+    border: 1px solid rgba(200, 200, 200, 0.3);
+}
+
+/* צבעי כוכבי לכת */
+.planet-sun .info-header {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, #2a2400, #1a1a00);
+}
+
+.planet-mercury .info-header {
+    border-color: #8c7853;
+    background: linear-gradient(135deg, #2a241a, #1a1810);
+}
+
+.planet-venus .info-header {
+    border-color: #ffc649;
+    background: linear-gradient(135deg, #2a2212, #1a1a08);
+}
+
+.planet-earth .info-header {
+    border-color: #6b93d6;
+    background: linear-gradient(135deg, #1a222a, #0a1218);
+}
+
+.planet-mars .info-header {
+    border-color: #cd5c5c;
+    background: linear-gradient(135deg, #2a1a1a, #1a1010);
+}
+
+.planet-jupiter .info-header {
+    border-color: #d8ca9d;
+    background: linear-gradient(135deg, #2a2620, #1a1810);
+}
+
+.planet-saturn .info-header {
+    border-color: #fad5a5;
+    background: linear-gradient(135deg, #2a2518, #1a1808);
+}
+
+.planet-uranus .info-header {
+    border-color: #4fd0e7;
+    background: linear-gradient(135deg, #122a2a, #081a1a);
+}
+
+.planet-neptune .info-header {
+    border-color: #4b70dd;
+    background: linear-gradient(135deg, #121a2a, #08101a);
+}
+
+/* פאנל מורחב */
+#infoPanel.expanded {
+    width: 700px;
+    max-width: 95vw;
+    max-height: 90vh;
+}
+
+#infoPanel.expanded .info-content {
+    max-height: calc(90vh - 100px);
+}
+
+/* Scrollbar עיצוב */
+.info-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.info-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.info-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 215, 0, 0.5);
+    border-radius: 4px;
+}
+
+.info-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 215, 0, 0.7);
+}
+
+/* תיקון: ודוא שהפאנל תמיד מעל הכל */
+#infoPanel::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1400;
+    pointer-events: none;
+}
+
+#infoPanel.hidden::before {
+    display: none;
+}
+
+/* Media Queries - התאמה למסכים שונים */
+
+/* טאבלט - 768px ומטה */
+@media (max-width: 768px) {
+    #infoPanel {
+        width: 95vw;
+        max-width: none;
+        max-height: 90vh;
+        top: 5vh;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 12px;
+        z-index: 1500; /* ודוא שגם במובייל z-index גבוה */
     }
 
-    // אתחול הפאנל
-    async init(app) {
-        try {
-            this.app = app;
-            
-            // איתור או יצירת אלמנטים
-            await this.findOrCreateElements();
-            
-            // הגדרת מאזיני אירועים
-            this.setupEventListeners();
-            
-            // הכנת אנימציות
-            this.setupAnimations();
-            
-            this.isInitialized = true;
-            console.log('✅ Info Panel initialized successfully');
-            
-        } catch (error) {
-            console.error('❌ Failed to initialize Info Panel:', error);
-            throw error;
-        }
+    .info-header {
+        padding: 15px;
     }
 
-    // איתור או יצירת אלמנטים
-    async findOrCreateElements() {
-        // חיפוש פאנל קיים
-        this.elements.panel = document.getElementById('infoPanel');
-        
-        // יצירת פאנל אם לא קיים
-        if (!this.elements.panel) {
-            await this.createInfoPanel();
-        }
-        
-        // איתור אלמנטים פנימיים
-        this.elements.header = this.elements.panel.querySelector('.info-header');
-        this.elements.title = document.getElementById('planetName');
-        this.elements.closeButton = this.elements.panel.querySelector('.close-btn');
-        this.elements.content = this.elements.panel.querySelector('.info-content');
-        this.elements.preview = document.getElementById('planetPreview');
-        this.elements.data = document.getElementById('planetData');
-        
-        // איתור אלמנטי נתונים
-        const dataIds = ['planetDistance', 'planetMass', 'planetRadius', 'planetPeriod', 'temperature'];
-        dataIds.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                this.elements.dataElements.set(id, element);
-            }
-        });
-        
-        if (!this.elements.panel) {
-            throw new Error('Info panel element not found and could not be created');
-        }
+    #planetName {
+        font-size: 20px;
     }
 
-    // **הוספה: יצירת פאנל מידע**
-    async createInfoPanel() {
-        const panel = document.createElement('div');
-        panel.id = 'infoPanel';
-        panel.className = 'hidden';
-        panel.innerHTML = `
-            <div class="info-header">
-                <h3 id="planetName">מידע על כוכב הלכת</h3>
-                <button class="close-btn" title="סגור">&times;</button>
-            </div>
-            <div class="info-content">
-                <div id="planetPreview" class="planet-image"></div>
-                <div id="planetData" class="planet-data"></div>
-            </div>
-        `;
-        
-        document.body.appendChild(panel);
-        this.elements.panel = panel;
-        
-        console.log('Info panel created');
+    .close-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
     }
 
-    // הגדרת מאזיני אירועים
-    setupEventListeners() {
-        // כפתור סגירה
-        if (this.elements.closeButton) {
-            this.elements.closeButton.addEventListener('click', () => {
-                this.hide();
-            });
-        }
-        
-        // לחיצה מחוץ לפאנל (על הרקע)
-        if (this.elements.panel) {
-            this.elements.panel.addEventListener('click', (event) => {
-                if (event.target === this.elements.panel) {
-                    this.hide();
-                }
-            });
-        }
-        
-        // מקש Escape
-        document.addEventListener('keydown', (event) => {
-            if (event.code === 'Escape' && this.isVisible) {
-                this.hide();
-            }
-        });
-        
-        // **הוספה: אירועי אפליקציה**
-        if (this.app) {
-            // האזנה לבחירת כוכב לכת
-            if (typeof this.app.on === 'function') {
-                this.app.on('planetSelected', (data) => {
-                    this.showPlanetInfo(data.planet);
-                });
-                
-                this.app.on('planetDeselected', () => {
-                    this.hide();
-                });
-            }
-        }
+    .info-content {
+        padding: 15px;
+        max-height: calc(90vh - 80px);
     }
 
-    // הכנת אנימציות
-    setupAnimations() {
-        // אנימציית סיבוב כוכב הלכת בתצוגה מקדימה
-        if (this.elements.preview) {
-            this.animations.planetRotation = {
-                angle: 0,
-                speed: 0.01,
-                active: false
-            };
-        }
-        
-        // הגדרת אנימציות CSS
-        this.setupCSSAnimations();
+    #planetPreview {
+        width: 100px;
+        height: 100px;
     }
 
-    // **הוספה: הגדרת אנימציות CSS**
-    setupCSSAnimations() {
-        if (!this.elements.panel) return;
-        
-        // אנימציית כניסה
-        this.animations.fadeIn = [
-            { opacity: 0, transform: 'translate(-50%, -50%) scale(0.8)' },
-            { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' }
-        ];
-        
-        // אנימציית יציאה
-        this.animations.fadeOut = [
-            { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' },
-            { opacity: 0, transform: 'translate(-50%, -50%) scale(0.8)' }
-        ];
+    .saturn-rings {
+        width: 150px;
+        height: 150px;
+        border-width: 6px;
     }
 
-    // **עדכון: הצגת מידע על כוכב לכת**
-    showPlanetInfo(planetName) {
-        const planetData = PLANETS_DATA[planetName];
-        if (!planetData || !this.elements.panel) {
-            console.warn('Cannot show planet info:', planetName);
-            return;
-        }
-        
-        this.currentPlanet = planetName;
-        this.isVisible = true;
-        
-        // עדכון כותרת
-        if (this.elements.title) {
-            this.elements.title.textContent = planetData.name;
-        }
-        
-        // עדכון תוכן
-        this.updateContent(planetName, planetData);
-        
-        // הצגת הפאנל עם אנימציה
-        this.show();
-        
-        console.log(`Showing info for: ${planetData.name}`);
+    .data-item {
+        padding: 8px 0;
+        font-size: 13px;
     }
 
-    // **עדכון: עדכון תוכן הפאנל**
-    updateContent(planetName, planetData) {
-        // עדכון תצוגה מקדימה
-        this.updatePreview(planetName, planetData);
-        
-        // עדכון נתונים
-        this.updateData(planetName, planetData);
+    .planet-description p {
+        font-size: 13px;
     }
 
-    // **עדכון: תצוגה מקדימה**
-    updatePreview(planetName, planetData) {
-        if (!this.elements.preview) return;
-        
-        const color = planetData.color ? `#${planetData.color.toString(16).padStart(6, '0')}` : '#888888';
-        const darkerColor = this.darkenColor(color, 0.4);
-        
-        let previewHTML = `
-            <div class="planet-sphere" style="
-                background: radial-gradient(circle at 30% 30%, ${color}, ${darkerColor});
-                box-shadow: inset -20px -20px 50px rgba(0,0,0,0.5), 0 0 20px ${color}40;
-            ">
-        `;
-        
-        // טבעות מיוחדות לשבתאי
-        if (planetName === 'saturn') {
-            previewHTML += `
-                <div class="saturn-rings" style="
-                    border-color: rgba(245, 245, 220, 0.6);
-                    animation: ringRotate 30s linear infinite;
-                "></div>
-            `;
-        }
-        
-        // אטמוספירה לכוכבי לכת מתאימים
-        if (['venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(planetName)) {
-            const atmosphereColor = this.getAtmosphereColor(planetName);
-            previewHTML += `
-                <div style="
-                    position: absolute;
-                    top: -10px; left: -10px; right: -10px; bottom: -10px;
-                    border-radius: 50%;
-                    background: ${atmosphereColor};
-                    opacity: 0.3;
-                    pointer-events: none;
-                "></div>
-            `;
-        }
-        
-        previewHTML += '</div>';
-        this.elements.preview.innerHTML = previewHTML;
+    .interesting-facts,
+    .advanced-data,
+    .earth-comparison,
+    .moons-info {
+        padding: 12px;
     }
 
-    // **הוספה: קבלת צבע אטמוספירה**
-    getAtmosphereColor(planetName) {
-        const atmosphereColors = {
-            venus: 'radial-gradient(circle, #FFF5AA, transparent)',
-            earth: 'radial-gradient(circle, #87CEEB, transparent)',
-            mars: 'radial-gradient(circle, #DEB887, transparent)',
-            jupiter: 'radial-gradient(circle, #F4A460, transparent)',
-            saturn: 'radial-gradient(circle, #F5DEB3, transparent)',
-            uranus: 'radial-gradient(circle, #40E0D0, transparent)',
-            neptune: 'radial-gradient(circle, #4169E1, transparent)'
-        };
-        
-        return atmosphereColors[planetName] || 'radial-gradient(circle, #CCCCCC, transparent)';
+    .interesting-facts h4,
+    .advanced-data h4,
+    .earth-comparison h4,
+    .moons-info h4 {
+        font-size: 15px;
     }
 
-    // עדכון נתונים
-    updateData(planetName, planetData) {
-        if (!this.elements.data) return;
-        
-        // יצירת תוכן מפורט
-        const content = this.generateDetailedContent(planetName, planetData);
-        this.elements.data.innerHTML = content;
+    .advanced-data-grid {
+        grid-template-columns: 1fr;
     }
 
-    // **הוספה: יצירת תוכן מפורט**
-    generateDetailedContent(planetName, planetData) {
-        let content = `
-            <div class="planet-description">
-                <p>${planetData.description}</p>
-            </div>
-            
-            <div class="planet-basic-data">
-                <div class="data-item">
-                    <span class="label">רדיוס:</span>
-                    <span class="value">${planetData.radius?.toLocaleString() || 'לא ידוע'} ק"מ</span>
-                </div>
-        `;
-        
-        // נתונים בסיסיים
-        if (planetData.distance) {
-            const distanceAU = (planetData.distance / 149597870.7).toFixed(2);
-            content += `
-                <div class="data-item">
-                    <span class="label">מרחק מהשמש:</span>
-                    <span class="value">${(planetData.distance / 1e6).toFixed(1)} מיליון ק"מ (${distanceAU} AU)</span>
-                </div>
-            `;
-        }
-        
-        if (planetData.orbitalPeriod) {
-            const years = (planetData.orbitalPeriod / 365.25).toFixed(2);
-            content += `
-                <div class="data-item">
-                    <span class="label">שנה:</span>
-                    <span class="value">${planetData.orbitalPeriod.toFixed(0)} ימים (${years} שנות כדור ארץ)</span>
-                </div>
-            `;
-        }
-        
-        if (planetData.rotationPeriod) {
-            const hours = (Math.abs(planetData.rotationPeriod) * 24).toFixed(1);
-            const direction = planetData.rotationPeriod < 0 ? ' (הפוך)' : '';
-            content += `
-                <div class="data-item">
-                    <span class="label">יום:</span>
-                    <span class="value">${hours} שעות${direction}</span>
-                </div>
-            `;
-        }
-        
-        if (planetData.temperature) {
-            content += `
-                <div class="data-item">
-                    <span class="label">טמפרטורה:</span>
-                    <span class="value">${this.formatTemperature(planetData.temperature)}</span>
-                </div>
-            `;
-        }
-        
-        if (planetData.moons !== undefined) {
-            content += `
-                <div class="data-item">
-                    <span class="label">ירחים:</span>
-                    <span class="value">${planetData.moons}</span>
-                </div>
-            `;
-        }
-        
-        content += '</div>';
-        
-        // עובדות מעניינות
-        if (planetData.facts && planetData.facts.length > 0) {
-            content += `
-                <div class="interesting-facts">
-                    <h4>עובדות מעניינות</h4>
-                    <ul>
-                        ${planetData.facts.slice(0, 5).map(fact => `<li>${fact}</li>`).join('')}
-                    </ul>
-                </div>
-            `;
-        }
-        
-        // השוואה לכדור הארץ (אם לא כדור הארץ עצמו)
-        if (planetName !== 'earth' && planetName !== 'sun') {
-            content += this.generateEarthComparison(planetName, planetData);
-        }
-        
-        // מידע על ירחים עיקריים
-        if (planetData.majorMoons && planetData.majorMoons.length > 0) {
-            content += `
-                <div class="moons-info">
-                    <h4>ירחים עיקריים</h4>
-                    <div class="moons-list">
-                        ${planetData.majorMoons.map(moon => `<span class="moon-item">${moon}</span>`).join('')}
-                    </div>
-                </div>
-            `;
-        }
-        
-        // חקירה חללית
-        if (planetData.exploration && planetData.exploration.length > 0) {
-            content += `
-                <div class="exploration-info">
-                    <h4>חקירה חללית</h4>
-                    <ul class="exploration-list">
-                        ${planetData.exploration.map(mission => `<li>${mission}</li>`).join('')}
-                    </ul>
-                </div>
-            `;
-        }
-        
-        return content;
+    .comparison-grid {
+        gap: 6px;
     }
 
-    // **הוספה: השוואה לכדור הארץ**
-    generateEarthComparison(planetName, planetData) {
-        const earthData = PLANETS_DATA.earth;
-        let content = '<div class="earth-comparison"><h4>השוואה לכדור הארץ</h4><div class="comparison-grid">';
-        
-        // השוואת גודל
-        if (planetData.radius && earthData.radius) {
-            const ratio = planetData.radius / earthData.radius;
-            const comparison = ratio > 1 ? 
-                `גדול פי ${ratio.toFixed(1)}` : 
-                `קטן פי ${(1/ratio).toFixed(1)}`;
-            
-            content += `
-                <div class="comparison-item">
-                    <span class="label">גודל:</span>
-                    <span class="value">${comparison}</span>
-                </div>
-            `;
-        }
-        
-        // השוואת מסה
-        if (planetData.mass && earthData.mass) {
-            const massRatio = planetData.mass / earthData.mass;
-            const massComparison = massRatio > 1 ? 
-                `כבד פי ${massRatio.toFixed(1)}` : 
-                `קל פי ${(1/massRatio).toFixed(1)}`;
-            
-            content += `
-                <div class="comparison-item">
-                    <span class="label">מסה:</span>
-                    <span class="value">${massComparison}</span>
-                </div>
-            `;
-        }
-        
-        // השוואת שנה
-        if (planetData.orbitalPeriod && earthData.orbitalPeriod) {
-            const yearRatio = planetData.orbitalPeriod / earthData.orbitalPeriod;
-            const yearComparison = yearRatio > 1 ? 
-                `ארוכה פי ${yearRatio.toFixed(1)}` : 
-                `קצרה פי ${(1/yearRatio).toFixed(1)}`;
-            
-            content += `
-                <div class="comparison-item">
-                    <span class="label">שנה:</span>
-                    <span class="value">${yearComparison}</span>
-                </div>
-            `;
-        }
-        
-        // השוואת יום
-        if (planetData.rotationPeriod && earthData.rotationPeriod) {
-            const dayRatio = Math.abs(planetData.rotationPeriod) / earthData.rotationPeriod;
-            const dayComparison = dayRatio > 1 ? 
-                `ארוך פי ${dayRatio.toFixed(1)}` : 
-                `קצר פי ${(1/dayRatio).toFixed(1)}`;
-            
-            content += `
-                <div class="comparison-item">
-                    <span class="label">יום:</span>
-                    <span class="value">${dayComparison}</span>
-                </div>
-            `;
-        }
-        
-        content += '</div></div>';
-        return content;
+    .comparison-item {
+        font-size: 12px;
     }
 
-    // פורמט טמפרטורה
-    formatTemperature(temp) {
-        if (typeof temp === 'number') {
-            return `${temp}°C`;
-        } else if (typeof temp === 'object' && temp !== null) {
-            if (temp.avg !== undefined) return `${temp.avg}°C ממוצע`;
-            if (temp.surface !== undefined) return `${temp.surface}°C פני השטח`;
-            if (temp.min !== undefined && temp.max !== undefined) {
-                return `${temp.min}°C עד ${temp.max}°C`;
-            }
-            if (temp.day !== undefined && temp.night !== undefined) {
-                return `יום: ${temp.day}°C, לילה: ${temp.night}°C`;
-            }
-        }
-        return 'לא ידוע';
-    }
-
-    // החשכת צבע
-    darkenColor(color, factor) {
-        const hex = color.replace('#', '');
-        const r = Math.max(0, Math.floor(parseInt(hex.substr(0, 2), 16) * (1 - factor)));
-        const g = Math.max(0, Math.floor(parseInt(hex.substr(2, 2), 16) * (1 - factor)));
-        const b = Math.max(0, Math.floor(parseInt(hex.substr(4, 2), 16) * (1 - factor)));
-        
-        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-    }
-
-    // הצגת הפאנל
-    show() {
-        if (!this.elements.panel) return;
-        
-        // הסרת מחלקת hidden
-        this.elements.panel.classList.remove('hidden');
-        
-        // הוספת מחלקת צבע לפי כוכב הלכת
-        if (this.currentPlanet) {
-            this.elements.panel.className = `planet-${this.currentPlanet}`;
-        }
-        
-        // אנימציית כניסה
-        if (this.animations.fadeIn && this.elements.panel.animate) {
-            this.elements.panel.animate(this.animations.fadeIn, {
-                duration: 300,
-                easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-            });
-        }
-        
-        this.isVisible = true;
-        
-        // התחלת אנימציית סיבוב אם יש תצוגה מקדימה
-        this.startPlanetAnimation();
-        
-        console.log('Info panel shown');
-    }
-
-    // הסתרת הפאנל
-    hide() {
-        if (!this.elements.panel) return;
-        
-        // אנימציית יציאה
-        if (this.animations.fadeOut && this.elements.panel.animate) {
-            const animation = this.elements.panel.animate(this.animations.fadeOut, {
-                duration: 200,
-                easing: 'ease-in'
-            });
-            
-            animation.addEventListener('finish', () => {
-                this.elements.panel.classList.add('hidden');
-            });
-        } else {
-            this.elements.panel.classList.add('hidden');
-        }
-        
-        this.isVisible = false;
-        this.currentPlanet = null;
-        
-        // עצירת אנימציות
-        this.stopPlanetAnimation();
-        
-        console.log('Info panel hidden');
-    }
-
-    // **הוספה: התחלת אנימציית כוכב הלכת**
-    startPlanetAnimation() {
-        if (this.animations.planetRotation) {
-            this.animations.planetRotation.active = true;
-            this.animatePlanetRotation();
-        }
-    }
-
-    // **הוספה: עצירת אנימציית כוכב הלכת**
-    stopPlanetAnimation() {
-        if (this.animations.planetRotation) {
-            this.animations.planetRotation.active = false;
-        }
-    }
-
-    // **הוספה: אנימציית סיבוב כוכב הלכת**
-    animatePlanetRotation() {
-        if (!this.animations.planetRotation.active) return;
-        
-        const planetSphere = this.elements.preview?.querySelector('.planet-sphere');
-        if (planetSphere) {
-            this.animations.planetRotation.angle += this.animations.planetRotation.speed;
-            planetSphere.style.transform = `rotate(${this.animations.planetRotation.angle}rad)`;
-        }
-        
-        if (this.animations.planetRotation.active) {
-            requestAnimationFrame(() => this.animatePlanetRotation());
-        }
-    }
-
-    // בדיקה אם הפאנל גלוי
-    isShowing() {
-        return this.isVisible;
-    }
-
-    // קבלת כוכב הלכת הנוכחי
-    getCurrentPlanet() {
-        return this.currentPlanet;
-    }
-
-    // **הוספה: החלפת כוכב לכת בלי סגירת הפאנל**
-    switchPlanet(newPlanetName) {
-        if (this.isVisible) {
-            this.showPlanetInfo(newPlanetName);
-        }
-    }
-
-    // **הוספה: עדכון מיקום הפאנל**
-    updatePosition(x, y) {
-        if (this.elements.panel && x !== undefined && y !== undefined) {
-            this.elements.panel.style.left = `${x}px`;
-            this.elements.panel.style.top = `${y}px`;
-            this.elements.panel.style.transform = 'translate(-50%, -50%)';
-        }
-    }
-
-    // **הוספה: הגדרת גודל הפאנל**
-    setSize(width, height) {
-        if (this.elements.panel) {
-            if (width) this.elements.panel.style.width = typeof width === 'number' ? `${width}px` : width;
-            if (height) this.elements.panel.style.height = typeof height === 'number' ? `${height}px` : height;
-        }
-    }
-
-    // קבלת מידע מהיר
-    getQuickInfo(planetName) {
-        const planetData = PLANETS_DATA[planetName];
-        if (!planetData) return null;
-        
-        return {
-            name: planetData.name,
-            nameEn: planetData.nameEn,
-            description: planetData.description,
-            quickFacts: planetData.facts?.slice(0, 3) || [],
-            color: planetData.color,
-            radius: planetData.radius,
-            distance: planetData.distance
-        };
-    }
-
-    // עדכון מצב מהאפליקציה
-    syncWithApp() {
-        if (this.app && this.app.state) {
-            if (this.app.state.selectedPlanet && this.app.state.selectedPlanet !== this.currentPlanet) {
-                this.showPlanetInfo(this.app.state.selectedPlanet);
-            }
-        }
-    }
-
-    // ניקוי משאבים
-    dispose() {
-        // עצירת אנימציות
-        this.stopPlanetAnimation();
-        
-        // הסתרת הפאנל
-        this.hide();
-        
-        // ניקוי הפניות
-        this.currentPlanet = null;
-        this.isVisible = false;
-        this.app = null;
-        
-        // ניקוי אלמנטים
-        Object.keys(this.elements).forEach(key => {
-            if (key !== 'dataElements') {
-                this.elements[key] = null;
-            }
-        });
-        this.elements.dataElements.clear();
-        
-        this.isInitialized = false;
-        
-        console.log('Info panel disposed');
+    .moon-item {
+        font-size: 11px;
+        padding: 4px 8px;
     }
 }
 
-// **הוספה: פונקציות עזר גלובליות**
-const InfoPanelUtils = {
-    // יצירת תוכן מהיר למידע על כוכב לכת
-    createQuickContent(planetName) {
-        const planetData = PLANETS_DATA[planetName];
-        if (!planetData) return '';
-        
-        return `
-            <div class="quick-info">
-                <h3>${planetData.name}</h3>
-                <p>${planetData.description}</p>
-                ${planetData.facts ? `
-                    <ul>
-                        ${planetData.facts.slice(0, 2).map(fact => `<li>${fact}</li>`).join('')}
-                    </ul>
-                ` : ''}
-            </div>
-        `;
-    },
-    
-    // פורמט מספרים גדולים
-    formatLargeNumber(num) {
-        if (num >= 1e9) return (num / 1e9).toFixed(1) + ' מיליארד';
-        if (num >= 1e6) return (num / 1e6).toFixed(1) + ' מיליון';
-        if (num >= 1e3) return (num / 1e3).toFixed(1) + ' אלף';
-        return num.toLocaleString();
-    },
-    
-    // קבלת אייקון לכוכב לכת
-    getPlanetIcon(planetName) {
-        const icons = {
-            sun: '☀️',
-            mercury: '☿️',
-            venus: '♀️',
-            earth: '🌍',
-            mars: '♂️',
-            jupiter: '♃',
-            saturn: '♄',
-            uranus: '♅',
-            neptune: '♆'
-        };
-        
-        return icons[planetName] || '🪐';
+/* סמארטפון - 480px ומטה */
+@media (max-width: 480px) {
+    #infoPanel {
+        width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        top: 0;
+        left: 0;
+        transform: none;
+        border-radius: 0;
+        border: none;
+        z-index: 1500; /* ודוא שגם במסך קטן z-index גבוה */
     }
-};
 
-// הפוך הכל זמין גלובלית
-if (typeof window !== 'undefined') {
-    window.InfoPanel = InfoPanel;
-    window.InfoPanelUtils = InfoPanelUtils;
-    
-    // יצירת instance גלובלי
-    window.infoPanel = new InfoPanel();
+    .info-header {
+        padding: 12px 15px;
+        position: sticky;
+        top: 0;
+        z-index: 1510;
+    }
+
+    #planetName {
+        font-size: 18px;
+    }
+
+    .close-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+
+    .info-content {
+        padding: 15px;
+        max-height: calc(100vh - 70px);
+    }
+
+    #planetPreview {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 15px;
+    }
+
+    .saturn-rings {
+        width: 120px;
+        height: 120px;
+        border-width: 4px;
+    }
+
+    .data-item {
+        padding: 6px 0;
+        font-size: 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .data-item .value {
+        text-align: right;
+        direction: rtl;
+    }
+
+    .planet-description {
+        margin-bottom: 15px;
+    }
+
+    .planet-description p {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .interesting-facts,
+    .advanced-data,
+    .earth-comparison,
+    .moons-info {
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+
+    .interesting-facts h4,
+    .advanced-data h4,
+    .earth-comparison h4,
+    .moons-info h4 {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .interesting-facts li {
+        font-size: 12px;
+        padding: 6px 0;
+        padding-right: 15px;
+    }
+
+    .comparison-item {
+        font-size: 11px;
+    }
+
+    .moon-item {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+}
+
+/* אנימציות מתקדמות */
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -60%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+@keyframes slideOutToTop {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -60%);
+    }
+}
+
+/* הצגת הפאנל */
+#infoPanel:not(.hidden) {
+    animation: slideInFromTop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* תיקון בעיות תצוגה נוספות */
+#infoPanel {
+    /* ודוא שהפאנל לא מתחבא מאחורי אלמנטים אחרים */
+    isolation: isolate;
+    contain: layout style paint;
+}
+
+/* תיקון עבור דפדפנים ישנים */
+#infoPanel {
+    -webkit-transform: translate(-50%, -50%);
+    -moz-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+}
+
+/* הגנה מפני interference של אלמנטים אחרים */
+#infoPanel * {
+    box-sizing: border-box;
+}
+
+/* תיקון עבור מצב מסך מלא */
+@media (display-mode: fullscreen) {
+    #infoPanel {
+        z-index: 2000; /* z-index עוד יותר גבוה במסך מלא */
+    }
 }
