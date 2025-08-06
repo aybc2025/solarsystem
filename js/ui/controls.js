@@ -2,6 +2,7 @@
 class UIControls {
     constructor() {
         this.app = null;
+        this.infoPanel = null; // **הוספה: רפרנס לפאנל מידע**
         this.isInitialized = false;
         this.isMobile = this.detectMobile();
         
@@ -14,7 +15,7 @@ class UIControls {
             realisticMode: false,
             selectedPlanet: null,
             menuOpen: false,
-            infoVisible: false // **הוספה: מעקב אחר פאנל מידע**
+            infoVisible: false
         };
         
         // אלמנטים בממשק
@@ -45,7 +46,7 @@ class UIControls {
             // רשימת כוכבי הלכת
             planetList: null,
             
-            // **הוספה: פאנל מידע**
+            // פאנל מידע
             infoPanel: null,
             infoPanelName: null,
             infoPanelContent: null,
@@ -73,7 +74,7 @@ class UIControls {
             // הגדרת מאזיני אירועים
             this.setupEventListeners();
             
-            // **הוספה: אתחול פאנל מידע**
+            // אתחול פאנל מידע
             this.initInfoPanel();
             
             this.isInitialized = true;
@@ -105,21 +106,21 @@ class UIControls {
         this.controls.viewAsteroids = document.getElementById('showAsteroids');
         
         // בקרות מהירות
-        this.controls.quickPlayPause = document.getElementById('quickPause');
+        this.controls.quickPlayPause = document.getElementById('quickPlayPause');
         this.controls.quickReset = document.getElementById('quickReset');
         this.controls.quickInfo = document.getElementById('quickInfo');
         
         // רשימת כוכבי הלכת
         this.controls.planetList = document.querySelectorAll('.planet-btn');
         
-        // **הוספה: פאנל מידע**
+        // פאנל מידע
         this.controls.infoPanel = document.getElementById('infoPanel');
         this.controls.infoPanelName = document.getElementById('planetName');
         this.controls.infoPanelContent = document.querySelector('.info-content');
         this.controls.infoPanelClose = document.querySelector('.close-btn');
     }
 
-    // **הוספה: אתחול פאנל מידע**
+    // אתחול פאנל מידע
     initInfoPanel() {
         // יצירת פאנל מידע אם לא קיים
         if (!this.controls.infoPanel) {
@@ -130,7 +131,7 @@ class UIControls {
         this.setupInfoPanelEvents();
     }
 
-    // **הוספה: יצירת פאנל מידע**
+    // יצירת פאנל מידע
     createInfoPanel() {
         const infoPanel = document.createElement('div');
         infoPanel.id = 'infoPanel';
@@ -142,7 +143,29 @@ class UIControls {
             </div>
             <div class="info-content">
                 <div id="planetPreview"></div>
-                <div id="planetData"></div>
+                <div class="planet-data">
+                    <div class="data-item">
+                        <span class="data-label">מרחק מהשמש:</span>
+                        <span id="distance" class="data-value">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">קוטר:</span>
+                        <span id="diameter" class="data-value">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">מסה:</span>
+                        <span id="mass" class="data-value">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">תקופת מסלול:</span>
+                        <span id="period" class="data-value">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">טמפרטורה:</span>
+                        <span id="temperature" class="data-value">-</span>
+                    </div>
+                </div>
+                <div id="planetDescription" class="planet-description"></div>
             </div>
         `;
         
@@ -155,7 +178,7 @@ class UIControls {
         this.controls.infoPanelClose = infoPanel.querySelector('.close-btn');
     }
 
-    // **הוספה: הגדרת אירועי פאנל מידע**
+    // הגדרת אירועי פאנל מידע
     setupInfoPanelEvents() {
         // כפתור סגירה
         if (this.controls.infoPanelClose) {
@@ -249,7 +272,12 @@ class UIControls {
         // מהירות זמן
         if (this.controls.timeSpeed) {
             this.addEventListenerSafe(this.controls.timeSpeed, 'input', (event) => {
-                this.setTimeScale(parseFloat(event.target.value));
+                const value = parseFloat(event.target.value);
+                this.setTimeScale(value);
+                
+                if (this.controls.speedValue) {
+                    this.controls.speedValue.textContent = value.toFixed(1) + 'x';
+                }
             });
         }
     }
@@ -285,46 +313,37 @@ class UIControls {
         }
     }
 
-    // **תיקון: הגדרת כפתורי כוכבי הלכת עם פאנל מידע**
+    // הגדרת כפתורי כוכבי הלכת
     setupPlanetButtons() {
-        if (this.controls.planetList) {
-            this.controls.planetList.forEach(button => {
-                const planetName = button.dataset.planet;
-                if (planetName) {
-                    // **תיקון: הוספת פתיחת מידע בנוסף להתמקדות**
-                    this.addEventListenerSafe(button, 'click', () => {
-                        this.selectPlanet(planetName);
-                        this.showPlanetInfo(planetName); // **הוספה: פתיחת מידע**
-                    });
-                    
-                    button.title = `לחץ לצפייה ב${this.getPlanetDisplayName(planetName)}`;
-                }
+        this.controls.planetList.forEach(button => {
+            const planetName = button.getAttribute('data-planet');
+            
+            this.addEventListenerSafe(button, 'click', () => {
+                this.selectPlanet(planetName);
             });
-        }
+        });
     }
 
     // הגדרת בקרות מהירות
     setupQuickControls() {
+        // השהיה/המשכה מהירה
         if (this.controls.quickPlayPause) {
             this.addEventListenerSafe(this.controls.quickPlayPause, 'click', () => {
                 this.togglePlayPause();
             });
         }
         
+        // איפוס מהיר
         if (this.controls.quickReset) {
             this.addEventListenerSafe(this.controls.quickReset, 'click', () => {
                 this.resetView();
             });
         }
         
-        // **הוספה: כפתור מידע מהיר**
+        // מידע מהיר
         if (this.controls.quickInfo) {
             this.addEventListenerSafe(this.controls.quickInfo, 'click', () => {
-                if (this.state.selectedPlanet) {
-                    this.showPlanetInfo(this.state.selectedPlanet);
-                } else {
-                    this.showPlanetInfo('sun'); // ברירת מחדל - השמש
-                }
+                this.toggleInfoPanel();
             });
         }
     }
@@ -332,8 +351,6 @@ class UIControls {
     // הגדרת קיצורי מקלדת
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (event) => {
-            if (!this.app) return;
-            
             switch(event.code) {
                 case 'Space':
                     event.preventDefault();
@@ -351,11 +368,9 @@ class UIControls {
                     event.preventDefault();
                     this.toggleLabels();
                     break;
-                case 'KeyI': // **הוספה: קיצור דרך למידע**
+                case 'KeyI':
                     event.preventDefault();
-                    if (this.state.selectedPlanet) {
-                        this.showPlanetInfo(this.state.selectedPlanet);
-                    }
+                    this.toggleInfoPanel();
                     break;
                 case 'Escape':
                     event.preventDefault();
@@ -392,158 +407,104 @@ class UIControls {
         }
     }
 
-    // פתיחה/סגירה של תפריט נייד
-    toggleMobileMenu() {
-        this.state.menuOpen = !this.state.menuOpen;
-        
-        if (this.controls.mobileToggle) {
-            this.controls.mobileToggle.classList.toggle('active', this.state.menuOpen);
-        }
-        
-        if (this.controls.controlsPanel) {
-            this.controls.controlsPanel.classList.toggle('open', this.state.menuOpen);
-        }
-        
-        console.log('Mobile menu:', this.state.menuOpen ? 'opened' : 'closed');
-    }
-
-    // סגירת תפריט נייד
-    closeMobileMenu() {
-        this.state.menuOpen = false;
-        
-        if (this.controls.mobileToggle) {
-            this.controls.mobileToggle.classList.remove('active');
-        }
-        
-        if (this.controls.controlsPanel) {
-            this.controls.controlsPanel.classList.remove('open');
-        }
-    }
-
-    // **הוספה: הצגת מידע על כוכב לכת**
+    // **תיקון: הצגת מידע על כוכב לכת**
     showPlanetInfo(planetName) {
-        if (!planetName || !PLANETS_DATA[planetName]) {
-            console.warn('Invalid planet name:', planetName);
-            return;
-        }
+        if (!planetName || typeof PLANETS_DATA === 'undefined') return;
         
-        const planetData = PLANETS_DATA[planetName];
         this.state.selectedPlanet = planetName;
         this.state.infoVisible = true;
         
-        // עדכון תוכן הפאנל
-        if (this.controls.infoPanelName) {
-            this.controls.infoPanelName.textContent = planetData.name;
-        }
-        
-        // יצירת תוכן מפורט
-        this.updatePlanetContent(planetName, planetData);
-        
-        // הצגת הפאנל
-        if (this.controls.infoPanel) {
+        // שימוש בפאנל המידע המתוקן
+        if (this.infoPanel && typeof this.infoPanel.onPlanetSelected === 'function') {
+            this.infoPanel.onPlanetSelected(planetName);
+        } else if (this.controls.infoPanel) {
+            // חלופה: עדכון ישיר של פאנל HTML
+            this.updateInfoPanelHTML(planetName);
             this.controls.infoPanel.classList.remove('hidden');
-            this.controls.infoPanel.className = `planet-${planetName}`; // הוספת מחלקת צבע
         }
         
         // עדכון כפתורי כוכבי הלכת
         this.updatePlanetButtons(planetName);
         
-        console.log(`Showing info for: ${planetData.name}`);
+        console.log(`Showing info for: ${planetName}`);
     }
 
-    // **הוספה: עדכון תוכן כוכב הלכת**
-    updatePlanetContent(planetName, planetData) {
-        const planetDataDiv = document.getElementById('planetData');
-        if (!planetDataDiv) return;
+    // עדכון ישיר של פאנל HTML
+    updateInfoPanelHTML(planetName) {
+        const planetData = PLANETS_DATA[planetName];
+        if (!planetData) return;
         
-        // תצוגה מקדימה של כוכב הלכת
-        const previewDiv = document.getElementById('planetPreview');
-        if (previewDiv) {
-            previewDiv.innerHTML = this.createPlanetPreview(planetName, planetData);
+        // עדכון שם
+        if (this.controls.infoPanelName) {
+            this.controls.infoPanelName.textContent = planetData.name || planetName;
         }
         
-        // נתונים מפורטים
-        planetDataDiv.innerHTML = `
-            <div class="planet-description">
-                <p>${planetData.description}</p>
-            </div>
-            
-            <div class="planet-data">
-                <div class="data-item">
-                    <span class="label">רדיוס:</span>
-                    <span class="value">${planetData.radius?.toLocaleString() || 'לא ידוע'} ק"מ</span>
-                </div>
-                ${planetData.distance ? `
-                    <div class="data-item">
-                        <span class="label">מרחק מהשמש:</span>
-                        <span class="value">${(planetData.distance / 1e6).toFixed(1)} מיליון ק"מ</span>
-                    </div>
-                ` : ''}
-                ${planetData.orbitalPeriod ? `
-                    <div class="data-item">
-                        <span class="label">שנה:</span>
-                        <span class="value">${planetData.orbitalPeriod.toFixed(1)} ימי כדור ארץ</span>
-                    </div>
-                ` : ''}
-                ${planetData.rotationPeriod ? `
-                    <div class="data-item">
-                        <span class="label">יום:</span>
-                        <span class="value">${Math.abs(planetData.rotationPeriod).toFixed(2)} ימי כדור ארץ</span>
-                    </div>
-                ` : ''}
-                ${planetData.temperature ? `
-                    <div class="data-item">
-                        <span class="label">טמפרטורה:</span>
-                        <span class="value">${this.formatTemperature(planetData.temperature)}</span>
-                    </div>
-                ` : ''}
-                ${planetData.moons !== undefined ? `
-                    <div class="data-item">
-                        <span class="label">ירחים:</span>
-                        <span class="value">${planetData.moons}</span>
-                    </div>
-                ` : ''}
-            </div>
-            
-            ${planetData.facts ? `
-                <div class="interesting-facts">
-                    <h4>עובדות מעניינות</h4>
-                    <ul>
-                        ${planetData.facts.slice(0, 4).map(fact => `<li>${fact}</li>`).join('')}
-                    </ul>
-                </div>
-            ` : ''}
-        `;
-    }
-
-    // **הוספה: יצירת תצוגה מקדימה של כוכב הלכת**
-    createPlanetPreview(planetName, planetData) {
-        const color = planetData.color ? `#${planetData.color.toString(16).padStart(6, '0')}` : '#888888';
+        // עדכון נתונים בסיסיים
+        const distanceEl = document.getElementById('distance');
+        const diameterEl = document.getElementById('diameter');
+        const massEl = document.getElementById('mass');
+        const periodEl = document.getElementById('period');
+        const tempEl = document.getElementById('temperature');
         
-        let preview = `
-            <div class="planet-sphere" style="background: radial-gradient(circle at 30% 30%, ${color}, ${this.darkenColor(color, 0.3)});">
-        `;
-        
-        // הוספת טבעות לשבתאי
-        if (planetName === 'saturn') {
-            preview += '<div class="saturn-rings"></div>';
+        if (distanceEl && planetData.distance) {
+            distanceEl.textContent = this.formatDistance(planetData.distance);
         }
         
-        preview += '</div>';
-        return preview;
-    }
-
-    // **הוספה: החשכת צבע**
-    darkenColor(color, factor) {
-        const hex = color.replace('#', '');
-        const r = Math.max(0, Math.floor(parseInt(hex.substr(0, 2), 16) * (1 - factor)));
-        const g = Math.max(0, Math.floor(parseInt(hex.substr(2, 2), 16) * (1 - factor)));
-        const b = Math.max(0, Math.floor(parseInt(hex.substr(4, 2), 16) * (1 - factor)));
+        if (diameterEl && planetData.radius) {
+            diameterEl.textContent = this.formatDiameter(planetData.radius * 2);
+        }
         
-        return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        if (massEl && planetData.mass) {
+            massEl.textContent = this.formatMass(planetData.mass);
+        }
+        
+        if (periodEl && planetData.orbitalPeriod) {
+            periodEl.textContent = this.formatPeriod(planetData.orbitalPeriod);
+        }
+        
+        if (tempEl && planetData.temperature) {
+            tempEl.textContent = this.formatTemperature(planetData.temperature);
+        }
+        
+        // עדכון תיאור
+        const descEl = document.getElementById('planetDescription');
+        if (descEl && planetData.description) {
+            descEl.textContent = planetData.description;
+        }
     }
 
-    // **הוספה: פורמט טמפרטורה**
+    // פונקציות עיצוב נתונים
+    formatDistance(distance) {
+        if (distance < 1) {
+            return `${(distance * 1000).toFixed(0)} אלף ק"מ`;
+        } else {
+            return `${distance.toFixed(1)} מיליון ק"מ`;
+        }
+    }
+
+    formatDiameter(diameter) {
+        return `${diameter.toLocaleString()} ק"מ`;
+    }
+
+    formatMass(mass) {
+        const earthMass = 5.972e24;
+        const relativeToEarth = mass / earthMass;
+        
+        if (relativeToEarth < 0.1) {
+            return `${relativeToEarth.toFixed(3)} מסות כדור הארץ`;
+        } else {
+            return `${relativeToEarth.toFixed(1)} מסות כדור הארץ`;
+        }
+    }
+
+    formatPeriod(period) {
+        if (period < 1) {
+            return `${(period * 365).toFixed(0)} ימים`;
+        } else {
+            return `${period.toFixed(1)} שנות כדור הארץ`;
+        }
+    }
+
     formatTemperature(temp) {
         if (typeof temp === 'number') {
             return `${temp}°C`;
@@ -557,11 +518,15 @@ class UIControls {
         return 'לא ידוע';
     }
 
-    // **הוספה: סגירת פאנל מידע**
+    // סגירת פאנל מידע
     closeInfoPanel() {
         this.state.infoVisible = false;
+        this.state.selectedPlanet = null;
         
-        if (this.controls.infoPanel) {
+        // שימוש בפאנל המידע המתוקן
+        if (this.infoPanel && typeof this.infoPanel.onPlanetDeselected === 'function') {
+            this.infoPanel.onPlanetDeselected();
+        } else if (this.controls.infoPanel) {
             this.controls.infoPanel.classList.add('hidden');
         }
         
@@ -571,17 +536,13 @@ class UIControls {
         console.log('Info panel closed');
     }
 
-    // **הוספה: עדכון כפתורי כוכבי הלכת**
-    updatePlanetButtons(selectedPlanet) {
-        if (this.controls.planetList) {
-            this.controls.planetList.forEach(button => {
-                const planetName = button.dataset.planet;
-                if (planetName === selectedPlanet) {
-                    button.classList.add('active');
-                } else {
-                    button.classList.remove('active');
-                }
-            });
+    // החלפת toggle ל-show
+    toggleInfoPanel() {
+        if (this.state.infoVisible) {
+            this.closeInfoPanel();
+        } else {
+            // הצגת מידע על השמש כברירת מחדל
+            this.showPlanetInfo('sun');
         }
     }
 
@@ -596,16 +557,24 @@ class UIControls {
             this.app.selectPlanet(planetName);
         }
         
-        // עדכון כפתורים
-        this.updatePlanetButtons(planetName);
+        // הצגת מידע
+        this.showPlanetInfo(planetName);
         
         console.log(`Selected planet: ${planetName}`);
     }
 
-    // קבלת שם תצוגה לכוכב לכת
-    getPlanetDisplayName(planetName) {
-        const planetData = PLANETS_DATA[planetName];
-        return planetData ? planetData.name : planetName;
+    // עדכון כפתורי כוכבי הלכת
+    updatePlanetButtons(selectedPlanet) {
+        if (this.controls.planetList) {
+            this.controls.planetList.forEach(button => {
+                const planetName = button.dataset.planet;
+                if (planetName === selectedPlanet) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+        }
     }
 
     // פונקציות בקרה
@@ -617,40 +586,16 @@ class UIControls {
         }
     }
 
-    // עדכון כפתור השהיה/המשכה
-    updatePlayPauseButton() {
-        const text = this.state.isPaused ? '▶️ המשך' : '⏸️ השהה';
-        const quickText = this.state.isPaused ? '▶️' : '⏸️';
-        
-        if (this.controls.playPause) {
-            this.controls.playPause.textContent = text;
-        }
-        
-        if (this.controls.quickPlayPause) {
-            this.controls.quickPlayPause.textContent = quickText;
-        }
-    }
-
     resetView() {
         if (this.app && typeof this.app.resetView === 'function') {
             this.app.resetView();
         }
-        
-        // איפוס בחירת כוכב לכת
-        this.state.selectedPlanet = null;
-        this.updatePlanetButtons(null);
-        this.closeInfoPanel();
     }
 
     setTimeScale(scale) {
         if (this.app && typeof this.app.setTimeScale === 'function') {
             this.app.setTimeScale(scale);
             this.state.timeScale = scale;
-            
-            // עדכון תצוגת הערך
-            if (this.controls.speedValue) {
-                this.controls.speedValue.textContent = scale.toFixed(1) + 'x';
-            }
         }
     }
 
@@ -669,8 +614,8 @@ class UIControls {
     }
 
     toggleAsteroids() {
-        if (this.app && typeof this.app.toggleAsteroidBelt === 'function') {
-            this.app.toggleAsteroidBelt();
+        if (this.app && typeof this.app.toggleAsteroids === 'function') {
+            this.app.toggleAsteroids();
             this.state.showAsteroids = this.app.state.showAsteroids;
         }
     }
@@ -682,181 +627,151 @@ class UIControls {
         }
     }
 
-    // טיפול בשינוי גודל חלון
-    handleResize() {
-        // סגירת תפריט נייד בשינוי גודל
-        if (this.state.menuOpen && window.innerWidth > 768) {
-            this.closeMobileMenu();
+    // עדכון כפתור השהיה/המשכה
+    updatePlayPauseButton() {
+        const text = this.state.isPaused ? '▶️ המשך' : '⏸️ השהה';
+        const quickText = this.state.isPaused ? '▶️' : '⏸️';
+        
+        if (this.controls.playPause) {
+            this.controls.playPause.textContent = text;
+            this.controls.playPause.title = this.state.isPaused ? 'המשך' : 'השהה';
         }
         
-        // התאמת פאנל מידע
-        if (this.state.infoVisible && this.controls.infoPanel) {
-            // ודוא שהפאנל נשאר במרכז
-            // הCSS כבר מטפל בזה, אבל נוודא
+        if (this.controls.quickPlayPause) {
+            this.controls.quickPlayPause.textContent = quickText;
+            this.controls.quickPlayPause.title = this.state.isPaused ? 'המשך' : 'השהה';
         }
+    }
+
+    // פתיחה/סגירה של תפריט נייד
+    toggleMobileMenu() {
+        this.state.menuOpen = !this.state.menuOpen;
+        
+        if (this.controls.mobileToggle) {
+            this.controls.mobileToggle.classList.toggle('active', this.state.menuOpen);
+        }
+        
+        if (this.controls.controlsPanel) {
+            this.controls.controlsPanel.classList.toggle('open', this.state.menuOpen);
+        }
+        
+        // מניעת/החזרת scroll
+        document.body.style.overflow = this.state.menuOpen ? 'hidden' : '';
+        
+        console.log('Mobile menu:', this.state.menuOpen ? 'opened' : 'closed');
+    }
+
+    closeMobileMenu() {
+        this.state.menuOpen = false;
+        
+        if (this.controls.mobileToggle) {
+            this.controls.mobileToggle.classList.remove('active');
+        }
+        
+        if (this.controls.controlsPanel) {
+            this.controls.controlsPanel.classList.remove('open');
+        }
+        
+        // החזרת scroll
+        document.body.style.overflow = '';
     }
 
     // טיפול בשינוי orientation
     handleOrientationChange() {
-        // המתנה קצרה לסיום השינוי
-        setTimeout(() => {
-            this.handleResize();
-        }, 200);
+        if (this.app && this.app.handleResize) {
+            this.app.handleResize();
+        }
+        
+        // סגירת תפריט במעבר ל-landscape
+        if (window.orientation === 90 || window.orientation === -90) {
+            this.closeMobileMenu();
+        }
     }
 
-    // **הוספה: פתיחה/סגירה של פאנל מידע**
-    toggleInfoPanel() {
-        if (this.state.infoVisible) {
-            this.closeInfoPanel();
+    // טיפול בשינוי גודל
+    handleResize() {
+        // עדכון זיהוי מובייל
+        this.isMobile = this.detectMobile();
+        
+        // התאמת ממשק
+        if (this.isMobile) {
+            this.setupMobileMenu();
         } else {
-            // פתיחת מידע על כוכב הלכת הנבחר או השמש
-            const planetToShow = this.state.selectedPlanet || 'sun';
-            this.showPlanetInfo(planetToShow);
+            this.closeMobileMenu();
         }
     }
 
-    // קבלת מידע מהיר על כוכב לכת
-    getQuickPlanetInfo(planetName) {
-        const planetData = PLANETS_DATA[planetName];
-        if (!planetData) return 'מידע לא זמין';
+    // עדכון ממשק
+    updateUI() {
+        this.updatePlayPauseButton();
         
-        const facts = planetData.facts || [];
-        return `${planetData.name}\n\n${planetData.description}\n\nעובדות מעניינות:\n${facts.slice(0, 3).join('\n')}`;
-    }
-
-    // טיפול בלחיצה מחוץ לפאנל
-    handleOutsideClick(event) {
-        // סגירת פאנל מידע
-        if (this.state.infoVisible && 
-            this.controls.infoPanel && 
-            !this.controls.infoPanel.contains(event.target)) {
-            this.closeInfoPanel();
+        // עדכון checkboxes
+        if (this.controls.viewOrbits && this.app) {
+            this.controls.viewOrbits.checked = this.app.state.showOrbits;
+        }
+        
+        if (this.controls.viewLabels && this.app) {
+            this.controls.viewLabels.checked = this.app.state.showLabels;
+        }
+        
+        if (this.controls.viewAsteroids && this.app) {
+            this.controls.viewAsteroids.checked = this.app.state.showAsteroids;
+        }
+        
+        if (this.controls.viewRealistic && this.app) {
+            this.controls.viewRealistic.checked = this.app.state.realisticMode;
+        }
+        
+        // עדכון מהירות זמן
+        if (this.controls.timeSpeed && this.app) {
+            this.controls.timeSpeed.value = this.app.state.timeScale;
+            
+            if (this.controls.speedValue) {
+                this.controls.speedValue.textContent = this.app.state.timeScale.toFixed(1) + 'x';
+            }
         }
     }
 
-    // **הוספה: פונקציות עזר לטמפרטורה**
-    formatTemperatureRange(temp) {
-        if (typeof temp === 'object') {
-            if (temp.min !== undefined && temp.max !== undefined) {
-                return `${temp.min}°C - ${temp.max}°C`;
-            }
-            if (temp.day !== undefined && temp.night !== undefined) {
-                return `יום: ${temp.day}°C, לילה: ${temp.night}°C`;
-            }
-            if (temp.avg !== undefined) {
-                return `${temp.avg}°C ממוצע`;
-            }
-        }
-        return typeof temp === 'number' ? `${temp}°C` : 'לא ידוע';
-    }
-
-    // **הוספה: חישוב השוואה לכדור הארץ**
-    getEarthComparison(planetName) {
-        const planetData = PLANETS_DATA[planetName];
-        const earthData = PLANETS_DATA.earth;
-        
-        if (!planetData || planetName === 'earth') return null;
-        
-        const comparisons = [];
-        
-        // השוואת גודל
-        if (planetData.radius && earthData.radius) {
-            const ratio = planetData.radius / earthData.radius;
-            if (ratio > 1) {
-                comparisons.push(`גדול פי ${ratio.toFixed(1)} מכדור הארץ`);
-            } else {
-                comparisons.push(`קטן פי ${(1/ratio).toFixed(1)} מכדור הארץ`);
-            }
-        }
-        
-        // השוואת מסה
-        if (planetData.mass && earthData.mass) {
-            const massRatio = planetData.mass / earthData.mass;
-            if (massRatio > 1) {
-                comparisons.push(`כבד פי ${massRatio.toFixed(1)} מכדור הארץ`);
-            } else {
-                comparisons.push(`קל פי ${(1/massRatio).toFixed(1)} מכדור הארץ`);
-            }
-        }
-        
-        return comparisons;
-    }
-
-    // סנכרון מצב עם האפליקציה
-    syncWithApp() {
+    // שמירת הגדרות
+    saveSettings() {
         if (!this.app) return;
         
-        // עדכון מצב האפליקציה
-        if (this.app.state) {
-            this.state.isPaused = this.app.state.isPaused || false;
-            this.state.timeScale = this.app.state.timeScale || 1;
-            this.state.showOrbits = this.app.state.showOrbits !== false;
-            this.state.showLabels = this.app.state.showLabels !== false;
-            this.state.showAsteroids = this.app.state.showAsteroids !== false;
-            this.state.realisticMode = this.app.state.realisticMode || false;
-        }
-        
-        // עדכון ממשק
-        this.updateControls();
-    }
-
-    // עדכון בקרות לפי המצב
-    updateControls() {
-        // עדכון checkbox-ים
-        if (this.controls.viewOrbits) {
-            this.controls.viewOrbits.checked = this.state.showOrbits;
-        }
-        
-        if (this.controls.viewLabels) {
-            this.controls.viewLabels.checked = this.state.showLabels;
-        }
-        
-        if (this.controls.viewRealistic) {
-            this.controls.viewRealistic.checked = this.state.realisticMode;
-        }
-        
-        if (this.controls.viewAsteroids) {
-            this.controls.viewAsteroids.checked = this.state.showAsteroids;
-        }
-        
-        // עדכון סליידר זמן
-        if (this.controls.timeSpeed) {
-            this.controls.timeSpeed.value = this.state.timeScale;
-        }
-        
-        // עדכון כפתור השהיה
-        this.updatePlayPauseButton();
-    }
-
-    // קבלת מצב הממשק
-    getState() {
-        return {
-            ...this.state,
-            timestamp: Date.now()
+        const settings = {
+            timeScale: this.app.state.timeScale,
+            showOrbits: this.app.state.showOrbits,
+            showLabels: this.app.state.showLabels,
+            showAsteroids: this.app.state.showAsteroids,
+            realisticMode: this.app.state.realisticMode
         };
-    }
-
-    // טעינת מצב הממשק
-    setState(newState) {
-        if (!newState) return;
         
-        Object.assign(this.state, newState);
-        this.updateControls();
+        try {
+            localStorage.setItem('solarSystemSettings', JSON.stringify(settings));
+        } catch (error) {
+            console.warn('Could not save settings:', error);
+        }
     }
 
-    // ניקוי משאבים
-    dispose() {
-        // ניקוי מאזיני אירועים
-        this.eventListeners.forEach((listeners, key) => {
-            listeners.forEach(({ element, event, handler }) => {
-                if (element && element.removeEventListener) {
-                    element.removeEventListener(event, handler);
+    // טעינת הגדרות
+    loadSettings() {
+        try {
+            const saved = localStorage.getItem('solarSystemSettings');
+            if (saved && this.app) {
+                const settings = JSON.parse(saved);
+                
+                if (settings.timeScale) {
+                    this.app.setTimeScale(settings.timeScale);
                 }
-            });
-        });
-        this.eventListeners.clear();
-        
-        // איפוס מצב
+                
+                // עדכון מצבי תצוגה
+                this.updateUI();
+            }
+        } catch (error) {
+            console.warn('Could not load settings:', error);
+        }
+    }
+
+    // איפוס מצב
+    resetState() {
         this.state = {
             isPaused: false,
             timeScale: 1,
@@ -871,9 +786,26 @@ class UIControls {
         this.isInitialized = false;
         this.app = null;
     }
+
+    // ניקוי resources
+    destroy() {
+        // ניקוי מאזיני אירועים
+        this.eventListeners.forEach((listeners, key) => {
+            listeners.forEach(({ element, event, handler }) => {
+                element.removeEventListener(event, handler);
+            });
+        });
+        
+        this.eventListeners.clear();
+        
+        // החזרת scroll
+        document.body.style.overflow = '';
+        
+        console.log('UI Controls destroyed');
+    }
 }
 
-// **הוספה: נתונים לצורכי הצגה במידע המהיר**
+// נתונים לצורכי הצגה במידע המהיר
 const QUICK_PLANET_DATA = {
     sun: {
         emoji: '☀️',
