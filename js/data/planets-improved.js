@@ -9,7 +9,7 @@ const PLANETS_DATA = {
         rotationPeriod: 25.05, // ימים
         color: 0xFFD700,
         emissive: 0xFFAA00,
-        scaledRadius: 15,
+        scaledRadius: 20, // הגדלה מ-15 ל-20
         description: 'השמש היא הכוכב במרכז מערכת השמש שלנו והמקור לכל האנרגיה על כדור הארץ. היא מכילה 99.86% ממסת מערכת השמש כולה ומספקת חום ואור לכל כוכבי הלכת. השמש היא כוכב מסוג G2V, כוכב ננס צהוב, והיא בגיל של כ-4.6 מיליארד שנים.',
         facts: [
             'הטמפרטורה במרכז השמש מגיעה ל-15 מיליון מעלות צלזיוס',
@@ -45,7 +45,7 @@ const PLANETS_DATA = {
         rotationPeriod: 58.646, // ימים
         temperature: { min: -173, max: 427, day: 427, night: -173 }, // צלזיוס
         color: 0x8C7853,
-        scaledRadius: 2,
+        scaledRadius: 4, // הגדלה מ-2 ל-4
         scaledDistance: 25,
         moons: 0,
         eccentricity: 0.2056,
@@ -53,29 +53,22 @@ const PLANETS_DATA = {
         axialTilt: 0.034,
         description: 'כוכב חמה הוא הכוכב הקרוב ביותר לשמש והקטן ביותר במערכת השמש. למרות קרבתו לשמש, הוא אינו הכוכב החם ביותר. כוכב חמה חסר אטמוספירה כמעט לחלוטין, מה שגורם לשינויי טמפרטורה קיצוניים בין היום והלילה. יום אחד על כוכב חמה ארוך יותר משנה שלו!',
         facts: [
-            'הכוכב לכת הקטן ביותר במערכת השמש',
-            'יום אחד על כוכב חמה = 176 ימי כדור ארץ',
-            'השנה הקצרה ביותר: 88 ימי כדור ארץ',
-            'טמפרטורות קיצוניות: -173°C עד 427°C',
-            'אין לו אטמוספירה כמעט',
-            'יש לו מגמה של כווצות - הוא מתקרר לאט',
-            'המהירות הגבוהה ביותר במסלול: 47.4 קמ/ש',
-            'יש לו מרכז ברזל גדול יחסית לגודלו'
+            'יום אחד על כוכב חמה (58.6 ימי כדור ארץ) ארוך יותר משנה שלו (88 ימי כדור ארץ)',
+            'שינויי הטמפרטורה הקיצוניים ביותר: מ-173°C בלילה ל-427°C ביום',
+            'יש לו ליבת ברזל הגדולה ביותר יחסית לגודלו מכל כוכבי הלכת',
+            'המהירות הגבוהה ביותר במסלול - 48 ק"מ לשנייה',
+            'הכוכב הצפוף ביותר אחרי כדור הארץ',
+            'אין לו אטמוספירה משמעותית - חסר אוויר לחלוטין'
         ],
         composition: {
-            core: 'ברזל מוצק גדול (75% מהקוטר)',
-            mantle: 'סיליקטים דקים',
-            crust: 'סיליקטים עם מכתשים רבים'
-        },
-        atmosphere: {
-            composition: 'כמעט ואקום',
-            pressure: '10^-15 בר',
-            mainComponents: 'חמצן, נתרן, מימן, הליום, אשלגן'
+            core: 'ליבת ברזל גדולה (75% מהרדיוס)',
+            mantle: 'מעטה סיליקטי דק',
+            crust: 'קרום דק של סלע בזלתי'
         },
         exploration: [
-            'מרינר 10 (1974-1975)',
-            'MESSENGER (2011-2015)',
-            'BepiColombo (2018-2025)'
+            'מרינר 10 (1974-1975) - תמונות ראשונות',
+            'מסנג\'ר (2011-2015) - מיפוי מלא',
+            'BepiColombo (2025+) - משימה משותפת אירופה-יפן'
         ]
     },
     venus: {
@@ -85,89 +78,72 @@ const PLANETS_DATA = {
         mass: 4.8675e24, // ק"ג
         distance: 108.21e6, // ק"מ מהשמש
         orbitalPeriod: 224.701, // ימים
-        rotationPeriod: -243.025, // ימים (סיבוב לאחור)
-        temperature: { avg: 464, surface: 464 }, // צלזיוס
+        rotationPeriod: -243.025, // ימים (סיבוב הפוך!)
+        temperature: { surface: 464, clouds: -45 }, // צלזיוס
         color: 0xFFC649,
-        scaledRadius: 3.8,
-        scaledDistance: 35,
+        scaledRadius: 6, // הגדלה מ-4 ל-6
+        scaledDistance: 45,
         moons: 0,
         eccentricity: 0.0067,
         inclination: 3.39,
-        axialTilt: 177.4,
-        description: 'נוגה נקראת "כוכב הערב" או "כוכב הבוקר" והיא הכוכב הבהיר ביותר בשמי הלילה אחרי השמש והירח. האטמוספרה הצפופה שלה יוצרת אפקט חממה קיצוני שהופך אותה לכוכב הלכת החם ביותר במערכת השמש, אפילו יותר מכוכב חמה.',
+        axialTilt: 177.36,
+        description: 'נוגה, הכוכב השני מהשמש, הוא הכוכב החם ביותר במערכת השמש בשל אפקט החממה הקיצוני. האטמוספירה הצפופה שלו מכילה עננים של חומצה גופרתית ולחץ פני השטח פי 90 מכדור הארץ. נוגה מסתובבת בכיוון הפוך מכל כוכבי הלכת האחרים.',
         facts: [
-            'הכוכב לכת החם ביותר במערכת השמש (464°C)',
-            'מסתובב לכיוון ההפוך מכל הכוכבים האחרים',
-            'יום אחד על נוגה = 243 ימי כדור ארץ',
-            'לחץ אטמוספרי פי 90 מכדור הארץ',
-            'נקראת "תאומת כדור הארץ" בגלל הגודל הדומה',
-            'השמש זורחת במערב ושוקעת במזרח',
-            'יש לה עננים של חומצת גופרית',
-            'הכוכב הבהיר ביותר אחרי השמש והירח'
+            'הכוכב החם ביותר במערכת השמש - 464°C, חם יותר מכוכב חמה',
+            'מסתובב בכיוון הפוך (retrograde) - השמש זורחת במערב!',
+            'יום אחד ארוך יותר משנה אחת (243 מול 225 ימי כדור ארץ)',
+            'לחץ האטמוספירה פי 90 מכדור הארץ - כמו להיות 900 מטר מתחת לים',
+            'עננים של חומצה גופרתית ברוחות של 120 מ/ש',
+            'הכוכב הבהיר ביותר בשמיים אחרי השמש והירח'
         ],
         atmosphere: {
-            co2: '96.5%',
+            carbonDioxide: '96.5%',
             nitrogen: '3.5%',
-            pressure: '92 בר',
-            clouds: 'חומצת גופרית',
-            effects: 'אפקט חממה קיצוני'
-        },
-        surface: {
-            features: 'וולקנים, הרים, מכתשים',
-            volcanism: 'פעילות וולקנית אפשרית',
-            terrain: 'מישורי לבה ענקיים'
+            pressure: '9.2 MPa (פי 92 מכדור הארץ)',
+            greenhouse: 'אפקט חממה קיצוני'
         },
         exploration: [
-            'ונרה (ברית המועצות, 1961-1984)',
-            'מגלן (NASA, 1989-1994)',
-            'ונוס אקספרס (ESA, 2005-2014)',
-            'פארקר סולאר פרוב (2020-היום)'
+            'ונרה (ברית המועצות) - נחתות ראשונות',
+            'מגלן (נאס"א, 1990-1994) - מיפוי רדאר',
+            'ביפי קולומבו (2025) - חלוף בדרך למרקורי',
+            'VERITAS & DAVINCI+ (עתיד) - חקירה מפורטת'
         ]
     },
     earth: {
         name: 'כדור הארץ',
         nameEn: 'Earth',
-        radius: 6371, // ק"מ
-        mass: 5.9724e24, // ק"ג
+        radius: 6371, // ק"מ  
+        mass: 5.972e24, // ק"ג
         distance: 149.6e6, // ק"מ מהשמש (1 AU)
         orbitalPeriod: 365.256, // ימים
-        rotationPeriod: 0.99726968, // ימים (23.93 שעות)
+        rotationPeriod: 0.99726968, // ימים (23h 56m 4s)
         temperature: { avg: 15, min: -89, max: 58 }, // צלזיוס
         color: 0x6B93D6,
-        scaledRadius: 4,
-        scaledDistance: 50,
+        scaledRadius: 6, // הגדלה מ-4 ל-6
+        scaledDistance: 65,
         moons: 1,
         eccentricity: 0.0167,
-        inclination: 0,
+        inclination: 0.00,
         axialTilt: 23.44,
-        description: 'כדור הארץ הוא הכוכב לכת הידוע היחיד שתומך בחיים. 71% משטחו מכוסה במים נוזליים, והוא בעל אטמוספרה עשירה בחמצן ושכבת אוזון מגנה. הירח שלנו משפיע על הגאות והשפל ומייצב את הסיבוב של כדור הארץ, מה שמאפשר אקלים יציב.',
+        description: 'כדור הארץ הוא הכוכב השלישי מהשמש והיחיד הידוע שתומך בחיים. 71% מפני השטח מכוסה במים נוזליים, ולו אטמוספירה עשירה בחמצן ושדה מגנטי המגן מקרינה קוסמית. כדור הארץ בן 4.54 מיליארד שנים והוא הבית לכל הצורות הידועות של חיים.',
         facts: [
-            'הכוכב לכת היחיד הידוע שתומך בחיים',
-            '71% מהשטח מכוסה במים נוזליים',
-            'האטמוספרה מכילה 21% חמצן',
-            'יש לו ירח אחד גדול המשפיע על הגאות',
-            'שכבת האוזון מגנה מקרינה מזיקה',
-            'הכוכב הצפוף ביותר במערכת השמש',
-            'היחיד עם טקטוניקת לוחות פעילה',
-            'בית לכ-8.7 מיליון מינים של יצורים חיים'
+            'הכוכב היחיד הידוע שתומך בחיים',
+            '71% מפני השטח מכוסה במים נוזליים',
+            'שדה מגנטי חזק המגן מקרינה קוסמית מזיקה',
+            'אטמוספירה עשירה בחמצן (21%) וחנקן (78%)',
+            'הירח גורם לגאות ושפל ומייצב את הטיית הציר',
+            'היום הולך ומתארך ב-2.3 מילישנייה כל 100 שנה'
         ],
-        atmosphere: {
-            nitrogen: '78.09%',
-            oxygen: '20.95%',
-            argon: '0.93%',
-            co2: '0.04%',
-            pressure: '1 בר'
+        structure: {
+            crust: 'קרום של סלע בזלתי וגרניטי (עובי ממוצע 40 ק"מ)',
+            mantle: 'מעטה של סלע חם ופלסטי (2,900 ק"מ)',
+            outerCore: 'ליבה חיצונית נוזלית של ברזל וניקל',
+            innerCore: 'ליבה פנימית מוצקה - ברזל בלחץ עצום'
         },
-        oceans: {
-            coverage: '71%',
-            averageDepth: '3.68 קמ',
-            deepestPoint: 'תעלת מריאנה - 11.03 קמ',
-            volume: '1.386 מיליארד קמ³'
-        },
-        life: {
-            ageOfLife: '3.8 מיליארד שנים',
-            species: '8.7 מיליון מינים מוערכים',
-            biomass: 'מרבית הביומסה חיה באוקיינוסים'
+        biosphere: {
+            species: 'מיליוני מינים - מחיידקים ועד לווייתנים',
+            ecosystems: 'יערות, מדבריות, אוקיינוסים, קוטבים',
+            evolution: '3.8 מיליארד שנות אבולוציה'
         }
     },
     mars: {
@@ -175,46 +151,38 @@ const PLANETS_DATA = {
         nameEn: 'Mars',
         radius: 3389.5, // ק"מ
         mass: 6.4171e23, // ק"ג
-        distance: 227.92e6, // ק"מ מהשמש
-        orbitalPeriod: 686.980, // ימים
-        rotationPeriod: 1.025957, // ימים (24.6 שעות)
-        temperature: { avg: -65, min: -125, max: 20 }, // צלזיוס
+        distance: 227.9e6, // ק"מ מהשמש
+        orbitalPeriod: 686.971, // ימים
+        rotationPeriod: 1.025957, // ימים (24h 37m)
+        temperature: { avg: -65, summer: 20, winter: -125 }, // צלזיוס
         color: 0xCD5C5C,
-        scaledRadius: 3.5,
-        scaledDistance: 75,
-        moons: 2, // פובוס ודיימוס
+        scaledRadius: 5, // הגדלה מ-3 ל-5
+        scaledDistance: 90,
+        moons: 2, // פובוס ודימוס
         eccentricity: 0.0935,
         inclination: 1.85,
         axialTilt: 25.19,
-        description: 'מאדים, הידוע כ"כוכב הלכת האדום", הוא המטרה העיקרית לחקר החלל העתידי. יש לו עונות דומות לכדור הארץ, קטבים קפואים, ועדויות רבות לכך שבעבר זרמו עליו מים נוזליים. מאדים הוא הכוכב לכת השני הקטן ביותר במערכת השמש.',
+        description: 'מאדים, הכוכב האדום, הוא רביעי במרחק מהשמש ודומה במקצת לכדור הארץ. צבעו האדום נובע מחמצון הברזל בקרקע. למאדים יש עונות כמו כדור הארץ, קוטבי קרח, והר הגעש הגבוה ביותר במערכת השמש - אולימפוס מונס.',
         facts: [
-            'נקרא "הכוכב לכת האדום" בגלל תחמוצת הברזל',
-            'יש לו שני ירחים קטנים: פובוס ודיימוס',
-            'הר הגעש הגבוה ביותר במערכת השמש: אולימפוס מונס',
-            'יום דומה לכדור הארץ: 24.6 שעות',
-            'עונות דומות לכדור הארץ אבל פי 2 ארוכות יותר',
-            'יש קרח מים בקטבים ומתחת לפני השטח',
-            'הוא איבד את רוב האטמוספירה שלו בעבר',
-            'בעבר כנראה היו עליו אוקיינוסים'
+            'הר הגעש הגבוה ביותר במערכת השמש - אולימפוס מונס (21 ק"מ)',
+            'העמק הגדול ביותר - ואליס מארינריס (4,000 ק"מ אורך)',
+            'יום במאדים דומה לכדור הארץ - 24 שעות 37 דקות',
+            'יש לו עונות בזכוות הטיית הציר הדומה לכדור הארץ',
+            'אטמוספירה דקה - לחץ של 1% מכדור הארץ',
+            'קוטבי קרח עשויים מים וקרח יבש (CO2)'
         ],
-        features: {
-            olympusMons: 'הר הגעש הגבוה ביותר במערכת השמש (21.9 ק"מ)',
-            valesMarineris: 'קניון ענק באורך 4,000 ק"מ ועומק 7 ק"מ',
-            polarIceCaps: 'קרח מים וקרח יבש (CO2) בקטבים',
-            dust: 'סופות אבק עולמיות'
-        },
         atmosphere: {
-            co2: '95.32%',
-            nitrogen: '2.7%',
-            argon: '1.6%',
-            pressure: '0.6% מכדור הארץ'
+            carbonDioxide: '95.97%',
+            argon: '1.93%',
+            nitrogen: '1.89%',
+            pressure: '0.636 kPa (0.6% מכדור הארץ)'
         },
         exploration: [
-            'מארס פת\'פיינדר (1997)',
+            'ויקינג 1 ו-2 (1976) - נחתות ראשונות',
+            'מארס פת\'פיינדר (1997) - הרובר הראשון',
             'ספיריט ואופורטוניטי (2004)',
-            'קיוריוסיטי (2012)',
-            'פרסוורנס (2021)',
-            'אינג\'נואיטי - מסוק מאדים (2021)'
+            'קיוריוסיטי (2012) - חיפוש אחר סימני חיים',
+            'פרסוורנס (2021) - איסוף דגימות להחזרה לכדור הארץ'
         ]
     },
     jupiter: {
@@ -222,18 +190,19 @@ const PLANETS_DATA = {
         nameEn: 'Jupiter',
         radius: 69911, // ק"מ
         mass: 1.8982e27, // ק"ג
-        distance: 778.57e6, // ק"מ מהשמש
+        distance: 778.5e6, // ק"מ מהשמש
         orbitalPeriod: 4332.59, // ימים (11.86 שנים)
-        rotationPeriod: 0.41354, // ימים (9.9 שעות)
-        temperature: { avg: -110, core: 20000 }, // צלזיוס
+        rotationPeriod: 0.41354, // ימים (9h 56m) - הכי מהיר!
+        temperature: { clouds: -110, core: 20000 }, // צלזיוס
         color: 0xD8CA9D,
-        scaledRadius: 12,
-        scaledDistance: 120,
-        moons: 95, // כולל 4 הירחים הגליליים הגדולים
+        scaledRadius: 14, // הגדלה מ-12 ל-14
+        scaledDistance: 200,
+        moons: 95, // כולל 4 הירחים הגליליים
+        rings: true, // טבעות דקות
         eccentricity: 0.0489,
         inclination: 1.30,
         axialTilt: 3.13,
-        description: 'צדק הוא ענק הגז הגדול ביותר במערכת השמש ומכיל יותר מסה מכל הכוכבים האחרים יחד. הוא מגן על כדור הארץ מפני אסטרואידים וקומטות בזכות כוח הכבידה העצום שלו. צדק הוא כמו מערכת שמש קטנה עם 95 ירחים.',
+        description: 'צדק הוא ענק הגז הגדול ביותר במערכת השמש ומכיל יותר מסה מכל כוכבי הלכת האחרים יחד. הוא מגן על כדור הארץ מפני אסטרואידים וקומטות בזכוות כוח הכבידה העצום שלו. צדק הוא כמו מערכת שמש קטנה עם 95 ירחים.',
         facts: [
             'הכוכב לכת הגדול ביותר במערכת השמש',
             'מסה גדולה פי 2.5 מכל הכוכבים האחרים יחד',
@@ -273,36 +242,27 @@ const PLANETS_DATA = {
         rotationPeriod: 0.43958, // ימים (10.55 שעות)
         temperature: { avg: -140, core: 11700 }, // צלזיוס
         color: 0xFAD5A5,
-        scaledRadius: 10,
-        scaledDistance: 180,
+        scaledRadius: 12, // הגדלה מ-10 ל-12
+        scaledDistance: 280,
         moons: 146, // כולל טיטאן
         rings: true,
         eccentricity: 0.0565,
         inclination: 2.49,
         axialTilt: 26.73,
-        description: 'שבתאי מפורסם בזכות מערכת הטבעות המרהיבה שלו והוא ענק הגז השני בגודלו. הוא כה קל שהיה צף במים! טיטאן, הירח הגדול ביותר שלו, הוא הגוף היחיד במערכת השמש מלבד כדור הארץ שיש לו נוזלים יציבים על פני השטח.',
+        description: 'שבתאי מפורסם בזכוות מערכת הטבעות המרהיבה שלו והוא ענק הגז השני בגודלו. הוא כה קל שהיה צף במים! טיטאן, הירח הגדול ביותר שלו, הוא הגוף היחיד במערכת השמש מלבד כדור הארץ שיש לו נוזלים יציבים על פני השטח.',
         facts: [
             'מפורסם במערכת הטבעות המדהימה שלו',
             'צפיפות נמוכה מכל כוכב לכת אחר - היה צף במים!',
-            '146 ירחים ידועים',
-            'טיטאן הוא הירח היחיד עם אטמוספירה צפופה',
-            'הטבעות עשויות בעיקר מקרח מים',
-            'יש לו שישה-צדר ענק בקוטב הצפוני',
-            'מוקף בשדה מגנטי חזק',
-            'יש לו יותר ירחים מכל כוכב לכת אחר'
+            'טיטאן - הירח עם אטמוספירה ואגמי מתאן',
+            '146 ירחים ידועים עד כה',
+            'מערכת הטבעות רחבה 282,000 ק"מ אבל עבה רק 1 ק"מ',
+            'הכוכב הפחות צפוף במערכת השמש (0.687 ג/סמ"ק)'
         ],
-        rings: {
-            mainRings: ['D', 'C', 'B', 'A', 'F', 'G', 'E'],
-            composition: 'קרח מים (99%) ואבק סלעים (1%)',
-            width: 'עד 282,000 ק"מ',
-            thickness: 'כ-1 ק"מ בממוצע',
-            discovery: 'גלילאו גליליי (1610)'
-        },
-        majorMoons: ['טיטאן (Titan)', 'אנקלדוס (Enceladus)', 'מימאס (Mimas)', 'איפטוס (Iapetus)', 'רהיה (Rhea)'],
+        majorMoons: ['טיטאן (Titan)', 'אנקלדוס (Enceladus)', 'מימאס (Mimas)', 'יאפטוס (Iapetus)'],
         atmosphere: {
             hydrogen: '96.3%',
             helium: '3.25%',
-            pressure: 'אין משטח מוצק'
+            methane: '0.45%'
         },
         exploration: [
             'פיוניר 11 (1979)',
@@ -316,48 +276,36 @@ const PLANETS_DATA = {
         radius: 25362, // ק"מ
         mass: 8.6810e25, // ק"ג
         distance: 2867.0e6, // ק"מ מהשמש
-        orbitalPeriod: 30688.5, // ימים (84.01 שנים)
-        rotationPeriod: -0.71833, // ימים (17.24 שעות, סיבוב לאחור)
-        temperature: { avg: -195, min: -224 }, // צלזיוס
+        orbitalPeriod: 30588.0, // ימים (83.75 שנים)
+        rotationPeriod: -0.71833, // ימים (17.2 שעות, הפוך)
+        temperature: { clouds: -195, core: 5000 }, // צלזיוס
         color: 0x4FD0E7,
-        scaledRadius: 8,
-        scaledDistance: 240,
+        scaledRadius: 9, // הגדלה מ-7 ל-9
+        scaledDistance: 400,
         moons: 27,
-        rings: true,
+        rings: true, // טבעות אנכיות!
         eccentricity: 0.0444,
         inclination: 0.77,
-        axialTilt: 97.77,
-        description: 'אורנוס הוא כוכב לכת ייחודי שמסתובב על הצד - ציר הסיבוב שלו נטוי ב-98 מעלות! הוא עשוי בעיקר מקרח מים, מתאן ואמוניה, מה שנותן לו את הצבע הכחול-ירוק המיוחד. אורנוס הוא הכוכב הקר ביותר במערכת השמש.',
+        axialTilt: 97.77, // מסתובב על הצד!
+        description: 'אורנוס הוא ענק הקרח השלישי בגודלו והוא ייחודי במערכת השמש - הוא מסתובב על הצד! הטיית הציר שלו היא כמעט 98 מעלות, מה שאומר שהקטבים שלו פונים לשמש לחילופין. אורנוס עשוי בעיקר מקרח מים, מתאן ואמוניה.',
         facts: [
-            'מסתובב על הצד - ציר סיבוב נטוי ב-98°',
-            'העונות ארוכות 21 שנה כל אחת',
-            'עשוי בעיקר מקרח מים, מתאן ואמוניה',
-            'הכוכב לכת הקר ביותר במערכת השמש',
-            'הוא הראשון שהתגלה באמצעות טלסקופ (1781)',
-            'יש לו 13 טבעות דקות וכהות',
-            'שדה המגנטי שלו נטוי ב-59° לציר הסיבוב',
-            'כל הקטבים חווים 42 שנה של אור ו-42 שנה של חושך'
+            'מסתובב על הצד - הטיית ציר של 98 מעלות!',
+            'עשוי מקרח ומתאן, לא מגז כמו צדק ושבתאי',
+            'התגלה ב-1781 על ידי וויליאם הרשל - הכוכב הראשון שהתגלה בטלסקופ',
+            'טבעות אנכיות ייחודיות שהתגלו ב-1977',
+            'הכוכב הקר ביותר במערכת השמש למרות שנפטון רחוק יותר',
+            'יום קיץ באורנוס אורך 42 שנות כדור ארץ'
         ],
-        composition: {
-            water: '50% קרח מים',
-            methane: '15% קרח מתאן',
-            ammonia: '15% קרח אמוניה',
-            rock: '20% סלע ומתכות'
-        },
-        rings: {
-            discovered: '1977',
-            rings: 13,
-            composition: 'חלקיקים כהים ואבק',
-            names: ['זטה, 6, 5, 4, אלפא, בטא, אטה, גמא, דלתא, למבדה, אפסילון, נו, מו']
-        },
-        majorMoons: ['מירנדה (Miranda)', 'אריאל (Ariel)', 'אומבריאל (Umbriel)', 'טיטניה (Titania)', 'אוברון (Oberon)'],
         atmosphere: {
             hydrogen: '82.5%',
             helium: '15.2%',
-            methane: '2.3%'
+            methane: '2.3%',
+            uniqueFeature: 'מתאן גורם לצבע הכחול'
         },
         exploration: [
-            'ויאג\'ר 2 (1986) - החללית היחידה שביקרה'
+            'ויאג\'ר 2 (1986) - החללית היחידה שביקרה',
+            'טלסקופ הבל - תצפיות מתמשכות',
+            'טלסקופ ג\'יימס ווב - תמונות חדשות באיכות גבוהה'
         ]
     },
     neptune: {
@@ -367,139 +315,60 @@ const PLANETS_DATA = {
         mass: 1.02413e26, // ק"ג
         distance: 4515.0e6, // ק"מ מהשמש
         orbitalPeriod: 60182.0, // ימים (164.8 שנים)
-        rotationPeriod: 0.6713, // ימים (16.11 שעות)
-        temperature: { avg: -200, core: 5200 }, // צלזיוס
+        rotationPeriod: 0.6713, // ימים (16.1 שעות)
+        temperature: { clouds: -200, core: 5200 }, // צלזיוס
         color: 0x4B70DD,
-        scaledRadius: 7.5,
-        scaledDistance: 300,
+        scaledRadius: 8, // הגדלה מ-6 ל-8
+        scaledDistance: 500,
         moons: 16, // כולל טריטון
-        rings: true,
+        rings: true, // טבעות חלקיות
         eccentricity: 0.0113,
         inclination: 1.77,
         axialTilt: 28.32,
-        description: 'נפטון הוא הכוכב לכת הרחוק ביותר מהשמש ובעל הרוחות החזקות ביותר במערכת השמש - עד 2,100 קמ"ש! טריטון, הירח הגדול שלו, הוא הגוף הקר ביותר במערכת השמש והירח היחיד עם מסלול רטרוגרדי.',
+        description: 'נפטון הוא הכוכב הרחוק ביותר מהשמש וענק הקרח השני בגודלו. הוא מפורסם ברוחות החזקות ביותר במערכת השמש - עד 2,100 קמ"ש! נפטון התגלה באמצעות חישובים מתמטיים לפני שנצפה בטלסקופ, והוא משלים מסלול אחד סביב השמש כל 165 שנה.',
         facts: [
-            'הכוכב לכת הרחוק ביותר מהשמש',
-            'הרוחות החזקות ביותר: עד 2,100 קמ"ש',
-            'שנה אחת = 165 שנות כדור ארץ',
-            'טריטון הוא הירח היחיד עם מסלול רטרוגרדי',
-            'התגלה באמצעות חישובים מתמטיים (1846)',
-            'הוא הכוכב הצפוף ביותר מבין ענקי הגז',
-            'מקבל רק 0.1% מהאור שמגיע לכדור הארץ',
-            'טמפרטורת הליבה חמה יותר מפני השמש'
+            'הרוחות החזקות ביותר במערכת השמש - עד 2,100 קמ"ש',
+            'שנה אחת שווה ל-164.8 שנות כדור ארץ',
+            'התגלה באמצעות חישובים מתמטיים לפני התצפית',
+            'הצפיפות הגבוהה ביותר מבין ענקי הגז',
+            'טריטון, הירח הגדול, מסתובב בכיוון הפוך',
+            'הכוכב עם הגוון הכחול הכי עמוק בשל המתאן'
         ],
-        majorMoons: ['טריטון (Triton)', 'נראיד (Nereid)', 'פרוטאוס (Proteus)'],
         atmosphere: {
             hydrogen: '80%',
             helium: '19%',
             methane: '1%',
-            traces: 'הידרגן דאוטריד, אתאן'
+            uniqueFeature: 'מתאן בריכוז גבוה יותר מאורנוס'
         },
-        features: {
-            winds: 'הרוחות החזקות ביותר במערכת השמש - עד 2,100 קמ"ש',
-            triton: 'ירח גדול עם פעילות גיאולוגית וגייזרים של חנקן',
-            color: 'הצבע הכחול נובע ממתאן באטמוספירה',
-            storms: 'סופות גדולות כגודל כדור הארץ'
-        },
-        rings: {
-            discovered: '1989',
-            rings: 6,
-            names: ['גל, לה ורייה, לאסל, אראגו, אדמס'],
-            composition: 'חומר אורגני כהה'
-        },
+        majorMoons: ['טריטון (Triton)', 'נראיד (Nereid)'],
         exploration: [
-            'ויאג\'ר 2 (1989) - החללית היחידה שביקרה'
+            'ויאג\'ר 2 (1989) - החללית היחידה שביקרה',
+            'טלסקופ הבל - מעקב אחר סופות',
+            'טלסקופ ג\'יימס ווב - מחקר אטמוספירה מתקדם'
         ]
     }
 };
 
-// קבועים פיזיקליים מדויקים
-const PHYSICS_CONSTANTS = {
-    AU: 149597870.7, // קילומטר - יחידה אסטרונומית
-    G: 6.67430e-11, // קבוע הכבידה הניוטוני
+// יחידות מידה וקונברטרים
+const ASTRONOMICAL_UNITS = {
+    AU: 149597870.7, // ק"מ
+    LIGHT_MINUTE: 17987547.48, // ק"מ
+    LIGHT_SECOND: 299792.458, // ק"מ
     EARTH_RADIUS: 6371, // ק"מ
     SUN_RADIUS: 696340, // ק"מ
-    LIGHT_SPEED: 299792458, // מ/ש
-    SCALE_FACTOR: 0.0001, // קנה מידה לתצוגה
-    TIME_SCALE: 1, // קנה מידה זמן
-    REALISTIC_SCALE_FACTOR: 0.000001 // קנה מידה ריאליסטי
-};
-
-// נתוני חגורת האסטרואידים
-const ASTEROID_BELT_DATA = {
-    name: 'חגורת האסטרואידים',
-    nameEn: 'Asteroid Belt',
-    innerRadius: 2.2, // AU
-    outerRadius: 3.2, // AU
-    scaledInnerRadius: 85,
-    scaledOuterRadius: 130,
-    totalMass: 3.0e21, // ק"ג (4% ממסת הירח)
-    largestAsteroid: 'קרס (Ceres)',
-    description: 'חגורת האסטרואידים היא אזור במערכת השמש הממוקם בין מאדים לצדק, המכיל מיליוני גופים סלעיים. למרות שבסרטים היא נראית צפופה ומסוכנת, במציאות המרחקים בין האסטרואידים עצומים.',
-    facts: [
-        'מכילה מיליוני אסטרואידים',
-        'המסה הכוללת היא רק 4% ממסת הירח',
-        'הממוצע בין האסטרואידים הוא מיליוני קילומטרים',
-        'קרס הוא הגוף הגדול ביותר - כוכב לכת ננס',
-        'רוב האסטרואידים עשויים סלע ומתכת',
-        'נוצרה ככל הנראה מחומר שלא הצליח להתחבר לכוכב לכת'
-    ],
-    majorAsteroids: [
-        { name: 'קרס (Ceres)', diameter: 939, type: 'כוכב לכת ננס', composition: 'סלע וקרח' },
-        { name: 'וסטה (Vesta)', diameter: 525, type: 'אסטרואיד', composition: 'בזלת' },
-        { name: 'פלס (Pallas)', diameter: 512, type: 'אסטרואיד', composition: 'סלע' },
-        { name: 'יונו (Juno)', diameter: 246, type: 'אסטרואיד', composition: 'סלע ומתכת' }
-    ]
-};
-
-// פונקציות עזר לחישובים אסטרונומיים
-const AstronomicalUtils = {
-    // המרת AU לקילומטרים
-    auToKm: (au) => au * PHYSICS_CONSTANTS.AU,
     
-    // חישוב מהירות מסלול (חוק שלישי של קפלר)
-    orbitalVelocity: (distance, mass = PLANETS_DATA.sun.mass) => {
-        return Math.sqrt(PHYSICS_CONSTANTS.G * mass / (distance * 1000));
-    },
+    // המרת יחידות
+    kmToAU: (km) => km / ASTRONOMICAL_UNITS.AU,
+    auToKm: (au) => au * ASTRONOMICAL_UNITS.AU,
     
-    // חישוב כבידה על פני השטח
-    surfaceGravity: (mass, radius) => {
-        return PHYSICS_CONSTANTS.G * mass / Math.pow(radius * 1000, 2);
-    },
+    // המרת זמן
+    earthDaysToYears: (days) => days / 365.25,
+    yearsToEarthDays: (years) => years * 365.25,
     
-    // חישוב מהירות בריחה
-    escapeVelocity: (mass, radius) => {
-        return Math.sqrt(2 * PHYSICS_CONSTANTS.G * mass / (radius * 1000));
-    },
-    
-    // המרת מעלות צלזיוס לקלווין
+    // המרת טמפרטורה
     celsiusToKelvin: (celsius) => celsius + 273.15,
-    
-    // חישוב זמן הגעת אור
-    lightTravelTime: (distance) => {
-        return (distance * 1000) / PHYSICS_CONSTANTS.LIGHT_SPEED; // שניות
-    },
-    
-    // חישוב כוח הכבידה בין שני גופים
-    gravitationalForce: (mass1, mass2, distance) => {
-        return PHYSICS_CONSTANTS.G * mass1 * mass2 / Math.pow(distance * 1000, 2);
-    },
-    
-    // חישוב אנרגיה קינטית אורביטלית
-    orbitalKineticEnergy: (mass, velocity) => {
-        return 0.5 * mass * Math.pow(velocity, 2);
-    },
-    
-    // חישוב אנרגיה פוטנציאלית גרוויטציונית
-    gravitationalPotentialEnergy: (mass1, mass2, distance) => {
-        return -PHYSICS_CONSTANTS.G * mass1 * mass2 / (distance * 1000);
-    },
-    
-    // חישוב צפיפות
-    density: (mass, radius) => {
-        const volume = (4/3) * Math.PI * Math.pow(radius * 1000, 3);
-        return mass / volume; // ק"ג/מ"ק
-    },
+    kelvinToCelsius: (kelvin) => kelvin - 273.15,
+    celsiusToFahrenheit: (celsius) => (celsius * 9/5) + 32,
     
     // המרת יחידות מסה (יחסית לכדור הארץ)
     massRelativeToEarth: (mass) => {
@@ -561,148 +430,39 @@ const ORBITAL_ELEMENTS = {
 
 // קבוצות כוכבי לכת
 const PLANET_GROUPS = {
-    terrestrial: ['mercury', 'venus', 'earth', 'mars'],
-    gasGiants: ['jupiter', 'saturn', 'uranus', 'neptune'],
-    inner: ['mercury', 'venus', 'earth', 'mars'],
-    outer: ['jupiter', 'saturn', 'uranus', 'neptune'],
-    withMoons: ['earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'],
-    withRings: ['jupiter', 'saturn', 'uranus', 'neptune'],
-    withAtmosphere: ['venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune']
+    terrestrial: ['mercury', 'venus', 'earth', 'mars'], // כוכבי לכת סלעיים
+    gasGiants: ['jupiter', 'saturn'], // ענקי גז
+    iceGiants: ['uranus', 'neptune'], // ענקי קרח
+    inner: ['mercury', 'venus', 'earth', 'mars'], // כוכבי הלכת הפנימיים
+    outer: ['jupiter', 'saturn', 'uranus', 'neptune'] // כוכבי הלכת החיצוניים
 };
 
-// מידע על ירחים עיקריים
-const MAJOR_MOONS = {
-    earth: {
-        moon: {
-            name: 'הירח',
-            nameEn: 'Moon',
-            radius: 1737.4,
-            distance: 384400, // ק"מ מכדור הארץ
-            period: 27.32,
-            description: 'הירח הוא הלוויין הטבעי היחיד של כדור הארץ והחמישי בגודלו במערכת השמש'
-        }
-    },
-    mars: {
-        phobos: { name: 'פובוס', radius: 11.3, distance: 9376, period: 0.32, description: 'הירח הפנימי והגדול יותר של מאדים' },
-        deimos: { name: 'דיימוס', radius: 6.2, distance: 23463, period: 1.26, description: 'הירח החיצוני והקטן יותר של מאדים' }
-    },
-    jupiter: {
-        io: { name: 'יו', radius: 1821.6, distance: 421700, period: 1.77, description: 'הירח הוולקני ביותר במערכת השמש' },
-        europa: { name: 'אירופה', radius: 1560.8, distance: 671034, period: 3.55, description: 'ירח עם אוקיינוס תת-קרקעי וחיים אפשריים' },
-        ganymede: { name: 'גנימד', radius: 2634.1, distance: 1070412, period: 7.15, description: 'הירח הגדול ביותר במערכת השמש' },
-        callisto: { name: 'קליסטו', radius: 2410.3, distance: 1882709, period: 16.69, description: 'ירח עתיק עם מכתשים רבים' }
-    },
-    saturn: {
-        titan: { name: 'טיטאן', radius: 2574, distance: 1221830, period: 15.95, description: 'הירח היחיד עם אטמוספירה צפופה ואגמי מתאן' },
-        enceladus: { name: 'אנקלדוס', radius: 252.1, distance: 238020, period: 1.37, description: 'ירח קטן עם גייזרים של מים מהקוטב הדרומי' }
-    },
-    uranus: {
-        titania: { name: 'טיטניה', radius: 788.4, distance: 436300, period: 8.71, description: 'הירח הגדול ביותר של אורנוס' },
-        oberon: { name: 'אוברון', radius: 761.4, distance: 583520, period: 13.46, description: 'הירח החיצוני והשני בגודלו של אורנוס' }
-    },
-    neptune: {
-        triton: { name: 'טריטון', radius: 1353.4, distance: 354760, period: -5.88, description: 'הירח היחיד עם מסלול רטרוגרדי ופעילות גיאולוגית' }
-    }
-};
-
-// מידע על מחקר החלל
+// מידע על חקירה חללית
 const SPACE_EXPLORATION = {
-    mercury: [
-        { mission: 'מרינר 10', years: '1974-1975', country: 'ארה"ב', achievement: 'תמונות ראשונות מקרוב' },
-        { mission: 'MESSENGER', years: '2011-2015', country: 'ארה"ב', achievement: 'מיפוי מפורט ותגלית קרח בקטבים' },
-        { mission: 'BepiColombo', years: '2018-2025', country: 'אירופה/יפן', achievement: 'משימה פעילה - מחקר מפורט' }
+    past: [
+        { mission: 'Apollo 11', year: 1969, target: 'earth', achievement: 'נחיתה ראשונה על הירח' },
+        { mission: 'Viking 1 & 2', year: 1976, target: 'mars', achievement: 'נחתות ראשונות על מאדים' },
+        { mission: 'Voyager 1 & 2', year: 1977, target: 'multiple', achievement: 'Grand Tour של כוכבי הלכת החיצוניים' }
     ],
-    venus: [
-        { mission: 'ונרה', years: '1961-1984', country: 'ברית המועצות', achievement: 'נחיתות ראשונות על פני השטח' },
-        { mission: 'מגלן', years: '1989-1994', country: 'ארה"ב', achievement: 'מיפוי רדאר של פני השטח' },
-        { mission: 'ונוס אקספרס', years: '2005-2014', country: 'אירופה', achievement: 'מחקר אטמוספירה מפורט' }
+    current: [
+        { mission: 'Perseverance', year: 2021, target: 'mars', status: 'פעיל' },
+        { mission: 'Juno', year: 2016, target: 'jupiter', status: 'פעיל' },
+        { mission: 'Parker Solar Probe', year: 2018, target: 'sun', status: 'פעיל' }
     ],
-    mars: [
-        { mission: 'ויקינג', years: '1976-1982', country: 'ארה"ב', achievement: 'נחיתות ראשונות מוצלחות' },
-        { mission: 'מארס פת\'פיינדר', years: '1997', country: 'ארה"ב', achievement: 'רובר ראשון' },
-        { mission: 'ספיריט ואופורטוניטי', years: '2004-2018', country: 'ארה"ב', achievement: 'עדויות למים בעבר' },
-        { mission: 'קיוריוסיטי', years: '2012-היום', country: 'ארה"ב', achievement: 'מחקר אפשרות חיים' },
-        { mission: 'פרסוורנס', years: '2021-היום', country: 'ארה"ב', achievement: 'איסוף דגימות לחזרה לארץ' }
-    ],
-    jupiter: [
-        { mission: 'פיוניר 10/11', years: '1973-1974', country: 'ארה"ב', achievement: 'חלפו ראשונים ליד צדק' },
-        { mission: 'ויאג\'ר 1/2', years: '1979', country: 'ארה"ב', achievement: 'תגלית ירחים וטבעות' },
-        { mission: 'גלילאו', years: '1995-2003', country: 'ארה"ב', achievement: 'מחקר מפורט של המערכת' },
-        { mission: 'ג\'ונו', years: '2016-היום', country: 'ארה"ב', achievement: 'מחקר פנים צדק והקטבים' }
-    ],
-    saturn: [
-        { mission: 'פיוניר 11', years: '1979', country: 'ארה"ב', achievement: 'חלף ראשון ליד שבתאי' },
-        { mission: 'ויאג\'ר 1/2', years: '1980-1981', country: 'ארה"ב', achievement: 'תגלית טבעות וירחים חדשים' },
-        { mission: 'קאסיני-הויגנס', years: '2004-2017', country: 'ארה"ב/אירופה', achievement: 'נחיתה על טיטאן ומחקר מפורט' }
-    ],
-    uranus: [
-        { mission: 'ויאג\'ר 2', years: '1986', country: 'ארה"ב', achievement: 'החללית היחידה שביקרה באורנוס' }
-    ],
-    neptune: [
-        { mission: 'ויאג\'ר 2', years: '1989', country: 'ארה"ב', achievement: 'החללית היחידה שביקרה בנפטון' }
+    future: [
+        { mission: 'Artemis', year: 2026, target: 'earth', goal: 'חזרה לירח' },
+        { mission: 'Europa Clipper', year: 2030, target: 'jupiter', goal: 'חקירת אירופה' },
+        { mission: 'Dragonfly', year: 2034, target: 'saturn', goal: 'נחתת על טיטאן' }
     ]
 };
 
-// פונקציות עזר להצגת מידע
-const InfoUtils = {
-    formatDistance: (km) => {
-        if (km >= 1e9) return `${(km / 1e9).toFixed(1)} מיליארד ק"מ`;
-        if (km >= 1e6) return `${(km / 1e6).toFixed(1)} מיליון ק"מ`;
-        if (km >= 1e3) return `${(km / 1e3).toFixed(0)} אלף ק"מ`;
-        return `${km.toLocaleString()} ק"מ`;
-    },
-    
-    formatMass: (kg) => {
-        const earthMass = PLANETS_DATA.earth.mass;
-        const ratio = kg / earthMass;
-        if (ratio > 1000) return `${(ratio / 1000).toFixed(1)} אלף פעמים ממסת כדור הארץ`;
-        if (ratio > 1) return `${ratio.toFixed(2)} פעמים ממסת כדור הארץ`;
-        return `${(ratio * 100).toFixed(1)}% ממסת כדור הארץ`;
-    },
-    
-    formatTemperature: (temp) => {
-        if (typeof temp === 'object') {
-            if (temp.avg) return `${temp.avg}°C בממוצע`;
-            if (temp.min !== undefined && temp.max !== undefined) {
-                return `${temp.min}°C עד ${temp.max}°C`;
-            }
-            if (temp.surface) return `${temp.surface}°C על פני השטח`;
-        }
-        return `${temp}°C`;
-    },
-    
-    formatPeriod: (days) => {
-        if (days < 1) return `${(days * 24).toFixed(1)} שעות`;
-        if (days < 365) return `${Math.round(days)} ימים`;
-        return `${(days / 365.25).toFixed(1)} שנות כדור ארץ`;
-    },
-    
-    formatGravity: (ms2) => {
-        const earthGravity = 9.81;
-        const ratio = ms2 / earthGravity;
-        return `${ms2.toFixed(1)} מ/ש² (${ratio.toFixed(2)} × כדור הארץ)`;
-    },
-    
-    formatVelocity: (ms) => {
-        const kms = ms / 1000;
-        if (kms > 10) return `${kms.toFixed(1)} קמ/ש`;
-        return `${ms.toFixed(0)} מ/ש`;
-    }
-};
-
-// ייצוא למודולים אחרים
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { 
-        PLANETS_DATA, 
-        PHYSICS_CONSTANTS, 
-        ASTEROID_BELT_DATA,
-        PLANET_COLORS,
-        INITIAL_POSITIONS,
-        ORBITAL_ELEMENTS,
-        PLANET_GROUPS,
-        MAJOR_MOONS,
-        SPACE_EXPLORATION,
-        AstronomicalUtils,
-        InfoUtils
-    };
+// הפוך את הנתונים זמינים גלובלית
+if (typeof window !== 'undefined') {
+    window.PLANETS_DATA = PLANETS_DATA;
+    window.ASTRONOMICAL_UNITS = ASTRONOMICAL_UNITS;
+    window.PLANET_COLORS = PLANET_COLORS;
+    window.INITIAL_POSITIONS = INITIAL_POSITIONS;
+    window.ORBITAL_ELEMENTS = ORBITAL_ELEMENTS;
+    window.PLANET_GROUPS = PLANET_GROUPS;
+    window.SPACE_EXPLORATION = SPACE_EXPLORATION;
 }
