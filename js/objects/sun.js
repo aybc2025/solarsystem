@@ -1,4 +1,4 @@
-// יצירת השמש עם חומרים מתקדמים
+// יצירת השמש עם חומרים מתקדמים - מתוקן
 class SolarSystemSun {
     constructor() {
         this.mesh = null;
@@ -52,7 +52,7 @@ class SolarSystemSun {
             
             const geometry = new THREE.SphereGeometry(sunData.scaledRadius || this.settings.radius, 32, 32);
             
-            // שימוש ב-MeshPhongMaterial במקום MeshBasicMaterial לאפקטי זוהר
+            // **תיקון: שימוש ב-MeshPhongMaterial במקום MeshBasicMaterial לאפקטי זוהר**
             const material = new THREE.MeshPhongMaterial({ 
                 color: colors.primary,
                 emissive: colors.secondary,
@@ -63,6 +63,13 @@ class SolarSystemSun {
             this.mesh = new THREE.Mesh(geometry, material);
             this.mesh.name = 'sun';
             this.mesh.position.set(0, 0, 0);
+            
+            // **תיקון: userData לזיהוי לחיצות**
+            this.mesh.userData = {
+                planetName: 'sun',
+                data: sunData,
+                type: 'star'
+            };
             
             // אפקט זוהר לשמש
             const glowGeometry = new THREE.SphereGeometry(this.settings.glowRadius, 16, 16);
@@ -87,7 +94,7 @@ class SolarSystemSun {
             this.group.add(this.mesh);
             
             this.isInitialized = true;
-            console.log('✅ Sun created successfully');
+            console.log('✅ Sun created successfully with corrected materials');
             return this.group;
             
         } catch (error) {
@@ -153,6 +160,32 @@ class SolarSystemSun {
         }
     }
 
+    // שינוי עוצמת האור
+    setLightIntensity(intensity) {
+        this.settings.lightIntensity = Math.max(0, Math.min(3, intensity));
+        if (this.pointLight) {
+            this.pointLight.intensity = this.settings.lightIntensity;
+        }
+    }
+
+    // שינוי עוצמת הזוהר
+    setGlowIntensity(intensity) {
+        this.settings.glowOpacity = Math.max(0, Math.min(1, intensity));
+        if (this.glow) {
+            this.glow.material.opacity = this.settings.glowOpacity;
+        }
+    }
+
+    // שינוי צבע השמש
+    setSunColor(color) {
+        if (this.mesh && this.mesh.material) {
+            this.mesh.material.color.setHex(color);
+        }
+        if (this.pointLight) {
+            this.pointLight.color.setHex(color);
+        }
+    }
+
     // קבלת מידע על השמש
     getSunInfo() {
         return {
@@ -161,8 +194,73 @@ class SolarSystemSun {
             settings: { ...this.settings },
             colors: { ...this.colors },
             animation: { ...this.animation },
-            position: this.mesh ? this.mesh.position.clone() : null
+            position: this.mesh ? this.mesh.position.clone() : null,
+            realData: {
+                radius: '696,340 ק"מ',
+                mass: '1.989 × 10³⁰ ק"ג',
+                temperature: '5,778 K (פני השטח)',
+                age: '4.6 מיליארד שנים',
+                composition: '73% מימן, 25% הליום, 2% יסודות כבדים'
+            }
         };
+    }
+
+    // יצירת אפקטי קורונה מתקדמים
+    createCoronaEffect() {
+        if (!this.isInitialized) return;
+        
+        // יצירת חלקיקים לקורונה
+        const particleCount = 2000;
+        const coronaGeometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        const sizes = new Float32Array(particleCount);
+        
+        for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3;
+            
+            // התפלגות סביב השמש
+            const radius = this.settings.radius + Math.random() * 15;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI;
+            
+            positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+            positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            positions[i3 + 2] = radius * Math.cos(phi);
+            
+            // צבעי קורונה
+            const intensity = 0.5 + Math.random() * 0.5;
+            colors[i3] = intensity; // אדום
+            colors[i3 + 1] = intensity * 0.8; // ירוק
+            colors[i3 + 2] = intensity * 0.3; // כחול
+            
+            sizes[i] = 1 + Math.random() * 3;
+        }
+        
+        coronaGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        coronaGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        coronaGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        
+        const coronaMaterial = new THREE.PointsMaterial({
+            size: 2,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const corona = new THREE.Points(coronaGeometry, coronaMaterial);
+        corona.name = 'sunCorona';
+        this.group.add(corona);
+        
+        this.effects.corona = corona;
+    }
+
+    // הפעלה/כיבוי קורונה
+    setCoronaEnabled(enabled) {
+        if (this.effects.corona) {
+            this.effects.corona.visible = enabled;
+        }
     }
 
     // ניקוי משאבים
@@ -171,6 +269,12 @@ class SolarSystemSun {
         if (this.mesh && this.mesh.material) this.mesh.material.dispose();
         if (this.glow && this.glow.geometry) this.glow.geometry.dispose();
         if (this.glow && this.glow.material) this.glow.material.dispose();
+        
+        // ניקוי אפקטי קורונה
+        if (this.effects.corona) {
+            if (this.effects.corona.geometry) this.effects.corona.geometry.dispose();
+            if (this.effects.corona.material) this.effects.corona.material.dispose();
+        }
         
         this.isInitialized = false;
         console.log('Sun disposed');
@@ -183,4 +287,6 @@ if (typeof module !== 'undefined' && module.exports) {
 }
 
 // הפוך את המחלקה זמינה גלובלית - תיקון עיקרי
-window.SolarSystemSun = SolarSystemSun;
+if (typeof window !== 'undefined') {
+    window.SolarSystemSun = SolarSystemSun;
+}
