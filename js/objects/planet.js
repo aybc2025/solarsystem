@@ -1,4 +1,4 @@
-// אובייקט כוכב לכת גנרי במערכת השמש - מתוקן עם מהירויות וצבעים נכונים
+// אובייקט כוכב לכת גנרי במערכת השמש - מתוקן עם גדלים נכונים
 class SolarSystemPlanet {
     constructor(planetName) {
         this.name = planetName;
@@ -44,8 +44,8 @@ class SolarSystemPlanet {
         
         // הגדרות ויזואליות
         this.settings = {
-            radius: 1,
-            segments: 32,
+            radius: this.data.scaledRadius || 1, // **תיקון: שימוש ב-scaledRadius מהנתונים**
+            segments: 64, // **תיקון: הגדלה מ-32 ל-64 לתצוגה חלקה יותר**
             atmosphereEnabled: false,
             cloudsEnabled: false,
             ringsEnabled: false,
@@ -74,909 +74,755 @@ class SolarSystemPlanet {
         this.isInitialized = false;
     }
 
-    // נתונים מדויקים לכוכבי לכת עם צבעים וכל הפרטים
-    getAccuratePlanetData(planetName) {
-        const accurateData = {
-            mercury: {
-                name: 'כוכב חמה',
-                nameEn: 'Mercury',
-                radius: 2439.7,
-                scaledRadius: 2.5,
-                distance: 57.9,
-                scaledDistance: 58,
-                period: 88, // ימים
-                rotationPeriod: 58.6, // ימים
-                color: 0x8c7853, // אפור-חום
-                surfaceTemp: 167,
-                hasRings: false,
-                moonCount: 0,
-                description: 'הכוכב הקרוב ביותר לשמש, עם טמפרטורות קיצוניות'
-            },
-            venus: {
-                name: 'נוגה',
-                nameEn: 'Venus',
-                radius: 6051.8,
-                scaledRadius: 3.8,
-                distance: 108.2,
-                scaledDistance: 72,
-                period: 225,
-                rotationPeriod: -243, // סיבוב הפוך
-                color: 0xffc649, // צהוב-כתום עז
-                surfaceTemp: 464,
-                hasRings: false,
-                moonCount: 0,
-                description: 'הכוכב החם ביותר עם אטמוספרה צפופה'
-            },
-            earth: {
-                name: 'כדור הארץ',
-                nameEn: 'Earth',
-                radius: 6371,
-                scaledRadius: 4,
-                distance: 149.6,
-                scaledDistance: 100,
-                period: 365.25,
-                rotationPeriod: 1,
-                color: 0x6b93d6, // כחול ים
-                surfaceTemp: 15,
-                hasRings: false,
-                moonCount: 1,
-                description: 'הכוכב היחיד הידוע עם חיים'
-            },
-            mars: {
-                name: 'מאדים',
-                nameEn: 'Mars',
-                radius: 3389.5,
-                scaledRadius: 3.2,
-                distance: 227.9,
-                scaledDistance: 152,
-                period: 687,
-                rotationPeriod: 1.03,
-                color: 0xcd5c5c, // אדום חלוד
-                surfaceTemp: -65,
-                hasRings: false,
-                moonCount: 2,
-                description: 'הכוכב האדום עם קוטבי קרח'
-            },
-            jupiter: {
-                name: 'צדק',
-                nameEn: 'Jupiter',
-                radius: 69911,
-                scaledRadius: 18,
-                distance: 778.5,
-                scaledDistance: 520,
-                period: 4333, // 11.9 שנים
-                rotationPeriod: 0.41, // סיבוב מהיר
-                color: 0xd2b48c, // חום-כתום עם פסים
-                surfaceTemp: -110,
-                hasRings: true, // טבעות דקות
-                moonCount: 95,
-                description: 'ענק הגז הגדול ביותר במערכת השמש'
-            },
-            saturn: {
-                name: 'שבתאי',
-                nameEn: 'Saturn',
-                radius: 58232,
-                scaledRadius: 15,
-                distance: 1432,
-                scaledDistance: 954,
-                period: 10759, // 29.5 שנים
-                rotationPeriod: 0.45,
-                color: 0xfad5a5, // צהוב חום בהיר
-                surfaceTemp: -140,
-                hasRings: true, // הטבעות הבולטות ביותר
-                moonCount: 146,
-                description: 'המפורסם בטבעותיו המרהיבות'
-            },
-            uranus: {
-                name: 'אורנוס',
-                nameEn: 'Uranus',
-                radius: 25362,
-                scaledRadius: 8,
-                distance: 2867,
-                scaledDistance: 1916,
-                period: 30687, // 84 שנים
-                rotationPeriod: -0.72, // סיבוב הפוך
-                color: 0x4fd0e7, // כחול-ירוק (מתאן)
-                surfaceTemp: -195,
-                hasRings: true, // טבעות אנכיות
-                moonCount: 28,
-                description: 'ענק קרח שמסתובב על הצד'
-            },
-            neptune: {
-                name: 'נפטון',
-                nameEn: 'Neptune',
-                radius: 24622,
-                scaledRadius: 7.8,
-                distance: 4515,
-                scaledDistance: 3010,
-                period: 60190, // 165 שנים
-                rotationPeriod: 0.67,
-                color: 0x4169e1, // כחול עמוק
-                surfaceTemp: -200,
-                hasRings: true, // טבעות דקות
-                moonCount: 16,
-                description: 'הכוכב הרחוק ביותר עם רוחות חזקות'
-            }
-        };
-        
-        return accurateData[planetName] || null;
-    }
-
     // אתחול כוכב הלכת
     async init() {
         try {
-            // חישוב פרמטרים פיזיקליים מדויקים
-            this.calculateAccurateOrbitalParameters();
+            // הגדרת פרמטרי מסלול
+            this.setupOrbitalParameters();
             
-            // יצירת גיאומטריה ראשית
-            await this.createGeometry();
+            // יצירת רכיבים ויזואליים
+            await this.createVisualComponents();
             
-            // טעינת טקסטורות (אופציונלי)
-            await this.loadTextures();
-            
-            // יצירת חומרים עם צבעים מדויקים
-            await this.createAccurateMaterials();
-            
-            // יצירת mesh ראשי
-            await this.createMesh();
-            
-            // יצירת אפקטים ייחודיים לכוכב הלכת
-            await this.createUniqueEffects();
+            // הגדרת אפקטים מיוחדים
+            await this.setupSpecialEffects();
             
             this.isInitialized = true;
             console.log(`✅ Planet ${this.name} initialized successfully`);
             
         } catch (error) {
-            console.error(`Failed to initialize planet ${this.name}:`, error);
-            // יצירת כוכב לכת פשוט כחלופה
-            this.createSimplePlanet();
+            console.error(`❌ Failed to initialize planet ${this.name}:`, error);
+            throw error;
         }
     }
 
-    // חישוב פרמטרים אורביטליים מדויקים - כל כוכב לכת מהירות שונה
-    calculateAccurateOrbitalParameters() {
-        // רדיוס מסלול
+    // הגדרת פרמטרי מסלול
+    setupOrbitalParameters() {
         this.orbital.radius = this.data.scaledDistance || 100;
         
-        // מהירות מסלול מדויקת - הפוכה לתקופה (כוכבי לכת רחוקים איטיים יותר)
-        this.orbital.speed = this.data.period ? 
-            (Math.PI * 2) / (this.data.period * 2) : 0.001; // הפחתת המהירות הכללית
+        // חישוב מהירות מסלול לפי חוק קפלר השלישי
+        this.orbital.speed = Math.sqrt(1 / this.orbital.radius) * 0.001;
         
-        // מהירות סיבוב עצמי מדויקת - לכל כוכב לכת קצב שונה
+        // מהירות סיבוב עצמי
         this.orbital.rotationSpeed = this.data.rotationPeriod ? 
-            (Math.PI * 2) / (Math.abs(this.data.rotationPeriod) * 50) : 0.001;
+            (2 * Math.PI) / (Math.abs(this.data.rotationPeriod) * 60) : 0.01;
         
-        // סיבוב הפוך לונוס ונוגה
-        if (this.data.rotationPeriod < 0) {
-            this.orbital.rotationSpeed = -this.orbital.rotationSpeed;
+        // פרמטרים מתקדמים
+        this.orbital.inclination = (this.data.inclination || 0) * Math.PI / 180;
+        this.orbital.eccentricity = this.data.eccentricity || 0;
+        
+        // זווית התחלה מהנתונים
+        const initialPos = INITIAL_POSITIONS[this.name];
+        if (initialPos) {
+            this.orbital.angle = initialPos.angle;
         }
-        
-        // רדיוס כוכב הלכת (בקנה מידה)
-        this.settings.radius = this.data.scaledRadius || 
-            Math.max(1, Math.log(this.data.radius || 1000) * 0.5);
-            
-        // זווית התחלה ייחודית לכל כוכב לכת (לא כולם בשורה)
-        const startAngles = {
-            mercury: 0,
-            venus: Math.PI / 4,
-            earth: Math.PI / 2,
-            mars: Math.PI * 3/4,
-            jupiter: Math.PI,
-            saturn: Math.PI * 5/4,
-            uranus: Math.PI * 3/2,
-            neptune: Math.PI * 7/4
-        };
-        
-        this.orbital.angle = startAngles[this.name] || Math.random() * Math.PI * 2;
-        
-        console.log(`${this.name} orbital params:`, {
-            speed: this.orbital.speed,
-            rotationSpeed: this.orbital.rotationSpeed,
-            startAngle: this.orbital.angle,
-            period: this.data.period
-        });
     }
 
-    // יצירת גיאומטריה
-    async createGeometry() {
-        // רזולוציה גבוהה יותר לכוכבי לכת גדולים
-        const segments = this.settings.radius > 10 ? 64 : 32;
-        
+    // יצירת רכיבים ויזואליים
+    async createVisualComponents() {
+        // יצירת גיאומטריה עם רזולוציה גבוהה
         this.geometry = new THREE.SphereGeometry(
-            this.settings.radius,
-            segments,
-            segments
+            this.settings.radius, // **שימוש ברדיוס המתוקן**
+            this.settings.segments, // **רזולוציה גבוהה**
+            this.settings.segments / 2
         );
         
-        // חישוב טנגנטים לnormal mapping
-        if (this.geometry.computeTangents) {
-            this.geometry.computeTangents();
-        }
-    }
-
-    // טעינת טקסטורות (אופציונלי)
-    async loadTextures() {
-        try {
-            // טקסטורה פרוצדורלית ייחודית לכל כוכב לכת
-            this.textures.surface = await this.createUniqueTexture();
-            
-        } catch (error) {
-            console.warn(`Failed to create texture for ${this.name}, using fallback`);
-            this.textures.surface = await this.createBasicTexture();
-        }
-    }
-
-    // יצירת טקסטורה ייחודית לכל כוכב לכת
-    async createUniqueTexture() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 256;
-        const ctx = canvas.getContext('2d');
+        // יצירת חומר בסיסי
+        await this.createBasicMaterial();
         
-        // צבעי בסיס מדויקים לכל כוכב לכת
-        const planetColors = {
-            mercury: ['#8c7853', '#6b5d42', '#4a3f2e'], // אפור-חום
-            venus: ['#ffc649', '#ffb732', '#e6a029'], // צהוב עז
-            earth: ['#6b93d6', '#4682b4', '#2e5984'], // כחול עם ירוק
-            mars: ['#cd5c5c', '#b22222', '#8b0000'], // אדום חלוד
-            jupiter: ['#d2b48c', '#daa520', '#b8860b'], // חום עם פסים
-            saturn: ['#fad5a5', '#f4a460', '#deb887'], // צהוב בהיר
-            uranus: ['#4fd0e7', '#00ced1', '#008b8b'], // כחול-ירוק
-            neptune: ['#4169e1', '#0000cd', '#191970'] // כחול עמוק
-        };
-        
-        const colors = planetColors[this.name] || ['#888888', '#666666', '#444444'];
-        
-        // רקע בסיסי
-        const gradient = ctx.createLinearGradient(0, 0, 512, 256);
-        gradient.addColorStop(0, colors[0]);
-        gradient.addColorStop(0.5, colors[1]);
-        gradient.addColorStop(1, colors[2]);
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 512, 256);
-        
-        // תכונות ייחודיות לכל כוכב לכת
-        this.addPlanetSpecificFeatures(ctx, colors);
-        
-        return new THREE.CanvasTexture(canvas);
-    }
-
-    // הוספת תכונות ייחודיות לכל כוכב לכת
-    addPlanetSpecificFeatures(ctx, colors) {
-        switch (this.name) {
-            case 'earth':
-                // יבשות ואוקיינוסים
-                ctx.fillStyle = '#228b22'; // ירוק ליבשות
-                for (let i = 0; i < 8; i++) {
-                    const x = Math.random() * 512;
-                    const y = Math.random() * 256;
-                    const size = 20 + Math.random() * 40;
-                    ctx.beginPath();
-                    ctx.arc(x, y, size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                
-                // עננים לבנים
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-                for (let i = 0; i < 15; i++) {
-                    const x = Math.random() * 512;
-                    const y = Math.random() * 256;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 8 + Math.random() * 12, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                break;
-                
-            case 'mars':
-                // כתמי קוטבים לבנים
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.arc(256, 20, 15, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(256, 236, 12, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // מכתשים כהים
-                ctx.fillStyle = '#8b0000';
-                for (let i = 0; i < 20; i++) {
-                    const x = Math.random() * 512;
-                    const y = Math.random() * 256;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 2 + Math.random() * 6, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                break;
-                
-            case 'jupiter':
-                // פסי עננים אופקיים
-                for (let i = 0; i < 12; i++) {
-                    const y = (i / 12) * 256;
-                    const color = i % 2 === 0 ? '#daa520' : '#b8860b';
-                    ctx.fillStyle = color;
-                    ctx.fillRect(0, y, 512, 256 / 12);
-                }
-                
-                // הסופה הגדולה האדומה
-                ctx.fillStyle = '#dc143c';
-                ctx.beginPath();
-                ctx.ellipse(150, 140, 25, 15, 0, 0, Math.PI * 2);
-                ctx.fill();
-                break;
-                
-            case 'saturn':
-                // פסים חומים-צהובים
-                for (let i = 0; i < 8; i++) {
-                    const y = (i / 8) * 256;
-                    const color = i % 2 === 0 ? '#fad5a5' : '#deb887';
-                    ctx.fillStyle = color;
-                    ctx.fillRect(0, y, 512, 256 / 8);
-                }
-                break;
-                
-            case 'uranus':
-                // טקסטורה חלקה עם פסים עדינים
-                for (let i = 0; i < 6; i++) {
-                    const y = (i / 6) * 256;
-                    ctx.fillStyle = i % 2 === 0 ? '#4fd0e7' : '#40b5cc';
-                    ctx.fillRect(0, y, 512, 256 / 6);
-                }
-                break;
-                
-            case 'neptune':
-                // כתמי סופה כהים
-                ctx.fillStyle = '#191970';
-                for (let i = 0; i < 5; i++) {
-                    const x = Math.random() * 512;
-                    const y = Math.random() * 256;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 8 + Math.random() * 15, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                break;
-        }
-    }
-
-    // יצירת חומרים מדויקים עם צבעים נכונים
-    async createAccurateMaterials() {
-        // פרמטרי חומר בסיסיים
-        const materialParams = {
-            color: this.data.color || 0xffffff
-        };
-        
-        // הוספת טקסטורה אם קיימת
-        if (this.textures.surface) {
-            materialParams.map = this.textures.surface;
-        }
-        
-        // בחירת חומר לפי סוג כוכב הלכת
-        if (['jupiter', 'saturn', 'uranus', 'neptune'].includes(this.name)) {
-            // ענקי גז - חומר עם זוהר עדין
-            this.material = new THREE.MeshPhongMaterial({
-                ...materialParams,
-                shininess: 30,
-                transparent: true,
-                opacity: 0.95
-            });
-        } else if (this.name === 'earth') {
-            // כדור הארץ - חומר עם השתקפויות מים
-            this.material = new THREE.MeshPhongMaterial({
-                ...materialParams,
-                specular: 0x222222,
-                shininess: 100 // השתקפות מהמים
-            });
-        } else if (this.name === 'venus') {
-            // נוגה - חומר עם זוהר חזק (אטמוספרה צפופה)
-            this.material = new THREE.MeshPhongMaterial({
-                ...materialParams,
-                emissive: new THREE.Color(0xffaa00).multiplyScalar(0.1),
-                shininess: 80
-            });
-        } else {
-            // כוכבי לכת סלעיים - חומר מט
-            this.material = new THREE.MeshLambertMaterial(materialParams);
-        }
-    }
-
-    // יצירת אפקטים ייחודיים לכל כוכב לכת
-    async createUniqueEffects() {
-        try {
-            // אטמוספרה לכוכבי לכת מתאימים
-            if (['venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(this.name)) {
-                this.createPlanetAtmosphere();
-            }
-            
-            // טבעות לכוכבי לכת המתאימים
-            if (this.data.hasRings) {
-                this.createPlanetRings();
-            }
-            
-            // ירחים
-            if (this.data.moonCount > 0) {
-                this.createPlanetMoons();
-            }
-            
-            // אפקטים מיוחדים
-            this.createSpecialEffects();
-            
-        } catch (error) {
-            console.warn(`Failed to create effects for ${this.name}:`, error);
-        }
-    }
-
-    // יצירת אטמוספרה ייחודית לכל כוכב לכת
-    createPlanetAtmosphere() {
-        const atmosphereData = {
-            venus: { color: 0xffcc00, opacity: 0.4, scale: 1.15 }, // צהוב עז
-            earth: { color: 0x87ceeb, opacity: 0.2, scale: 1.1 },  // כחול שמיים
-            mars: { color: 0xff6b47, opacity: 0.15, scale: 1.08 }, // אדום-כתום
-            jupiter: { color: 0xd2691e, opacity: 0.3, scale: 1.2 }, // חום
-            saturn: { color: 0xf4a460, opacity: 0.25, scale: 1.18 }, // צהוב-חום
-            uranus: { color: 0x40e0d0, opacity: 0.2, scale: 1.12 },  // טורקיז
-            neptune: { color: 0x4169e1, opacity: 0.25, scale: 1.15 } // כחול עמוק
-        };
-        
-        const atmData = atmosphereData[this.name];
-        if (!atmData) return;
-        
-        const atmosphereGeometry = new THREE.SphereGeometry(
-            this.settings.radius * atmData.scale, 
-            24, 24
-        );
-        
-        const atmosphereMaterial = new THREE.MeshBasicMaterial({
-            color: atmData.color,
-            transparent: true,
-            opacity: atmData.opacity,
-            side: THREE.BackSide
-        });
-        
-        this.effects.atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
-        this.group.add(this.effects.atmosphere);
-        this.settings.atmosphereEnabled = true;
-    }
-
-    // יצירת טבעות ייחודיות לכל כוכב לכת
-    createPlanetRings() {
-        if (this.name === 'saturn') {
-            // שבתאי - טבעות מרובות ועבות
-            this.createSaturnRings();
-        } else if (this.name === 'uranus') {
-            // אורנוס - טבעות דקות ואנכיות
-            this.createUranusRings();
-        } else if (this.name === 'jupiter') {
-            // צדק - טבעת דקה ובהירה
-            this.createJupiterRings();
-        } else if (this.name === 'neptune') {
-            // נפטון - טבעות דקות וחלקיות
-            this.createNeptuneRings();
-        }
-    }
-
-    // טבעות שבתאי - מרובות ומפורטות
-    createSaturnRings() {
-        const ringGroups = [
-            { inner: 1.2, outer: 1.5, opacity: 0.8, color: 0xc4b5a0 },
-            { inner: 1.6, outer: 1.9, opacity: 0.6, color: 0xd4c5b0 },
-            { inner: 2.0, outer: 2.3, opacity: 0.4, color: 0xe4d5c0 },
-            { inner: 2.5, outer: 2.7, opacity: 0.3, color: 0xf4e5d0 }
-        ];
-        
-        const ringsGroup = new THREE.Group();
-        
-        ringGroups.forEach((ring, index) => {
-            const geometry = new THREE.RingGeometry(
-                this.settings.radius * ring.inner,
-                this.settings.radius * ring.outer,
-                64
-            );
-            
-            const material = new THREE.MeshBasicMaterial({
-                color: ring.color,
-                transparent: true,
-                opacity: ring.opacity,
-                side: THREE.DoubleSide
-            });
-            
-            const ringMesh = new THREE.Mesh(geometry, material);
-            ringMesh.rotation.x = Math.PI / 2; // אופקי
-            ringsGroup.add(ringMesh);
-        });
-        
-        this.effects.rings = ringsGroup;
-        this.group.add(ringsGroup);
-        this.settings.ringsEnabled = true;
-    }
-
-    // טבעות אורנוס - דקות ואנכיות
-    createUranusRings() {
-        const ringData = [
-            { radius: 1.6, opacity: 0.4 },
-            { radius: 1.65, opacity: 0.3 },
-            { radius: 1.7, opacity: 0.35 },
-            { radius: 1.8, opacity: 0.25 }
-        ];
-        
-        const ringsGroup = new THREE.Group();
-        
-        ringData.forEach(ring => {
-            const geometry = new THREE.RingGeometry(
-                this.settings.radius * ring.radius,
-                this.settings.radius * ring.radius + 0.5,
-                32
-            );
-            
-            const material = new THREE.MeshBasicMaterial({
-                color: 0x4fd0e7,
-                transparent: true,
-                opacity: ring.opacity,
-                side: THREE.DoubleSide
-            });
-            
-            const ringMesh = new THREE.Mesh(geometry, material);
-            ringMesh.rotation.z = Math.PI / 2; // אנכי (אורנוס מסתובב על הצד)
-            ringsGroup.add(ringMesh);
-        });
-        
-        this.effects.rings = ringsGroup;
-        this.group.add(ringsGroup);
-        this.settings.ringsEnabled = true;
-    }
-
-    // טבעות צדק - דקות וקשות לראיה
-    createJupiterRings() {
-        const geometry = new THREE.RingGeometry(
-            this.settings.radius * 1.8,
-            this.settings.radius * 2.2,
-            32
-        );
-        
-        const material = new THREE.MeshBasicMaterial({
-            color: 0x654321,
-            transparent: true,
-            opacity: 0.1, // קשות לראיה
-            side: THREE.DoubleSide
-        });
-        
-        this.effects.rings = new THREE.Mesh(geometry, material);
-        this.effects.rings.rotation.x = Math.PI / 2;
-        this.group.add(this.effects.rings);
-        this.settings.ringsEnabled = true;
-    }
-
-    // טבעות נפטון - חלקיות
-    createNeptuneRings() {
-        const geometry = new THREE.RingGeometry(
-            this.settings.radius * 1.4,
-            this.settings.radius * 1.8,
-            32
-        );
-        
-        const material = new THREE.MeshBasicMaterial({
-            color: 0x191970,
-            transparent: true,
-            opacity: 0.2,
-            side: THREE.DoubleSide
-        });
-        
-        this.effects.rings = new THREE.Mesh(geometry, material);
-        this.effects.rings.rotation.x = Math.PI / 2;
-        this.group.add(this.effects.rings);
-        this.settings.ringsEnabled = true;
-    }
-
-    // יצירת ירחים מדויקים
-    createPlanetMoons() {
-        const moonConfigs = this.getAccurateMoonData();
-        
-        moonConfigs.forEach((moon, index) => {
-            const moonGeometry = new THREE.SphereGeometry(moon.radius, 8, 8);
-            const moonMaterial = new THREE.MeshPhongMaterial({ 
-                color: moon.color || 0xcccccc 
-            });
-            const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
-            
-            // מיקום הירח עם זווית ייחודית
-            const angle = moon.startAngle || (index / moonConfigs.length) * Math.PI * 2;
-            moonMesh.position.set(
-                Math.cos(angle) * moon.distance,
-                0,
-                Math.sin(angle) * moon.distance
-            );
-            
-            const moonGroup = new THREE.Group();
-            moonGroup.add(moonMesh);
-            moonGroup.userData = {
-                angle: angle,
-                speed: moon.speed,
-                distance: moon.distance,
-                name: moon.name
-            };
-            
-            this.effects.moons.push(moonGroup);
-            this.group.add(moonGroup);
-        });
-        
-        if (moonConfigs.length > 0) {
-            this.settings.moonsEnabled = true;
-        }
-    }
-
-    // נתוני ירחים מדויקים לכל כוכב לכת
-    getAccurateMoonData() {
-        const moonData = {
-            earth: [
-                { name: 'הירח', radius: 1.2, distance: 15, speed: 0.02, color: 0xc0c0c0 }
-            ],
-            mars: [
-                { name: 'פובוס', radius: 0.3, distance: 8, speed: 0.05, color: 0x8b7765 },
-                { name: 'דימוס', radius: 0.2, distance: 12, speed: 0.025, color: 0x8b7765 }
-            ],
-            jupiter: [
-                { name: 'יו', radius: 1.2, distance: 25, speed: 0.03, color: 0xffff99 },
-                { name: 'אירופה', radius: 1.0, distance: 30, speed: 0.025, color: 0xe6e6fa },
-                { name: 'גנימד', radius: 1.8, distance: 35, speed: 0.02, color: 0x696969 },
-                { name: 'קליסטו', radius: 1.6, distance: 42, speed: 0.015, color: 0x2f4f4f }
-            ],
-            saturn: [
-                { name: 'טיטאן', radius: 1.8, distance: 35, speed: 0.018, color: 0xdaa520 },
-                { name: 'אנקלדוס', radius: 0.8, distance: 28, speed: 0.025, color: 0xffffff }
-            ],
-            uranus: [
-                { name: 'טיטניה', radius: 0.9, distance: 22, speed: 0.02, color: 0x708090 },
-                { name: 'אובירון', radius: 0.8, distance: 25, speed: 0.018, color: 0x696969 }
-            ],
-            neptune: [
-                { name: 'טריטון', radius: 1.1, distance: 24, speed: -0.022, color: 0xd3d3d3 } // מסלול רטרוגרדי
-            ]
-        };
-        
-        return moonData[this.name] || [];
-    }
-
-    // אפקטים מיוחדים לכוכבי לכת ספציפיים
-    createSpecialEffects() {
-        if (this.name === 'jupiter') {
-            // הסופה הגדולה האדומה
-            this.createGreatRedSpot();
-        } else if (this.name === 'saturn') {
-            // זוהר מיוחד לטבעות
-            this.enhanceRings();
-        }
-    }
-
-    // הסופה הגדולה האדומה של צדק
-    createGreatRedSpot() {
-        const spotGeometry = new THREE.SphereGeometry(this.settings.radius * 0.3, 16, 16);
-        const spotMaterial = new THREE.MeshBasicMaterial({
-            color: 0xdc143c,
-            transparent: true,
-            opacity: 0.8
-        });
-        
-        const spot = new THREE.Mesh(spotGeometry, spotMaterial);
-        spot.position.set(this.settings.radius * 0.9, 0, 0);
-        this.group.add(spot);
-    }
-
-    // שיפור טבעות שבתאי
-    enhanceRings() {
-        if (this.effects.rings) {
-            // הוספת זוהר עדין לטבעות
-            this.effects.rings.children.forEach(ring => {
-                ring.material.emissive = new THREE.Color(0xffd700);
-                ring.material.emissiveIntensity = 0.05;
-            });
-        }
-    }
-
-    // יצירת mesh ראשי
-    async createMesh() {
+        // יצירת mesh ראשי
         this.mesh = new THREE.Mesh(this.geometry, this.material);
         this.mesh.name = this.name;
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
         
-        // מיקום במסלול
-        this.updateOrbitalPosition();
+        // **הוספה: userData לזיהוי לחיצות**
+        this.mesh.userData = {
+            planetName: this.name,
+            data: this.data,
+            type: 'planet'
+        };
         
-        // הוספת לקבוצה
+        // הוספה לקבוצה
         this.group.add(this.mesh);
+        
+        console.log(`Created visual components for ${this.name} with radius ${this.settings.radius}`);
     }
 
-    // יצירת כוכב לכת פשוט כחלופה
-    createSimplePlanet() {
-        const geometry = new THREE.SphereGeometry(this.settings.radius, 16, 16);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: this.data.color || 0x888888 
+    // יצירת חומר בסיסי
+    async createBasicMaterial() {
+        const materialOptions = {
+            color: this.data.color || 0x888888,
+            transparent: false,
+            side: THREE.FrontSide
+        };
+        
+        // שיפורים לפי סוג כוכב הלכת
+        switch(this.name) {
+            case 'sun':
+                materialOptions.emissive = this.data.emissive || this.data.color;
+                materialOptions.emissiveIntensity = 0.5;
+                this.material = new THREE.MeshBasicMaterial(materialOptions);
+                break;
+                
+            case 'venus':
+                // אטמוספירה עבה
+                materialOptions.transparent = true;
+                materialOptions.opacity = 0.9;
+                this.material = new THREE.MeshLambertMaterial(materialOptions);
+                break;
+                
+            case 'earth':
+                // שילוב של ים ויבשה
+                materialOptions.shininess = 30;
+                this.material = new THREE.MeshPhongMaterial(materialOptions);
+                break;
+                
+            case 'mars':
+                // משטח מאובק
+                materialOptions.roughness = 0.9;
+                this.material = new THREE.MeshLambertMaterial(materialOptions);
+                break;
+                
+            case 'jupiter':
+            case 'saturn':
+            case 'uranus':
+            case 'neptune':
+                // ענקי גז עם בנדות
+                materialOptions.shininess = 10;
+                this.material = new THREE.MeshPhongMaterial(materialOptions);
+                break;
+                
+            default:
+                this.material = new THREE.MeshLambertMaterial(materialOptions);
+        }
+    }
+
+    // הגדרת אפקטים מיוחדים
+    async setupSpecialEffects() {
+        // טבעות לשבתאי
+        if (this.name === 'saturn') {
+            await this.createRings();
+        }
+        
+        // אטמוספירה לכוכבי לכת מתאימים
+        if (['venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(this.name)) {
+            await this.createAtmosphere();
+        }
+        
+        // עננים לכוכבי לכת גזיים
+        if (['venus', 'earth', 'jupiter', 'saturn'].includes(this.name)) {
+            await this.createClouds();
+        }
+    }
+
+    // יצירת טבעות
+    async createRings() {
+        if (this.name !== 'saturn') return;
+        
+        const ringGeometry = new THREE.RingGeometry(
+            this.settings.radius * 1.5, // רדיוס פנימי
+            this.settings.radius * 2.5, // רדיוס חיצוני
+            64 // סגמנטים
+        );
+        
+        const ringMaterial = new THREE.MeshBasicMaterial({
+            color: 0xF5F5DC,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.7
         });
         
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.name = this.name;
-        this.mesh.castShadow = true;
-        this.mesh.receiveShadow = true;
+        this.effects.rings = new THREE.Mesh(ringGeometry, ringMaterial);
+        this.effects.rings.rotation.x = Math.PI / 2; // מיקום אופקי
+        this.effects.rings.name = `${this.name}Rings`;
         
-        this.updateOrbitalPosition();
-        this.group.add(this.mesh);
-        
-        this.isInitialized = true;
-        console.log(`✅ Simple planet ${this.name} created`);
+        this.group.add(this.effects.rings);
     }
 
-    // עדכון מיקום במסלול
-    updateOrbitalPosition() {
-        const x = Math.cos(this.orbital.angle) * this.orbital.radius;
-        const z = Math.sin(this.orbital.angle) * this.orbital.radius;
+    // יצירת אטמוספירה
+    async createAtmosphere() {
+        const atmosphereGeometry = new THREE.SphereGeometry(
+            this.settings.radius * 1.1, // מעט גדול יותר מהכוכב
+            this.settings.segments,
+            this.settings.segments / 2
+        );
         
-        this.group.position.set(x, 0, z);
+        const atmosphereMaterial = new THREE.MeshBasicMaterial({
+            color: this.getAtmosphereColor(),
+            transparent: true,
+            opacity: 0.2,
+            side: THREE.BackSide // רק הצד הפנימי
+        });
+        
+        this.effects.atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+        this.effects.atmosphere.name = `${this.name}Atmosphere`;
+        
+        this.group.add(this.effects.atmosphere);
     }
 
-    // יצירת mesh (פונקציה נדרשת)
+    // קבלת צבע אטמוספירה
+    getAtmosphereColor() {
+        const atmosphereColors = {
+            venus: 0xFFF5AA,    // צהוב לבן (חומצה גופרתית)
+            earth: 0x87CEEB,    // כחול שמיים
+            mars: 0xDEB887,     // חום בהיר (אבק)
+            jupiter: 0xF4A460,  // כתום חול
+            saturn: 0xF5DEB3,   // בז' בהיר
+            uranus: 0x40E0D0,   // טורקיז (מתאן)
+            neptune: 0x4169E1   // כחול מלכותי
+        };
+        
+        return atmosphereColors[this.name] || 0xCCCCCC;
+    }
+
+    // יצירת עננים
+    async createClouds() {
+        if (!['venus', 'earth', 'jupiter', 'saturn'].includes(this.name)) return;
+        
+        const cloudGeometry = new THREE.SphereGeometry(
+            this.settings.radius * 1.02, // קרוב מאוד לפני השטח
+            this.settings.segments,
+            this.settings.segments / 2
+        );
+        
+        let cloudColor, cloudOpacity;
+        switch(this.name) {
+            case 'venus':
+                cloudColor = 0xFFF8DC;
+                cloudOpacity = 0.8;
+                break;
+            case 'earth':
+                cloudColor = 0xFFFFFF;
+                cloudOpacity = 0.4;
+                break;
+            case 'jupiter':
+            case 'saturn':
+                cloudColor = 0xF5F5DC;
+                cloudOpacity = 0.3;
+                break;
+            default:
+                cloudColor = 0xFFFFFF;
+                cloudOpacity = 0.3;
+        }
+        
+        const cloudMaterial = new THREE.MeshLambertMaterial({
+            color: cloudColor,
+            transparent: true,
+            opacity: cloudOpacity
+        });
+        
+        this.effects.clouds = new THREE.Mesh(cloudGeometry, cloudMaterial);
+        this.effects.clouds.name = `${this.name}Clouds`;
+        
+        this.group.add(this.effects.clouds);
+    }
+
+    // יצירת mesh ראשי להחזרה
     createMesh() {
+        if (!this.isInitialized) {
+            console.warn(`Planet ${this.name} not initialized, returning basic mesh`);
+            return this.createBasicMesh();
+        }
+        
+        // החזרת הקבוצה המלאה עם כל האפקטים
+        this.group.name = this.name;
+        this.group.userData = {
+            planetName: this.name,
+            data: this.data,
+            type: 'planet'
+        };
+        
         return this.group;
     }
 
-    // עדכון אנימציה עם מהירויות מדויקות
+    // יצירת mesh בסיסי כחלופה
+    createBasicMesh() {
+        const radius = this.data.scaledRadius || 1;
+        const color = this.data.color || 0x888888;
+        
+        const geometry = new THREE.SphereGeometry(radius, 32, 32);
+        const material = new THREE.MeshLambertMaterial({ color: color });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.name = this.name;
+        mesh.userData = {
+            planetName: this.name,
+            data: this.data,
+            type: 'planet'
+        };
+        
+        return mesh;
+    }
+
+    // עדכון כוכב הלכת בלולאת האנימציה
     update(deltaTime) {
         if (!this.isInitialized) return;
         
         this.animation.time += deltaTime;
         
-        // עדכון מיקום במסלול - מהירות ייחודית לכל כוכב לכת
-        this.orbital.angle += this.orbital.speed * deltaTime * 0.001;
-        this.updateOrbitalPosition();
+        // עדכון מיקום במסלול
+        this.updateOrbitalPosition(deltaTime);
         
-        // סיבוב עצמי - מהירות ייחודית לכל כוכב לכת
-        this.animation.rotationAngle += this.orbital.rotationSpeed * deltaTime * 0.001;
+        // עדכון סיבוב עצמי
+        this.updateRotation(deltaTime);
+        
+        // עדכון אפקטים
+        this.updateEffects(deltaTime);
+    }
+
+    // עדכון מיקום במסלול
+    updateOrbitalPosition(deltaTime) {
+        // עדכון זווית המסלול
+        this.orbital.angle += this.orbital.speed * deltaTime * 0.001;
+        
+        // חישוב מיקום עם אקסצנטריות
+        const eccentricAnomaly = this.orbital.angle;
+        const trueAnomaly = eccentricAnomaly + this.orbital.eccentricity * Math.sin(eccentricAnomaly);
+        
+        // מיקום במסלול
+        const distance = this.orbital.radius * (1 - this.orbital.eccentricity * Math.cos(eccentricAnomaly));
+        const x = Math.cos(trueAnomaly) * distance;
+        const z = Math.sin(trueAnomaly) * distance;
+        const y = Math.sin(trueAnomaly) * Math.sin(this.orbital.inclination) * distance * 0.1;
+        
+        this.group.position.set(x, y, z);
+    }
+
+    // עדכון סיבוב עצמי
+    updateRotation(deltaTime) {
+        this.animation.rotationAngle += this.orbital.rotationSpeed * deltaTime;
+        
         if (this.mesh) {
             this.mesh.rotation.y = this.animation.rotationAngle;
         }
         
-        // עדכון אטמוספרה
+        // סיבוב הפוך לוונוס ואורנוס
+        if (this.name === 'venus' || this.data.rotationPeriod < 0) {
+            this.mesh.rotation.y = -this.animation.rotationAngle;
+        }
+    }
+
+    // עדכון אפקטים
+    updateEffects(deltaTime) {
+        // סיבוב עננים (אם יש)
+        if (this.effects.clouds) {
+            this.animation.cloudRotation += deltaTime * 0.0001;
+            this.effects.clouds.rotation.y = this.animation.cloudRotation;
+        }
+        
+        // פעמות אטמוספירה
         if (this.effects.atmosphere) {
-            const pulse = Math.sin(this.animation.time * 0.001) * 0.1 + 0.9;
-            this.effects.atmosphere.material.opacity = this.effects.atmosphere.material.opacity * pulse;
+            this.animation.atmospherePulse += deltaTime * 0.002;
+            const pulse = Math.sin(this.animation.atmospherePulse) * 0.1 + 0.9;
+            this.effects.atmosphere.scale.setScalar(pulse);
         }
         
-        // עדכון ירחים עם מהירויות שונות
-        this.effects.moons.forEach(moonGroup => {
-            const userData = moonGroup.userData;
-            userData.angle += userData.speed * deltaTime * 0.001;
-            
-            const x = Math.cos(userData.angle) * userData.distance;
-            const z = Math.sin(userData.angle) * userData.distance;
-            
-            if (moonGroup.children[0]) {
-                moonGroup.children[0].position.set(x, 0, z);
-            }
-        });
-        
-        // עדכון טבעות עם סיבוב עדין
+        // סיבוב טבעות
         if (this.effects.rings) {
-            if (this.name === 'saturn') {
-                this.effects.rings.rotation.z += deltaTime * 0.0001;
-            } else if (this.name === 'uranus') {
-                this.effects.rings.rotation.y += deltaTime * 0.0002; // אנכי
-            }
+            this.effects.rings.rotation.z += deltaTime * 0.0005;
         }
     }
 
-    // טקסטורה בסיסית
-    async createBasicTexture() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 256;
-        canvas.height = 256;
-        const ctx = canvas.getContext('2d');
+    // קבלת נתוני כוכב לכת מדויקים כחלופה
+    getAccuratePlanetData(planetName) {
+        const fallbackData = {
+            mercury: {
+                name: 'כוכב חמה',
+                radius: 2439.7,
+                scaledRadius: 4, // **תיקון: גודל גדול יותר**
+                scaledDistance: 25,
+                color: 0x8C7853,
+                orbitalPeriod: 87.969,
+                rotationPeriod: 58.646,
+                description: 'הכוכב הקרוב ביותר לשמש'
+            },
+            venus: {
+                name: 'נוגה',
+                radius: 6051.8,
+                scaledRadius: 6, // **תיקון: גודל גדול יותר**
+                scaledDistance: 45,
+                color: 0xFFC649,
+                orbitalPeriod: 224.701,
+                rotationPeriod: -243.025,
+                description: 'הכוכב החם ביותר במערכת השמש'
+            },
+            earth: {
+                name: 'כדור הארץ',
+                radius: 6371,
+                scaledRadius: 6, // **תיקון: גודל גדול יותר**
+                scaledDistance: 65,
+                color: 0x6B93D6,
+                orbitalPeriod: 365.256,
+                rotationPeriod: 0.99726968,
+                description: 'הכוכב היחיד עם חיים'
+            },
+            mars: {
+                name: 'מאדים',
+                radius: 3389.5,
+                scaledRadius: 5, // **תיקון: גודל גדול יותר**
+                scaledDistance: 90,
+                color: 0xCD5C5C,
+                orbitalPeriod: 686.971,
+                rotationPeriod: 1.025957,
+                description: 'הכוכב האדום'
+            },
+            jupiter: {
+                name: 'צדק',
+                radius: 69911,
+                scaledRadius: 14, // **תיקון: גודל גדול יותר**
+                scaledDistance: 200,
+                color: 0xD8CA9D,
+                orbitalPeriod: 4332.59,
+                rotationPeriod: 0.41354,
+                description: 'ענק הגז הגדול ביותר'
+            },
+            saturn: {
+                name: 'שבתאי',
+                radius: 58232,
+                scaledRadius: 12, // **תיקון: גודל גדול יותר**
+                scaledDistance: 280,
+                color: 0xFAD5A5,
+                orbitalPeriod: 10747.0,
+                rotationPeriod: 0.43958,
+                description: 'מפורסם בטבעות המרהיבות'
+            },
+            uranus: {
+                name: 'אורנוס',
+                radius: 25362,
+                scaledRadius: 9, // **תיקון: גודל גדול יותר**
+                scaledDistance: 400,
+                color: 0x4FD0E7,
+                orbitalPeriod: 30588.0,
+                rotationPeriod: -0.71833,
+                description: 'מסתובב על הצד'
+            },
+            neptune: {
+                name: 'נפטון',
+                radius: 24622,
+                scaledRadius: 8, // **תיקון: גודל גדול יותר**
+                scaledDistance: 500,
+                color: 0x4B70DD,
+                orbitalPeriod: 60182.0,
+                rotationPeriod: 0.6713,
+                description: 'הכוכב הרחוק ביותר'
+            }
+        };
         
-        ctx.fillStyle = `#${this.data.color.toString(16).padStart(6, '0')}`;
-        ctx.fillRect(0, 0, 256, 256);
-        
-        return new THREE.CanvasTexture(canvas);
+        return fallbackData[planetName] || null;
     }
 
-    // החזרת האובייקט הראשי
-    getMesh() {
-        return this.group;
+    // קבלת מיקום נוכחי
+    getPosition() {
+        return this.group.position.clone();
+    }
+
+    // קבלת מרחק מהשמש
+    getDistanceFromSun() {
+        return this.group.position.length();
+    }
+
+    // קבלת מהירות נוכחית
+    getCurrentSpeed() {
+        return this.orbital.speed;
+    }
+
+    // הגדרת מיקום ידני
+    setPosition(x, y, z) {
+        this.group.position.set(x, y, z);
+    }
+
+    // הגדרת סיבוב ידני
+    setRotation(x, y, z) {
+        if (this.mesh) {
+            this.mesh.rotation.set(x, y, z);
+        }
+    }
+
+    // הפעלה/כיבוי אפקטים
+    setAtmosphereEnabled(enabled) {
+        this.settings.atmosphereEnabled = enabled;
+        if (this.effects.atmosphere) {
+            this.effects.atmosphere.visible = enabled;
+        }
+    }
+
+    setCloudsEnabled(enabled) {
+        this.settings.cloudsEnabled = enabled;
+        if (this.effects.clouds) {
+            this.effects.clouds.visible = enabled;
+        }
+    }
+
+    setRingsEnabled(enabled) {
+        this.settings.ringsEnabled = enabled;
+        if (this.effects.rings) {
+            this.effects.rings.visible = enabled;
+        }
     }
 
     // הגדרת מצב ריאליסטי
-    setRealisticScale(enabled) {
+    setRealisticMode(enabled) {
         this.settings.realisticScale = enabled;
-        this.calculateAccurateOrbitalParameters();
         
-        // עדכון גיאומטריה
+        if (enabled) {
+            // גדלים ריאליסטיים (יחסיים)
+            const earthRadius = PLANETS_DATA.earth?.scaledRadius || 6;
+            const realRatio = this.data.radius / PLANETS_DATA.earth.radius;
+            this.settings.radius = earthRadius * realRatio;
+        } else {
+            // גדלים מותאמים לתצוגה
+            this.settings.radius = this.data.scaledRadius || 1;
+        }
+        
+        // עדכון הגיאומטריה
         if (this.geometry) {
             this.geometry.dispose();
             this.geometry = new THREE.SphereGeometry(
                 this.settings.radius,
                 this.settings.segments,
-                this.settings.segments
+                this.settings.segments / 2
             );
+            
             if (this.mesh) {
                 this.mesh.geometry = this.geometry;
             }
         }
     }
 
-    // הצגת/הסתרת אפקטים
-    toggleEffect(effectName, visible) {
-        if (this.effects[effectName]) {
-            if (Array.isArray(this.effects[effectName])) {
-                this.effects[effectName].forEach(effect => {
-                    effect.visible = visible;
-                });
-            } else {
-                this.effects[effectName].visible = visible;
+    // קבלת מידע מפורט
+    getDetailedInfo() {
+        return {
+            name: this.data.name,
+            nameEn: this.data.nameEn,
+            type: this.getObjectType(),
+            physicalData: {
+                radius: this.data.radius,
+                mass: this.data.mass,
+                density: this.data.mass && this.data.radius ? 
+                    this.data.mass / (4/3 * Math.PI * Math.pow(this.data.radius * 1000, 3)) : null
+            },
+            orbitalData: {
+                distance: this.data.distance,
+                period: this.data.orbitalPeriod,
+                eccentricity: this.data.eccentricity,
+                inclination: this.data.inclination
+            },
+            rotationalData: {
+                period: this.data.rotationPeriod,
+                axialTilt: this.data.axialTilt
+            },
+            currentStatus: {
+                position: this.getPosition(),
+                distanceFromSun: this.getDistanceFromSun(),
+                speed: this.getCurrentSpeed(),
+                rotationAngle: this.animation.rotationAngle
             }
+        };
+    }
+
+    // זיהוי סוג האובייקט
+    getObjectType() {
+        if (this.name === 'sun') return 'כוכב';
+        
+        const terrestrial = ['mercury', 'venus', 'earth', 'mars'];
+        const gasGiants = ['jupiter', 'saturn'];
+        const iceGiants = ['uranus', 'neptune'];
+        
+        if (terrestrial.includes(this.name)) return 'כוכב לכת סלעי';
+        if (gasGiants.includes(this.name)) return 'ענק גז';
+        if (iceGiants.includes(this.name)) return 'ענק קרח';
+        
+        return 'כוכב לכת';
+    }
+
+    // שיוך לסצנה
+    addToScene(scene) {
+        if (scene && this.group) {
+            scene.add(this.group);
         }
     }
 
-    // קבלת מידע מפורט על כוכב הלכת
-    getPlanetInfo() {
+    // הסרה מהסצנה
+    removeFromScene(scene) {
+        if (scene && this.group) {
+            scene.remove(this.group);
+        }
+    }
+
+    // **הוספה: קבלת mesh לצורכי raycasting**
+    getMeshForRaycasting() {
+        // החזרת mesh הראשי לזיהוי לחיצות
+        return this.mesh || this.group;
+    }
+
+    // **הוספה: בדיקה אם נקודה נמצאת על כוכב הלכת**
+    containsPoint(point) {
+        if (!this.mesh) return false;
+        
+        const distance = this.mesh.position.distanceTo(point);
+        return distance <= this.settings.radius;
+    }
+
+    // **הוספה: קבלת מרחק מנקודה**
+    distanceTo(point) {
+        if (!this.mesh) return Infinity;
+        return this.mesh.position.distanceTo(point);
+    }
+
+    // איפוס מיקום למסלול ההתחלתי
+    resetToInitialPosition() {
+        const initialPos = INITIAL_POSITIONS[this.name];
+        if (initialPos) {
+            this.orbital.angle = initialPos.angle;
+            this.updateOrbitalPosition(0);
+        }
+    }
+
+    // שמירת מצב נוכחי
+    saveState() {
         return {
             name: this.name,
-            displayName: this.data.name,
-            englishName: this.data.nameEn,
-            data: this.data,
-            settings: { ...this.settings },
-            orbital: { ...this.orbital },
-            animation: { ...this.animation },
-            effects: {
-                atmosphere: !!this.effects.atmosphere,
-                clouds: !!this.effects.clouds,
-                rings: !!this.effects.rings,
-                moons: this.effects.moons.length,
-                aurorae: !!this.effects.aurorae
-            },
-            isInitialized: this.isInitialized,
-            position: this.group.position.clone()
+            position: this.group.position.clone(),
+            rotation: this.mesh ? this.mesh.rotation.clone() : new THREE.Euler(),
+            orbitalAngle: this.orbital.angle,
+            animationTime: this.animation.time,
+            settings: { ...this.settings }
         };
+    }
+
+    // טעינת מצב שמור
+    loadState(state) {
+        if (!state || state.name !== this.name) return false;
+        
+        try {
+            this.group.position.copy(state.position);
+            if (this.mesh && state.rotation) {
+                this.mesh.rotation.copy(state.rotation);
+            }
+            this.orbital.angle = state.orbitalAngle || 0;
+            this.animation.time = state.animationTime || 0;
+            
+            if (state.settings) {
+                Object.assign(this.settings, state.settings);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error(`Failed to load state for ${this.name}:`, error);
+            return false;
+        }
+    }
+
+    // **הוספה: קבלת צבע דומיננטי**
+    getDominantColor() {
+        return this.data.color || 0x888888;
+    }
+
+    // **הוספה: קבלת מידע לתצוגה מהירה**
+    getQuickDisplayInfo() {
+        return {
+            name: this.data.name,
+            color: this.getDominantColor(),
+            radius: this.settings.radius,
+            position: this.getPosition(),
+            type: this.getObjectType(),
+            emoji: this.getPlanetEmoji()
+        };
+    }
+
+    // **הוספה: קבלת אמוג'י של כוכב הלכת**
+    getPlanetEmoji() {
+        const emojis = {
+            sun: '☀️',
+            mercury: '☿️',
+            venus: '♀️',
+            earth: '🌍',
+            mars: '♂️',
+            jupiter: '♃',
+            saturn: '♄',
+            uranus: '♅',
+            neptune: '♆'
+        };
+        
+        return emojis[this.name] || '🪐';
     }
 
     // ניקוי משאבים
     dispose() {
-        // ניקוי גיאומטריה
+        // ניקוי גיאומטריות
         if (this.geometry) {
             this.geometry.dispose();
+            this.geometry = null;
         }
         
-        // ניקוי חומר
+        // ניקוי חומרים
         if (this.material) {
             this.material.dispose();
+            this.material = null;
         }
-        
-        // ניקוי טקסטורות
-        Object.values(this.textures).forEach(texture => {
-            if (texture && texture.dispose) {
-                texture.dispose();
-            }
-        });
         
         // ניקוי אפקטים
         Object.values(this.effects).forEach(effect => {
-            if (effect) {
-                if (Array.isArray(effect)) {
-                    effect.forEach(e => {
-                        if (e && e.geometry) e.geometry.dispose();
-                        if (e && e.material) e.material.dispose();
-                    });
-                } else {
-                    if (effect.geometry) effect.geometry.dispose();
-                    if (effect.material) effect.material.dispose();
-                }
-            }
+            if (effect && effect.geometry) effect.geometry.dispose();
+            if (effect && effect.material) effect.material.dispose();
         });
         
+        // ניקוי טקסטורות
+        Object.values(this.textures).forEach(texture => {
+            if (texture && texture.dispose) texture.dispose();
+        });
+        
+        // איפוס הפניות
+        this.mesh = null;
+        this.group = null;
         this.isInitialized = false;
+        
         console.log(`Planet ${this.name} disposed`);
     }
 }
 
-// ייצוא המחלקה
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = SolarSystemPlanet;
-}
+// **הוספה: פונקציות עזר לכוכבי לכת**
+const PlanetUtils = {
+    // יצירת כוכב לכת מהיר
+    createQuickPlanet(planetName, radius, distance, color) {
+        const geometry = new THREE.SphereGeometry(radius, 32, 32);
+        const material = new THREE.MeshLambertMaterial({ color: color });
+        const mesh = new THREE.Mesh(geometry, material);
+        
+        mesh.name = planetName;
+        mesh.userData = { planetName: planetName, type: 'planet' };
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        
+        return mesh;
+    },
+    
+    // חישוב מיקום במסלול
+    calculateOrbitalPosition(angle, distance, inclination = 0) {
+        return new THREE.Vector3(
+            Math.cos(angle) * distance,
+            Math.sin(angle) * Math.sin(inclination) * distance * 0.1,
+            Math.sin(angle) * distance
+        );
+    },
+    
+    // חישוב מהירות מסלול (חוק קפלר השלישי)
+    calculateOrbitalSpeed(distance) {
+        return Math.sqrt(1 / distance) * 0.001;
+    },
+    
+    // המרת יחידות מדויקות
+    scaleDistance(realDistanceKm, scaleFactor = 1000000) {
+        return realDistanceKm / scaleFactor;
+    },
+    
+    scaleRadius(realRadiusKm, scaleFactor = 100) {
+        return Math.max(0.5, realRadiusKm / scaleFactor);
+    }
+};
 
-// הפוך את המחלקה זמינה גלובלית - תיקון עיקרי
-window.SolarSystemPlanet = SolarSystemPlanet;
+// הפוך הכל זמין גלובלית
+if (typeof window !== 'undefined') {
+    window.SolarSystemPlanet = SolarSystemPlanet;
+    window.PlanetUtils = PlanetUtils;
+}
