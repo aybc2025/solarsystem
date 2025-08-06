@@ -1,5 +1,7 @@
-// מחלקת בקרות ממשק המשתמש - עם תמיכה מלאה במובייל ותיקוני PWA
-class UIControls {
+// בקרות Orbit Controls מותאמות למובייל - מתוקן
+// **תיקון עיקרי: הוסרה הגדרה כפולה של UIControls ושונה שם המחלקה**
+
+class OrbitControlsHandler {
     constructor() {
         this.app = null;
         this.elements = new Map();
@@ -130,10 +132,10 @@ class UIControls {
             this.loadSettings();
             
             this.isInitialized = true;
-            console.log('UI Controls initialized successfully (Mobile:', this.isMobile, ')');
+            console.log('OrbitControlsHandler initialized successfully (Mobile:', this.isMobile, ')');
             
         } catch (error) {
-            console.error('Failed to initialize UI Controls:', error);
+            console.error('Failed to initialize OrbitControlsHandler:', error);
             throw error;
         }
     }
@@ -185,457 +187,60 @@ class UIControls {
         // מהירות זמן
         if (this.controls.timeSpeed) {
             this.addEventListenerSafe(this.controls.timeSpeed, 'input', (event) => {
-                this.setTimeScale(parseFloat(event.target.value));
-            });
-            
-            // עדכון בזמן אמת למגע
-            this.addEventListenerSafe(this.controls.timeSpeed, 'touchmove', (event) => {
-                this.setTimeScale(parseFloat(event.target.value));
+                const value = parseFloat(event.target.value);
+                this.setTimeScale(value);
+                
+                if (this.controls.speedValue) {
+                    this.controls.speedValue.textContent = value.toFixed(1) + 'x';
+                }
             });
         }
         
-        // כפתורי תצוגה
-        this.setupViewButtons();
-        
-        // קיצורי מקלדת
-        this.setupKeyboardShortcuts();
-        
-        // אירועי אפליקציה
-        this.setupAppEventListeners();
-        
-        // אירועי חלון
-        this.setupWindowEventListeners();
-    }
-
-    // הוספת מאזין אירוע עם הגנה
-    addEventListenerSafe(element, event, handler) {
-        if (element) {
-            element.addEventListener(event, handler);
-            
-            // שמירה למטרות ניקוי
-            const key = `${element.id || 'unknown'}_${event}`;
-            if (!this.eventListeners.has(key)) {
-                this.eventListeners.set(key, []);
-            }
-            this.eventListeners.get(key).push({ element, event, handler });
+        // בקרות תצוגה
+        if (this.controls.viewOrbits) {
+            this.addEventListenerSafe(this.controls.viewOrbits, 'change', () => {
+                this.toggleOrbits();
+            });
         }
-    }
-
-    // הגדרת תפריט נייד
-    setupMobileMenu() {
-        // כפתור פתיחת תפריט
+        
+        if (this.controls.viewLabels) {
+            this.addEventListenerSafe(this.controls.viewLabels, 'change', () => {
+                this.toggleLabels();
+            });
+        }
+        
+        if (this.controls.viewRealistic) {
+            this.addEventListenerSafe(this.controls.viewRealistic, 'change', () => {
+                this.toggleRealisticMode();
+            });
+        }
+        
+        if (this.controls.viewAsteroids) {
+            this.addEventListenerSafe(this.controls.viewAsteroids, 'change', () => {
+                this.toggleAsteroids();
+            });
+        }
+        
+        // תפריט נייד
         if (this.controls.mobileToggle) {
             this.addEventListenerSafe(this.controls.mobileToggle, 'click', () => {
                 this.toggleMobileMenu();
             });
-            
-            // מניעת propagation
-            this.addEventListenerSafe(this.controls.mobileToggle, 'touchstart', (e) => {
-                e.stopPropagation();
-            });
         }
         
-        // כפתור סגירת תפריט
         if (this.controls.closeControls) {
             this.addEventListenerSafe(this.controls.closeControls, 'click', () => {
                 this.closeMobileMenu();
             });
         }
         
-        // סגירה בלחיצה מחוץ לתפריט
-        document.addEventListener('click', (e) => {
-            if (this.state.menuOpen && 
-                this.controls.controlsPanel && 
-                !this.controls.controlsPanel.contains(e.target) &&
-                !this.controls.mobileToggle.contains(e.target)) {
-                this.closeMobileMenu();
-            }
-        });
-        
-        // מניעת סגירה בלחיצה בתוך התפריט
-        if (this.controls.controlsPanel) {
-            this.addEventListenerSafe(this.controls.controlsPanel, 'click', (e) => {
-                e.stopPropagation();
-            });
-        }
-    }
-
-    // הגדרת בקרות מגע מתקדמות
-    setupAdvancedTouchControls() {
-        if (!this.isMobile) return;
-        
-        const canvas = this.app.renderer.domElement;
-        
-        // מניעת זום לא רצוי רק בהקשרים מסוימים
-        if (this.touchSettings.preventZoom) {
-            document.addEventListener('touchstart', (e) => {
-                // אפשר pinch-to-zoom למרות הכל
-                if (e.touches.length === 2 && this.touchSettings.allowPinchZoom) {
-                    return; // אל תמנע
-                }
-                
-                if (e.touches.length > 2) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            
-            document.addEventListener('gesturestart', (e) => {
-                // אפשר gesture zoom בתנאים מסוימים
-                if (this.touchSettings.allowPinchZoom) {
-                    return;
-                }
-                e.preventDefault();
-            }, { passive: false });
-        }
-        
-        // טיפול בלחיצות כפולות משופר
-        this.setupAdvancedDoubleTapHandler(canvas);
-        
-        // טיפול בלחיצות ארוכות
-        this.setupLongPressHandler(canvas);
-        
-        // טיפול בswipe gestures
-        this.setupSwipeHandler(canvas);
-        
-        // טיפול בpinch-to-zoom משופר
-        this.setupPinchZoomHandler(canvas);
-    }
-
-    // טיפול בלחיצות כפולות משופר
-    setupAdvancedDoubleTapHandler(canvas) {
-        canvas.addEventListener('touchend', (e) => {
-            const currentTime = Date.now();
-            const touch = e.changedTouches[0];
-            
-            // בדיקת מיקום הטאפ
-            const rect = canvas.getBoundingClientRect();
-            const tapX = touch.clientX - rect.left;
-            const tapY = touch.clientY - rect.top;
-            
-            if (this.touchState.lastTap && 
-                (currentTime - this.touchState.lastTap) < this.touchSettings.doubleTapThreshold) {
-                
-                // לחיצה כפולה - זום חכם או איפוס
-                this.handleDoubleTap(tapX, tapY);
-                e.preventDefault();
-                
-                // איפוס מספר הטאפים
-                this.touchState.tapCount = 0;
-                this.touchState.lastTap = 0;
-            } else {
-                this.touchState.tapCount = 1;
-                this.touchState.lastTap = currentTime;
-            }
-        }, { passive: false });
-    }
-
-    // טיפול בלחיצה כפולה
-    handleDoubleTap(x, y) {
-        // ניסיון לזהות אובייקט במיקום הטאפ
-        const mouse = new THREE.Vector2();
-        const rect = this.app.renderer.domElement.getBoundingClientRect();
-        
-        mouse.x = (x / rect.width) * 2 - 1;
-        mouse.y = -(y / rect.height) * 2 + 1;
-        
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, this.app.camera);
-        
-        // בדיקה אם פגענו בכוכב לכת
-        const selectableObjects = [];
-        if (this.app.sun) selectableObjects.push(this.app.sun);
-        this.app.planets.forEach(planet => selectableObjects.push(planet));
-        
-        const intersects = raycaster.intersectObjects(selectableObjects, true);
-        
-        if (intersects.length > 0) {
-            // זום על האובייקט שנבחר
-            this.zoomToObject(intersects[0].object);
-        } else {
-            // איפוס תצוגה
-            this.resetView();
-        }
-    }
-
-    // זום על אובייקט
-    zoomToObject(object) {
-        if (this.app && this.app.controls) {
-            const targetPosition = object.position.clone();
-            const distance = object.userData.data ? 
-                object.userData.data.scaledRadius * 6 : 100;
-            
-            const newCameraPosition = targetPosition.clone().add(
-                new THREE.Vector3(distance, distance * 0.5, distance)
-            );
-            
-            // אנימציה חלקה
-            this.animateCamera(newCameraPosition, targetPosition);
-        }
-    }
-
-    // אנימציית מצלמה חלקה
-    animateCamera(targetPosition, lookAtPosition) {
-        if (!this.app || !this.app.camera || !this.app.controls) return;
-        
-        const startPosition = this.app.camera.position.clone();
-        const startLookAt = this.app.controls.target.clone();
-        const duration = 1500;
-        const startTime = performance.now();
-        
-        const animate = (currentTime) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const easeProgress = 1 - Math.pow(1 - progress, 3);
-            
-            this.app.camera.position.lerpVectors(startPosition, targetPosition, easeProgress);
-            this.app.controls.target.lerpVectors(startLookAt, lookAtPosition, easeProgress);
-            this.app.controls.update();
-            
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-        
-        requestAnimationFrame(animate);
-    }
-
-    // טיפול בלחיצות ארוכות
-    setupLongPressHandler(canvas) {
-        canvas.addEventListener('touchstart', (e) => {
-            this.touchState.startX = e.touches[0].clientX;
-            this.touchState.startY = e.touches[0].clientY;
-            this.touchState.isPress = true;
-            
-            this.touchState.pressTimer = setTimeout(() => {
-                if (this.touchState.isPress) {
-                    // לחיצה ארוכה - פתיחת תפריט מידע או הקשרים
-                    this.handleLongPress(this.touchState.startX, this.touchState.startY);
-                    
-                    // רטט קצר אם זמין
-                    if (navigator.vibrate) {
-                        navigator.vibrate(50);
-                    }
-                }
-            }, this.touchSettings.longPressThreshold);
-        });
-        
-        canvas.addEventListener('touchmove', (e) => {
-            if (this.touchState.isPress) {
-                const moveX = e.touches[0].clientX - this.touchState.startX;
-                const moveY = e.touches[0].clientY - this.touchState.startY;
-                const distance = Math.sqrt(moveX * moveX + moveY * moveY);
-                
-                // אם זז יותר מדי, זה לא לחיצה ארוכה
-                if (distance > this.touchSettings.swipeThreshold) {
-                    this.touchState.isPress = false;
-                    clearTimeout(this.touchState.pressTimer);
-                }
-            }
-        });
-        
-        canvas.addEventListener('touchend', () => {
-            this.touchState.isPress = false;
-            clearTimeout(this.touchState.pressTimer);
-        });
-    }
-
-    // טיפול בלחיצה ארוכה
-    handleLongPress(x, y) {
-        // פתיחת תפריט מידע או הצגת אפשרויות נוספות
-        this.toggleInfoPanel();
-    }
-
-    // טיפול בswipe gestures
-    setupSwipeHandler(canvas) {
-        let startX, startY, startTime;
-        
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                startTime = Date.now();
-            }
-        });
-        
-        canvas.addEventListener('touchend', (e) => {
-            if (e.changedTouches.length === 1) {
-                const endX = e.changedTouches[0].clientX;
-                const endY = e.changedTouches[0].clientY;
-                const endTime = Date.now();
-                
-                const deltaX = endX - startX;
-                const deltaY = endY - startY;
-                const deltaTime = endTime - startTime;
-                
-                // בדיקה אם זה swipe מהיר
-                if (deltaTime < 300 && Math.abs(deltaX) > this.touchSettings.swipeThreshold) {
-                    if (deltaX > 0) {
-                        this.handleSwipeRight();
-                    } else {
-                        this.handleSwipeLeft();
-                    }
-                }
-            }
-        });
-    }
-
-    // טיפול בswipe ימינה
-    handleSwipeRight() {
-        // פתיחת תפריט נייד
-        if (this.isMobile && !this.state.menuOpen) {
-            this.openMobileMenu();
-        }
-    }
-
-    // טיפול בswipe שמאלה  
-    handleSwipeLeft() {
-        // סגירת תפריט נייד
-        if (this.isMobile && this.state.menuOpen) {
-            this.closeMobileMenu();
-        }
-    }
-
-    // טיפול בpinch-to-zoom משופר
-    setupPinchZoomHandler(canvas) {
-        canvas.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 2) {
-                const dx = e.touches[0].clientX - e.touches[1].clientX;
-                const dy = e.touches[0].clientY - e.touches[1].clientY;
-                this.touchState.startDistance = Math.sqrt(dx * dx + dy * dy);
-            }
-        });
-        
-        canvas.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 2 && this.touchState.startDistance > 0) {
-                const dx = e.touches[0].clientX - e.touches[1].clientX;
-                const dy = e.touches[0].clientY - e.touches[1].clientY;
-                const currentDistance = Math.sqrt(dx * dx + dy * dy);
-                
-                const scale = currentDistance / this.touchState.startDistance;
-                
-                // אפשר זום של Three.js אבל גם של הדפדפן
-                if (this.app && this.app.controls && this.app.controls.enabled) {
-                    // זום של Three.js
-                    if (scale !== 1) {
-                        const camera = this.app.camera;
-                        const zoomScale = scale > 1 ? 0.95 : 1.05;
-                        
-                        camera.position.multiplyScalar(zoomScale);
-                        
-                        // הגבלות זום
-                        const distance = camera.position.length();
-                        if (distance < 50) {
-                            camera.position.normalize().multiplyScalar(50);
-                        } else if (distance > 3000) {
-                            camera.position.normalize().multiplyScalar(3000);
-                        }
-                    }
-                }
-                
-                this.touchState.startDistance = currentDistance;
-            }
-        }, { passive: true }); // passive כדי לא לחסום זום דפדפן
-    }
-
-    // הגדרת כפתורי תצוגה
-    setupViewButtons() {
-        // מסלולים
-        if (this.controls.viewOrbits) {
-            this.addEventListenerSafe(this.controls.viewOrbits, 'click', () => {
-                this.toggleOrbits();
-            });
-        }
-        
-        // תוויות
-        if (this.controls.viewLabels) {
-            this.addEventListenerSafe(this.controls.viewLabels, 'click', () => {
-                this.toggleLabels();
-            });
-        }
-        
-        // מצב ריאליסטי
-        if (this.controls.viewRealistic) {
-            this.addEventListenerSafe(this.controls.viewRealistic, 'click', () => {
-                this.toggleRealisticMode();
-            });
-        }
-        
-        // אסטרואידים
-        if (this.controls.viewAsteroids) {
-            this.addEventListenerSafe(this.controls.viewAsteroids, 'click', () => {
-                this.toggleAsteroids();
-            });
-        }
-    }
-
-    // הגדרת קיצורי מקלדת
-    setupKeyboardShortcuts() {
-        document.addEventListener('keydown', (event) => {
-            // התעלמות אם המיקוד על שדה קלט
-            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-                return;
-            }
-            
-            switch (event.code) {
-                case 'Space':
-                    event.preventDefault();
-                    this.togglePlayPause();
-                    break;
-                case 'KeyR':
-                    event.preventDefault();
-                    this.resetView();
-                    break;
-                case 'KeyM':
-                    event.preventDefault();
-                    this.toggleMobileMenu();
-                    break;
-                case 'KeyI':
-                    event.preventDefault();
-                    this.toggleInfoPanel();
-                    break;
-                case 'Escape':
-                    event.preventDefault();
-                    this.closeMobileMenu();
-                    break;
-            }
-        });
-    }
-
-    // הגדרת אירועי אפליקציה
-    setupAppEventListeners() {
-        // סנכרון כפתורי play/pause
-        this.setupPlayPauseSync();
-        
-        // בקרות מהירות למובייל
-        this.setupQuickControls();
-    }
-
-    // סנכרון כפתורי play/pause
-    setupPlayPauseSync() {
-        // סנכרון בין הכפתור הראשי והמהיר
+        // בקרות מהירות
         if (this.controls.quickPlayPause) {
             this.addEventListenerSafe(this.controls.quickPlayPause, 'click', () => {
                 this.togglePlayPause();
             });
         }
         
-        // צפייה בשינויים בכפתור הראשי
-        if (this.controls.playPause) {
-            const observer = new MutationObserver(() => {
-                this.syncPlayPauseButtons();
-            });
-            
-            observer.observe(this.controls.playPause, {
-                childList: true,
-                subtree: true,
-                characterData: true
-            });
-        }
-    }
-
-    // הגדרת בקרות מהירות
-    setupQuickControls() {
-        // איפוס מהיר
         if (this.controls.quickReset) {
             this.addEventListenerSafe(this.controls.quickReset, 'click', () => {
                 this.resetView();
@@ -648,6 +253,22 @@ class UIControls {
                 this.toggleInfoPanel();
             });
         }
+        
+        // אירועי חלון
+        this.setupWindowEventListeners();
+    }
+
+    // הוספת מאזין אירועים בטוח
+    addEventListenerSafe(element, event, handler) {
+        if (!element) return;
+        
+        element.addEventListener(event, handler);
+        
+        // שמירה לניקוי עתידי
+        if (!this.eventListeners.has(element)) {
+            this.eventListeners.set(element, []);
+        }
+        this.eventListeners.get(element).push({ event, handler });
     }
 
     // הגדרת אירועי חלון
@@ -674,6 +295,155 @@ class UIControls {
                 this.selectPlanet(planetName);
             });
         });
+    }
+
+    // הגדרת תפריט נייד
+    setupMobileMenu() {
+        if (!this.isMobile) return;
+        
+        // הצגת כפתור תפריט נייד
+        if (this.controls.mobileToggle) {
+            this.controls.mobileToggle.style.display = 'block';
+        }
+        
+        // התאמת פאנל הבקרות למובייל
+        if (this.controls.controlsPanel) {
+            this.controls.controlsPanel.classList.add('mobile-mode');
+        }
+    }
+
+    // הגדרת בקרות מגע משופרות
+    setupAdvancedTouchControls() {
+        if (!this.isMobile) return;
+        
+        const canvas = this.app?.renderer?.domElement;
+        if (!canvas) return;
+        
+        // מניעת התנהגויות ברירת מחדל
+        canvas.addEventListener('touchstart', (e) => {
+            this.handleTouchStart(e);
+        }, { passive: false });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            this.handleTouchMove(e);
+        }, { passive: false });
+        
+        canvas.addEventListener('touchend', (e) => {
+            this.handleTouchEnd(e);
+        });
+        
+        console.log('Advanced touch controls setup complete');
+    }
+
+    // טיפול בתחילת מגע
+    handleTouchStart(event) {
+        const touch = event.touches[0];
+        
+        this.touchState.startX = touch.clientX;
+        this.touchState.startY = touch.clientY;
+        this.touchState.isPress = true;
+        
+        // זיהוי לחיצה ארוכה
+        this.touchState.pressTimer = setTimeout(() => {
+            if (this.touchState.isPress) {
+                this.handleLongPress(touch);
+            }
+        }, this.touchSettings.longPressThreshold);
+        
+        // זיהוי טאפ כפול
+        const currentTime = Date.now();
+        const timeSinceLastTap = currentTime - this.touchState.lastTap;
+        
+        if (timeSinceLastTap < this.touchSettings.doubleTapThreshold) {
+            this.touchState.tapCount++;
+            if (this.touchState.tapCount === 2) {
+                this.handleDoubleTap(touch);
+                this.touchState.tapCount = 0;
+            }
+        } else {
+            this.touchState.tapCount = 1;
+        }
+        
+        this.touchState.lastTap = currentTime;
+    }
+
+    // טיפול בתנועת מגע
+    handleTouchMove(event) {
+        if (event.touches.length === 1) {
+            // מגע יחיד - סיבוב
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - this.touchState.startX;
+            const deltaY = touch.clientY - this.touchState.startY;
+            
+            // בדיקה אם זה swipe
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (distance > this.touchSettings.swipeThreshold) {
+                this.touchState.isPress = false; // לא לחיצה רגילה
+                
+                // מניעת scroll רק עבור swipe
+                event.preventDefault();
+                
+                this.touchState.startX = touch.clientX;
+                this.touchState.startY = touch.clientY;
+            }
+        } else if (event.touches.length === 2) {
+            // מגע כפול - זום
+            event.preventDefault(); // מונע זום של הדפדפן
+            
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+            
+            const currentDistance = Math.sqrt(
+                Math.pow(touch1.clientX - touch2.clientX, 2) +
+                Math.pow(touch1.clientY - touch2.clientY, 2)
+            );
+            
+            if (this.touchState.startDistance) {
+                const zoomDelta = (currentDistance - this.touchState.startDistance) * 0.01;
+                // כאן אפשר להוסיף זום למצלמה
+            }
+            
+            this.touchState.startDistance = currentDistance;
+            this.touchState.isPress = false;
+        }
+    }
+
+    // טיפול בסיום מגע
+    handleTouchEnd(event) {
+        // ניקוי timer של לחיצה ארוכה
+        if (this.touchState.pressTimer) {
+            clearTimeout(this.touchState.pressTimer);
+            this.touchState.pressTimer = null;
+        }
+        
+        // בדיקה אם זה היה טאפ קצר
+        if (this.touchState.isPress && event.touches.length === 0) {
+            // זה היה טאפ - בדוק אם יש צורך לטפל בלחיצה
+            this.handleTap(event.changedTouches[0]);
+        }
+        
+        this.touchState.isPress = false;
+        this.touchState.startDistance = 0;
+    }
+
+    // טיפול בטאפ רגיל
+    handleTap(touch) {
+        // כאן אפשר להוסיף לוגיקה לבחירת כוכבי לכת על ידי מגע
+        console.log('Tap detected at:', touch.clientX, touch.clientY);
+    }
+
+    // טיפול בטאפ כפול
+    handleDoubleTap(touch) {
+        console.log('Double tap detected - resetting view');
+        if (this.app && typeof this.app.resetView === 'function') {
+            this.app.resetView();
+        }
+    }
+
+    // טיפול בלחיצה ארוכה
+    handleLongPress(touch) {
+        console.log('Long press detected - showing context menu');
+        // כאן אפשר להוסיף תפריט הקשר או פעולות מיוחדות
     }
 
     // פונקציות פעולה
@@ -874,8 +644,8 @@ class UIControls {
     // ניקוי resources
     destroy() {
         // ניקוי מאזיני אירועים
-        this.eventListeners.forEach((listeners, key) => {
-            listeners.forEach(({ element, event, handler }) => {
+        this.eventListeners.forEach((listeners, element) => {
+            listeners.forEach(({ event, handler }) => {
                 element.removeEventListener(event, handler);
             });
         });
@@ -890,11 +660,16 @@ class UIControls {
         // החזרת scroll
         document.body.style.overflow = '';
         
-        console.log('UI Controls destroyed');
+        console.log('OrbitControlsHandler destroyed');
     }
 }
 
 // ייצוא המחלקה
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = UIControls;
+    module.exports = OrbitControlsHandler;
+}
+
+// הפוך את המחלקה זמינה גלובלית
+if (typeof window !== 'undefined') {
+    window.OrbitControlsHandler = OrbitControlsHandler;
 }
