@@ -1,247 +1,281 @@
-// מערכת השמש - אפליקציה משופרת עם פתרונות לכל הבעיות וחגורת אסטרואידים
+// מחלקת האפליקציה המרכזית - מתוקנת עם לחיצה על כוכבי לכת
 class ImprovedSolarSystemApp {
     constructor() {
-        this.isInitialized = false;
-        this.isLoading = true;
-        
-        // רכיבי האפליקציה הראשיים
         this.scene = null;
         this.camera = null;
         this.renderer = null;
         this.controls = null;
         this.ui = null;
-        this.infoPanel = null;
         
-        // אובייקטים תלת ממדיים
+        // אובייקטים במערכת השמש
         this.sun = null;
         this.planets = new Map();
         this.asteroidBelt = null;
+        this.stars = null;
+        
+        // מיקומים והצגה
         this.orbits = new Map();
         this.labels = new Map();
         
         // מצב האפליקציה
         this.state = {
+            isLoading: true,
             isPaused: false,
             timeScale: 1,
-            selectedPlanet: null,
-            currentView: 'solar-system',
             showOrbits: true,
             showLabels: true,
             showAsteroids: true,
-            realisticMode: false
+            realisticMode: false,
+            selectedPlanet: null,
+            cameraMode: 'free'
         };
         
-        // מונה ביצועים
+        // זמן ואנימציה
+        this.time = {
+            current: 0,
+            delta: 0,
+            lastFrame: performance.now()
+        };
+        
+        // ביצועים
         this.performance = {
-            lastTime: 0,
-            frameCount: 0,
             fps: 0,
+            frameCount: 0,
+            lastTime: 0,
             lastFpsUpdate: 0
         };
         
-        // הגדרות טעינה
-        this.loadingProgress = {
-            total: 100,
-            loaded: 0,
-            current: 'מאתחל...'
-        };
+        // **הוספה: Raycaster לזיהוי לחיצות**
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
         
-        // אירועים
-        this.eventListeners = new Map();
+        // אתחול התחלתי
+        this.isInitialized = false;
     }
 
     // אתחול האפליקציה
     async init() {
         try {
-            console.log('🚀 Starting Improved Solar System PWA...');
+            this.updateLoadingProgress('מתחיל אתחול...', 0);
             
-            // אתחול מערכות בסיס
-            await this.initializeBaseSystems();
+            // אתחול Three.js
+            await this.initThreeJS();
             
-            // יצירת סצנה תלת ממדית
-            await this.create3DScene();
+            // יצירת הסצנה
+            await this.createScene();
             
-            // יצירת אובייקטים
-            await this.createSolarSystemObjects();
-            
-            // הגדרת ממשק משתמש
+            // הגדרת ממשק המשתמש
             await this.setupUI();
             
-            // התחלת לולאת רנדור
+            // **הוספה: הגדרת אירועי לחיצה**
+            this.setupClickEvents();
+            
+            // התחלת הלולאה
             this.startRenderLoop();
             
-            // סיום טעינה
+            // סיום
             this.finishLoading();
             
             this.isInitialized = true;
-            console.log('✅ Improved Solar System PWA initialized successfully');
+            console.log('✅ ImprovedSolarSystemApp initialized successfully');
             
         } catch (error) {
-            console.error('❌ Failed to initialize Solar System PWA:', error);
-            this.showError('שגיאה באתחול האפליקציה: ' + error.message);
+            console.error('❌ Failed to initialize solar system:', error);
+            this.showError(error.message);
         }
     }
 
-    // אתחול מערכות בסיס
-    async initializeBaseSystems() {
-        this.updateLoadingProgress('אתחול מערכות בסיס...', 5);
+    // **הוספה: הגדרת אירועי לחיצה על כוכבי לכת**
+    setupClickEvents() {
+        const canvas = this.renderer.domElement;
         
-        // בדיקת תמיכה בWebGL
-        if (!this.checkWebGLSupport()) {
-            throw new Error('הדפדפן שלך אינו תומך בWebGL');
-        }
+        // לחיצה עם עכבר
+        canvas.addEventListener('click', (event) => {
+            this.handleClick(event);
+        });
         
-        this.updateLoadingProgress('מערכות בסיס מוכנות', 15);
-    }
-
-    // בדיקת תמיכה בWebGL
-    checkWebGLSupport() {
-        try {
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            return context !== null;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    // יצירת סצנה תלת ממדית
-    async create3DScene() {
-        this.updateLoadingProgress('יוצר סצנה תלת-ממדית...', 25);
-        
-        try {
-            // יצירת סצנה
-            this.scene = new THREE.Scene();
-            this.scene.background = new THREE.Color(0x000000);
-            
-            // יצירת מצלמה עם זווית רחבה יותר
-            this.camera = new THREE.PerspectiveCamera(
-                60, // זווית רחבה יותר לראות יותר
-                window.innerWidth / window.innerHeight, 
-                0.1, 
-                50000 // מרחק רחוק יותר לראות את כל המערכת
-            );
-            this.camera.position.set(400, 200, 400); // מיקום התחלתי רחוק יותר
-            
-            // קבלת canvas שכבר קיים ב-HTML
-            const canvas = document.getElementById('scene');
-            if (!canvas) {
-                throw new Error('Canvas element with id "scene" not found in HTML');
-            }
-            
-            // יצירת renderer עם הcanvas הקיים
-            this.renderer = new THREE.WebGLRenderer({ 
-                canvas: canvas,
-                antialias: true,
-                alpha: false,
-                powerPreference: "high-performance"
-            });
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
-            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            this.renderer.shadowMap.enabled = true;
-            this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            
-            // יצירת בקרות מצלמה
-            await this.createCameraControls();
-            
-            // יצירת תאורה
-            await this.createLighting();
-            
-            // יצירת שדה כוכבים
-            await this.createStarfield();
-            
-            // הוספת מאזיני אירועים
-            this.setupEventListeners();
-            
-            this.updateLoadingProgress('סצנה תלת-ממדית מוכנה', 40);
-            
-        } catch (error) {
-            console.error('Failed to create 3D scene:', error);
-            throw error;
-        }
-    }
-
-    // יצירת בקרות מצלמה משופרות
-    async createCameraControls() {
-        try {
-            // נסה קודם את THREE.OrbitControls הרשמי
-            if (typeof THREE.OrbitControls === 'function') {
-                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-                console.log('✅ Using THREE.OrbitControls');
-            } else {
-                // אם לא זמין, השתמש ב-fallback
-                this.controls = window.createFallbackOrbitControls(this.camera, this.renderer.domElement);
-                console.log('⚠️ Using fallback controls');
-            }
-            
-            // הגדרות משופרות לניווט
-            this.controls.enableDamping = true;
-            this.controls.dampingFactor = 0.05;
-            this.controls.enableZoom = true;
-            this.controls.enableRotate = true;
-            this.controls.enablePan = true;
-            
-            // הגבלות זום
-            if (this.controls.minDistance !== undefined) {
-                this.controls.minDistance = 10;
-                this.controls.maxDistance = 2000;
-            }
-            
-            // מקלדת - מאזינים מותאמים למובייל
-            this.setupKeyboardControls();
-            
-        } catch (error) {
-            console.warn('Failed to setup camera controls:', error);
-            // המשך בלי בקרות - לא כשל קריטי
-        }
-    }
-
-    // הגדרת בקרות מקלדת
-    setupKeyboardControls() {
-        document.addEventListener('keydown', (event) => {
-            switch(event.code) {
-                case 'Space':
-                    event.preventDefault();
-                    this.togglePause();
-                    break;
-                case 'KeyR':
-                    event.preventDefault();
-                    this.resetView();
-                    break;
+        // מגע על מסכי מגע
+        canvas.addEventListener('touchend', (event) => {
+            // רק אם זה מגע יחיד וקצר
+            if (event.changedTouches.length === 1) {
+                const touch = event.changedTouches[0];
+                this.handleClick(touch);
             }
         });
     }
 
-    // יצירת תאורה
-    async createLighting() {
-        this.updateLoadingProgress('יוצר תאורה...', 30);
+    // **הוספה: טיפול בלחיצה**
+    handleClick(event) {
+        // קבלת מיקום הלחיצה
+        const rect = this.renderer.domElement.getBoundingClientRect();
         
-        // אור שמש מרכזי
-        const sunLight = new THREE.PointLight(0xffffff, 1, 10000);
-        sunLight.position.set(0, 0, 0);
-        sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
-        this.scene.add(sunLight);
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
         
-        // אור סביבתי חלש
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.1);
-        this.scene.add(ambientLight);
+        // הגדרת raycaster
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        
+        // איסוף אובייקטים לבדיקה
+        const selectableObjects = [];
+        
+        // הוספת השמש
+        if (this.sun && this.sun.mesh) {
+            selectableObjects.push(this.sun.mesh);
+        }
+        
+        // הוספת כוכבי הלכת
+        this.planets.forEach((planet) => {
+            if (planet && planet.mesh) {
+                selectableObjects.push(planet.mesh);
+            } else if (planet) {
+                // כוכב לכת פשוט
+                selectableObjects.push(planet);
+            }
+        });
+        
+        // בדיקת חיתוכים
+        const intersects = this.raycaster.intersectObjects(selectableObjects, true);
+        
+        if (intersects.length > 0) {
+            // מציאת כוכב הלכת שנלחץ
+            const clickedObject = intersects[0].object;
+            const planetName = this.findPlanetName(clickedObject);
+            
+            if (planetName) {
+                this.selectPlanet(planetName);
+            }
+        }
+    }
+
+    // **הוספה: מציאת שם כוכב הלכת מהאובייקט**
+    findPlanetName(object) {
+        // בדיקה לפי שם האובייקט
+        if (object.name) {
+            const name = object.name.toLowerCase();
+            if (name.includes('sun') || name === 'sun') return 'sun';
+            if (name.includes('mercury') || name === 'mercury') return 'mercury';
+            if (name.includes('venus') || name === 'venus') return 'venus';
+            if (name.includes('earth') || name === 'earth') return 'earth';
+            if (name.includes('mars') || name === 'mars') return 'mars';
+            if (name.includes('jupiter') || name === 'jupiter') return 'jupiter';
+            if (name.includes('saturn') || name === 'saturn') return 'saturn';
+            if (name.includes('uranus') || name === 'uranus') return 'uranus';
+            if (name.includes('neptune') || name === 'neptune') return 'neptune';
+        }
+        
+        // בדיקה לפי parent
+        if (object.parent && object.parent.name) {
+            return this.findPlanetName(object.parent);
+        }
+        
+        // בדיקה לפי userData
+        if (object.userData && object.userData.planetName) {
+            return object.userData.planetName;
+        }
+        
+        return null;
+    }
+
+    // **הוספה: בחירת כוכב לכת ופתיחת מידע**
+    selectPlanet(planetName) {
+        this.state.selectedPlanet = planetName;
+        
+        // התמקדות על הכוכב
+        this.focusOnPlanet(planetName);
+        
+        // פתיחת פאנל המידע
+        this.showPlanetInfo(planetName);
+        
+        console.log(`Selected planet: ${planetName}`);
+    }
+
+    // **הוספה: הצגת מידע על כוכב לכת**
+    showPlanetInfo(planetName) {
+        // אם יש InfoPanel, השתמש בו
+        if (typeof InfoPanel !== 'undefined' && window.infoPanel) {
+            window.infoPanel.showPlanetInfo(planetName);
+            return;
+        }
+        
+        // אחרת, הצג באלרט פשוט
+        const planetData = PLANETS_DATA[planetName];
+        if (planetData) {
+            alert(`${planetData.name}\n\n${planetData.description}\n\nעובדות מעניינות:\n${planetData.facts.slice(0, 3).join('\n')}`);
+        }
+    }
+
+    // אתחול Three.js
+    async initThreeJS() {
+        this.updateLoadingProgress('מאתחל מנוע 3D...', 10);
+        
+        // יצירת סצנה
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x000000);
+        
+        // יצירת מצלמה
+        this.camera = new THREE.PerspectiveCamera(
+            60, // זווית ראיה
+            window.innerWidth / window.innerHeight, // יחס רוחב-גובה
+            0.1, // near plane
+            10000 // far plane
+        );
+        
+        // מיקום מצלמה ראשוני
+        this.camera.position.set(300, 150, 300);
+        
+        // יצירת renderer
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('scene'),
+            antialias: true,
+            alpha: false,
+            powerPreference: "high-performance"
+        });
+        
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.2;
+        
+        // בקרות מצלמה
+        if (typeof THREE.OrbitControls !== 'undefined') {
+            this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+            this.controls.enableDamping = true;
+            this.controls.dampingFactor = 0.05;
+            this.controls.enableZoom = true;
+            this.controls.enablePan = true;
+            this.controls.maxDistance = 2000;
+            this.controls.minDistance = 10;
+        }
+    }
+
+    // יצירת הסצנה
+    async createScene() {
+        this.updateLoadingProgress('יוצר רקע כוכבים...', 25);
+        
+        // יצירת רקע כוכבים
+        this.createStarField();
+        
+        // הוספת תאורה
+        this.setupLighting();
+        
+        // יצירת אובייקטי מערכת השמש
+        await this.createSolarSystemObjects();
     }
 
     // יצירת שדה כוכבים
-    async createStarfield() {
-        this.updateLoadingProgress('יוצר שדה כוכבים...', 35);
-        
+    createStarField() {
+        const starCount = 15000;
         const starGeometry = new THREE.BufferGeometry();
-        const starCount = 5000;
         const positions = new Float32Array(starCount * 3);
         
-        for(let i = 0; i < starCount; i++) {
-            const radius = 10000;
+        for (let i = 0; i < starCount; i++) {
             const i3 = i * 3;
             
-            // מיקום אקראי על כדור
+            // התפלגות כדורית
+            const radius = 3000 + Math.random() * 2000;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(1 - 2 * Math.random());
             
@@ -261,6 +295,23 @@ class ImprovedSolarSystemApp {
         
         const stars = new THREE.Points(starGeometry, starMaterial);
         this.scene.add(stars);
+    }
+
+    // הגדרת תאורה
+    setupLighting() {
+        // אור שמש מרכזי
+        const sunLight = new THREE.PointLight(0xffffff, 2, 2000);
+        sunLight.position.set(0, 0, 0);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 1;
+        sunLight.shadow.camera.far = 1000;
+        this.scene.add(sunLight);
+        
+        // אור סביבה עדין
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.1);
+        this.scene.add(ambientLight);
     }
 
     // יצירת אובייקטים במערכת השמש
@@ -289,6 +340,16 @@ class ImprovedSolarSystemApp {
                     await planet.init();
                     
                     const planetMesh = planet.createMesh();
+                    // **תיקון: וידוא שיש שם לאובייקט לזיהוי**
+                    if (planetMesh.name !== planetName) {
+                        planetMesh.name = planetName;
+                    }
+                    if (planetMesh.userData) {
+                        planetMesh.userData.planetName = planetName;
+                    } else {
+                        planetMesh.userData = { planetName: planetName };
+                    }
+                    
                     this.scene.add(planetMesh);
                     this.planets.set(planetName, planet); // שמירת האובייקט המלא
                     
@@ -307,18 +368,18 @@ class ImprovedSolarSystemApp {
         
         this.updateLoadingProgress('יוצר חגורת אסטרואידים...', 75);
         
-        // יצירת חגורת האסטרואידים - תמיד ליצור
+        // יצירת חגורת האסטרואידים - עם מרחקים מתוקנים
         await this.createAsteroidBelt();
     }
 
-    // יצירת חגורת אסטרואידים פשוטה ויעילה
+    // יצירת חגורת אסטרואידים פשוטה ויעילה - מתוקנת
     async createAsteroidBelt() {
         try {
             console.log('Creating asteroid belt...');
             
-            // פרמטרי חגורת האסטרואידים
-            const innerRadius = 180; // בין מאדים לצדק
-            const outerRadius = 280;
+            // פרמטרי חגורת האסטרואידים - תיקון מיקום
+            const innerRadius = 120; // תיקון: אחרי מאדים
+            const outerRadius = 180;  // תיקון: לפני צדק
             const asteroidCount = 3000; // מספר אסטרואידים
             
             // יצירת גיאומטריה לאסטרואידים
@@ -334,7 +395,7 @@ class ImprovedSolarSystemApp {
                 const radius = innerRadius + Math.random() * (outerRadius - innerRadius);
                 
                 // הוספת רעש לגובה (חגורה לא שטוחה לגמרי)
-                const height = (Math.random() - 0.5) * 20;
+                const height = (Math.random() - 0.5) * 15; // הקטנה מ-20 ל-15
                 
                 positions[i3] = Math.cos(angle) * radius;
                 positions[i3 + 1] = height;
@@ -390,7 +451,7 @@ class ImprovedSolarSystemApp {
             
             this.scene.add(this.asteroidBelt);
             
-            // יצירת כמה אסטרואידים גדולים (קרס, וסטה, פלאס)
+            // יצירת כמה אסטרואידים גדולים (קרס, וסטה, פלאס) - מיקום מתוקן
             await this.createMajorAsteroids();
             
             console.log('✅ Asteroid belt created successfully');
@@ -400,13 +461,13 @@ class ImprovedSolarSystemApp {
         }
     }
 
-    // יצירת אסטרואידים גדולים ומפורסמים
+    // יצירת אסטרואידים גדולים ומפורסמים - מיקום מתוקן
     async createMajorAsteroids() {
         const majorAsteroids = [
-            { name: 'Ceres', radius: 3, distance: 220, angle: 0, color: 0x8b7765 },
-            { name: 'Vesta', radius: 2, distance: 230, angle: Math.PI / 3, color: 0xa0522d },
-            { name: 'Pallas', radius: 1.8, distance: 240, angle: Math.PI * 2/3, color: 0x696969 },
-            { name: 'Hygiea', radius: 1.5, distance: 250, angle: Math.PI, color: 0x2f4f4f }
+            { name: 'Ceres', radius: 3, distance: 135, angle: 0, color: 0x8b7765 },           // במרכז החגורה
+            { name: 'Vesta', radius: 2, distance: 145, angle: Math.PI / 3, color: 0xa0522d },  // מעט רחוק יותר
+            { name: 'Pallas', radius: 1.8, distance: 155, angle: Math.PI * 2/3, color: 0x696969 }, // עוד יותר רחוק
+            { name: 'Hygiea', radius: 1.5, distance: 165, angle: Math.PI, color: 0x2f4f4f }    // בחלק החיצוני
         ];
         
         majorAsteroids.forEach(asteroid => {
@@ -422,7 +483,7 @@ class ImprovedSolarSystemApp {
             asteroidMesh.castShadow = true;
             asteroidMesh.receiveShadow = true;
             
-            // מיקום במסלול
+            // מיקום במסלול - מתוקן
             asteroidMesh.position.set(
                 Math.cos(asteroid.angle) * asteroid.distance,
                 (Math.random() - 0.5) * 10, // גובה אקראי
@@ -436,12 +497,13 @@ class ImprovedSolarSystemApp {
                 Math.random() * Math.PI * 2
             );
             
-            // הוספת נתוני מסלול
+            // פרמטרי מסלול
             asteroidMesh.userData = {
-                angle: asteroid.angle,
+                orbitalSpeed: Math.sqrt(1 / asteroid.distance) * 0.0001,
+                rotationSpeed: (Math.random() - 0.5) * 0.02,
                 distance: asteroid.distance,
-                rotationSpeed: (Math.random() - 0.5) * 0.02, // סיבוב אקראי
-                orbitalSpeed: 0.0005 + Math.random() * 0.0003 // מהירות מסלול
+                angle: asteroid.angle,
+                planetName: asteroid.name // לזיהוי לחיצה
             };
             
             this.scene.add(asteroidMesh);
@@ -450,132 +512,161 @@ class ImprovedSolarSystemApp {
 
     // יצירת גיאומטריה לא סדירה לאסטרואיד
     createIrregularAsteroidGeometry(baseRadius) {
-        const geometry = new THREE.SphereGeometry(baseRadius, 8, 6);
+        const geometry = new THREE.SphereGeometry(baseRadius, 12, 8);
         const positions = geometry.attributes.position.array;
         
-        // עיוות הנקודות ליצירת צורה לא סדירה
+        // עיוות הקודקודים ליצירת צורה לא סדירה
         for (let i = 0; i < positions.length; i += 3) {
-            const vertex = new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]);
+            const x = positions[i];
+            const y = positions[i + 1]; 
+            const z = positions[i + 2];
             
-            // הוספת רעש לכל vertex
-            const noise = 0.3 + Math.random() * 0.4; // 30%-70% מהרדיוס המקורי
-            vertex.multiplyScalar(noise);
+            // רעש פשוט לעיוות
+            const noise = Math.sin(x * 2) * Math.sin(y * 2) * Math.sin(z * 2) * 0.3;
+            const distortion = 1 + noise;
             
-            positions[i] = vertex.x;
-            positions[i + 1] = vertex.y;
-            positions[i + 2] = vertex.z;
+            positions[i] *= distortion;
+            positions[i + 1] *= distortion;
+            positions[i + 2] *= distortion;
         }
         
         geometry.attributes.position.needsUpdate = true;
-        geometry.computeVertexNormals(); // חישוב מחדש של הנורמלים
+        geometry.computeVertexNormals();
         
         return geometry;
     }
 
-    // יצירת שמש פשוטה כפתרון חלופי
-    createSimpleSun() {
-        const geometry = new THREE.SphereGeometry(20, 32, 32);
-        const material = new THREE.MeshBasicMaterial({ 
-            color: 0xffd700,
-            emissive: 0xff8800,
-            emissiveIntensity: 0.3
-        });
-        
-        const sunMesh = new THREE.Mesh(geometry, material);
-        sunMesh.name = 'sun';
-        sunMesh.position.set(0, 0, 0);
-        
-        // אור נקודתי
-        const sunLight = new THREE.PointLight(0xffffff, 1, 5000);
-        sunLight.position.set(0, 0, 0);
-        sunMesh.add(sunLight);
-        
-        this.scene.add(sunMesh);
-        this.sun = { 
-            mesh: sunMesh, 
-            update: (deltaTime) => {
-                sunMesh.rotation.y += deltaTime * 0.001;
-            }
-        };
-    }
-
-    // יצירת כוכב לכת פשוט כפתרון חלופי
+    // יצירת כוכב לכת פשוט
     createSimplePlanet(planetName) {
-        // נתונים בסיסיים מדויקים לכוכבי לכת
-        const planetData = {
-            mercury: { radius: 2.5, distance: 58, color: 0x8c7853, period: 88 },
-            venus: { radius: 3.8, distance: 72, color: 0xffc649, period: 225 },
-            earth: { radius: 4, distance: 100, color: 0x6b93d6, period: 365 },
-            mars: { radius: 3.2, distance: 152, color: 0xcd5c5c, period: 687 },
-            jupiter: { radius: 18, distance: 520, color: 0xd2b48c, period: 4333 },
-            saturn: { radius: 15, distance: 954, color: 0xfad5a5, period: 10759 },
-            uranus: { radius: 8, distance: 1916, color: 0x4fd0e7, period: 30687 },
-            neptune: { radius: 7.8, distance: 3010, color: 0x4169e1, period: 60190 }
-        };
+        const planetData = PLANETS_DATA[planetName];
+        if (!planetData) return;
         
-        const data = planetData[planetName];
-        if (!data) return;
-        
-        const geometry = new THREE.SphereGeometry(data.radius, 24, 24);
-        const material = new THREE.MeshPhongMaterial({ color: data.color });
+        // יצירת גיאומטריה וחומר
+        const geometry = new THREE.SphereGeometry(planetData.scaledRadius, 32, 32);
+        const material = new THREE.MeshLambertMaterial({ 
+            color: planetData.color,
+            transparent: false
+        });
         
         const planetMesh = new THREE.Mesh(geometry, material);
         planetMesh.name = planetName;
         planetMesh.castShadow = true;
         planetMesh.receiveShadow = true;
         
-        // מיקום במסלול עם זוויות התחלה שונות
-        const startAngles = {
-            mercury: 0, venus: Math.PI/4, earth: Math.PI/2, mars: Math.PI*3/4,
-            jupiter: Math.PI, saturn: Math.PI*5/4, uranus: Math.PI*3/2, neptune: Math.PI*7/4
-        };
-        
-        const angle = startAngles[planetName] || Math.random() * Math.PI * 2;
+        // מיקום ראשוני
+        const initialAngle = INITIAL_POSITIONS[planetName]?.angle || 0;
         planetMesh.position.set(
-            Math.cos(angle) * data.distance,
+            Math.cos(initialAngle) * planetData.scaledDistance,
             0,
-            Math.sin(angle) * data.distance
+            Math.sin(initialAngle) * planetData.scaledDistance
         );
         
-        // הוספת נתוני מסלול לאובייקט
+        // פרמטרי מסלול
         planetMesh.userData = {
-            angle: angle,
-            distance: data.distance,
-            orbitalSpeed: (Math.PI * 2) / (data.period * 2), // מהירות ייחודית
-            rotationSpeed: 0.01 + Math.random() * 0.02, // סיבוב עצמי
-            originalData: data
+            orbitalSpeed: Math.sqrt(1 / planetData.scaledDistance) * 0.001,
+            rotationSpeed: (2 * Math.PI) / (planetData.rotationPeriod * 60), // מהירות סיבוב
+            distance: planetData.scaledDistance,
+            angle: initialAngle,
+            planetName: planetName, // **הוספה: לזיהוי לחיצה**
+            data: planetData
         };
         
         this.scene.add(planetMesh);
         this.planets.set(planetName, planetMesh);
         
         // יצירת מסלול
-        this.createOrbit(planetName, data);
+        this.createOrbit(planetName, planetData);
     }
 
-    // יצירת מסלול לכוכב לכת
+    // יצירת שמש פשוטה
+    createSimpleSun() {
+        const sunData = PLANETS_DATA.sun;
+        
+        const geometry = new THREE.SphereGeometry(sunData.scaledRadius, 32, 32);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: sunData.color,
+            emissive: sunData.emissive || sunData.color,
+            emissiveIntensity: 0.3
+        });
+        
+        const sunMesh = new THREE.Mesh(geometry, material);
+        sunMesh.name = 'sun';
+        sunMesh.userData = { planetName: 'sun', data: sunData }; // **הוספה: לזיהוי לחיצה**
+        
+        this.scene.add(sunMesh);
+        this.sun = { mesh: sunMesh };
+    }
+
+    // יצירת מסלול כוכב לכת
     createOrbit(planetName, planetData) {
-        const radius = planetData.scaledDistance || planetData.distance || 50;
-        const points = [];
+        if (!this.state.showOrbits) return;
         
-        for (let i = 0; i <= 64; i++) {
-            const angle = (i / 64) * Math.PI * 2;
-            const x = Math.cos(angle) * radius;
-            const z = Math.sin(angle) * radius;
-            points.push(new THREE.Vector3(x, 0, z));
-        }
+        const radius = planetData.scaledDistance;
+        const segments = 64;
         
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const material = new THREE.LineBasicMaterial({ 
+        const geometry = new THREE.RingGeometry(radius - 0.5, radius + 0.5, segments);
+        const material = new THREE.MeshBasicMaterial({
             color: 0x444444,
+            side: THREE.DoubleSide,
             transparent: true,
             opacity: 0.3
         });
         
-        const orbit = new THREE.Line(geometry, material);
-        orbit.name = `${planetName}_orbit`;
+        const orbit = new THREE.Mesh(geometry, material);
+        orbit.rotation.x = -Math.PI / 2; // מישור האקליפטיקה
+        orbit.name = `${planetName}Orbit`;
+        
         this.scene.add(orbit);
         this.orbits.set(planetName, orbit);
+    }
+
+    // עדכון מסלולים
+    updateOrbitsVisibility() {
+        this.orbits.forEach(orbit => {
+            orbit.visible = this.state.showOrbits;
+        });
+    }
+
+    // התמקדות על כוכב לכת
+    focusOnPlanet(planetName) {
+        const planet = this.planets.get(planetName);
+        if (!planet || !this.camera || !this.controls) return;
+        
+        // קבלת מיקום כוכב הלכת
+        let planetPosition;
+        if (planet.mesh) {
+            planetPosition = planet.mesh.position.clone();
+        } else {
+            planetPosition = planet.position.clone();
+        }
+        
+        // חישוב מרחק מתאים לצפייה
+        const planetData = PLANETS_DATA[planetName];
+        const distance = planetData ? planetData.scaledRadius * 8 : 60;
+        
+        // מיקום המצלמה ליד כוכב הלכת
+        const cameraPosition = planetPosition.clone();
+        cameraPosition.add(new THREE.Vector3(distance, distance * 0.5, distance));
+        
+        this.camera.position.copy(cameraPosition);
+        this.camera.lookAt(planetPosition);
+        
+        if (this.controls && this.controls.target) {
+            this.controls.target.copy(planetPosition);
+        }
+        
+        console.log(`Focused on ${planetName}`);
+    }
+
+    // עדכון הודעת טעינה
+    updateLoadingProgress(message, percentage) {
+        const loadingText = document.getElementById('loadingText');
+        const progressBar = document.getElementById('progressBar');
+        
+        if (loadingText) loadingText.textContent = message;
+        if (progressBar) progressBar.style.width = percentage + '%';
+        
+        console.log(`Loading: ${message} (${percentage}%)`);
     }
 
     // הגדרת ממשק משתמש
@@ -626,7 +717,7 @@ class ImprovedSolarSystemApp {
         planetButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const planetName = btn.dataset.planet;
-                this.focusOnPlanet(planetName);
+                this.selectPlanet(planetName); // **שימוש בפונקציה החדשה**
             });
         });
     }
@@ -643,15 +734,6 @@ class ImprovedSolarSystemApp {
         window.addEventListener('beforeunload', () => this.dispose());
     }
 
-    // התאמה לשינוי גודל חלון
-    onWindowResize() {
-        if (!this.camera || !this.renderer) return;
-        
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
     // טיפול באירועי מקלדת
     onKeyDown(event) {
         switch(event.code) {
@@ -664,6 +746,15 @@ class ImprovedSolarSystemApp {
                 this.resetView();
                 break;
         }
+    }
+
+    // התאמה לשינוי גודל חלון
+    onWindowResize() {
+        if (!this.camera || !this.renderer) return;
+        
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
     // התחלת לולאת רנדור
@@ -738,18 +829,16 @@ class ImprovedSolarSystemApp {
         this.scene.children.forEach(child => {
             if (child.name && ['Ceres', 'Vesta', 'Pallas', 'Hygiea'].includes(child.name)) {
                 if (child.userData) {
-                    // עדכון מסלול
-                    child.userData.angle += child.userData.orbitalSpeed * scaledDelta * 0.001;
+                    child.userData.angle += child.userData.orbitalSpeed * scaledDelta;
                     
                     const x = Math.cos(child.userData.angle) * child.userData.distance;
                     const z = Math.sin(child.userData.angle) * child.userData.distance;
                     child.position.x = x;
                     child.position.z = z;
                     
-                    // סיבוב עצמי לא סדיר
-                    child.rotation.x += child.userData.rotationSpeed * scaledDelta * 0.001;
-                    child.rotation.y += child.userData.rotationSpeed * scaledDelta * 0.0007;
-                    child.rotation.z += child.userData.rotationSpeed * scaledDelta * 0.0005;
+                    // סיבוב עצמי
+                    child.rotation.x += child.userData.rotationSpeed * scaledDelta;
+                    child.rotation.y += child.userData.rotationSpeed * scaledDelta * 0.7;
                 }
             }
         });
@@ -759,121 +848,79 @@ class ImprovedSolarSystemApp {
     updateFPS(currentTime) {
         this.performance.frameCount++;
         
-        if (currentTime - this.performance.lastFpsUpdate >= 1000) {
-            this.performance.fps = Math.round((this.performance.frameCount * 1000) / (currentTime - this.performance.lastFpsUpdate));
+        if (currentTime - this.performance.lastFpsUpdate > 1000) {
+            this.performance.fps = this.performance.frameCount;
             this.performance.frameCount = 0;
             this.performance.lastFpsUpdate = currentTime;
             
             // עדכון תצוגת FPS
-            const fpsCounter = document.getElementById('fpsCounter');
-            if (fpsCounter) {
-                fpsCounter.textContent = this.performance.fps;
-            }
-            
-            // עדכון מספר אובייקטים
-            const objectCount = document.getElementById('objectCount');
-            if (objectCount && this.scene) {
-                let count = 0;
-                this.scene.traverse(() => count++);
-                objectCount.textContent = count;
+            const fpsElement = document.getElementById('fps');
+            if (fpsElement) {
+                fpsElement.textContent = `FPS: ${this.performance.fps}`;
             }
         }
     }
 
-    // עדכון התקדמות טעינה
-    updateLoadingProgress(text, percent) {
-        this.loadingProgress.current = text;
-        this.loadingProgress.loaded = percent;
-        
-        const progressBar = document.getElementById('loadingProgress');
-        const loadingText = document.getElementById('loadingText');
-        
-        if (progressBar) progressBar.style.width = percent + '%';
-        if (loadingText) loadingText.textContent = text;
-    }
-
-    // השהיה/המשכה
+    // פונקציות בקרה
     togglePause() {
         this.state.isPaused = !this.state.isPaused;
-        
-        const playPauseBtn = document.getElementById('playPause');
-        if (playPauseBtn) {
-            playPauseBtn.textContent = this.state.isPaused ? '▶️ המשך' : '⏸️ השהה';
-        }
-        
-        const quickPause = document.getElementById('quickPause');
-        if (quickPause) {
-            quickPause.textContent = this.state.isPaused ? '▶️' : '⏸️';
-        }
-        
-        console.log(this.state.isPaused ? 'Animation paused' : 'Animation resumed');
+        console.log(this.state.isPaused ? 'Paused' : 'Resumed');
     }
 
-    // איפוס תצוגה
+    setTimeScale(scale) {
+        this.state.timeScale = Math.max(0, Math.min(10, scale));
+        console.log(`Time scale: ${this.state.timeScale}x`);
+    }
+
+    toggleOrbits() {
+        this.state.showOrbits = !this.state.showOrbits;
+        this.updateOrbitsVisibility();
+        console.log('Orbits visibility:', this.state.showOrbits);
+    }
+
+    toggleLabels() {
+        this.state.showLabels = !this.state.showLabels;
+        // TODO: עדכון תוויות
+        console.log('Labels visibility:', this.state.showLabels);
+    }
+
     resetView() {
         if (this.camera && this.controls) {
-            this.camera.position.set(400, 200, 400);
-            this.camera.lookAt(0, 0, 0);
-            
+            this.camera.position.set(300, 150, 300);
             if (this.controls.target) {
                 this.controls.target.set(0, 0, 0);
             }
-            
-            console.log('View reset to default position');
+            this.state.selectedPlanet = null;
         }
+        console.log('View reset');
     }
 
-    // התמקדות על כוכב לכת
-    focusOnPlanet(planetName) {
-        let planetObject = null;
+    // הצגת/הסתרת חגורת אסטרואידים
+    toggleAsteroidBelt(visible = null) {
+        if (visible === null) {
+            this.state.showAsteroids = !this.state.showAsteroids;
+        } else {
+            this.state.showAsteroids = visible;
+        }
         
-        // חיפוש האובייקט (מחלקה מלאה או mesh פשוט)
-        const planet = this.planets.get(planetName);
-        if (planet) {
-            if (planet.group && planet.group.position) {
-                planetObject = planet.group; // מחלקה מלאה
-            } else if (planet.position) {
-                planetObject = planet; // mesh פשוט
+        if (this.asteroidBelt) {
+            this.asteroidBelt.visible = this.state.showAsteroids;
+        }
+        
+        // עדכון אסטרואידים גדולים
+        this.scene.children.forEach(child => {
+            if (child.name && ['Ceres', 'Vesta', 'Pallas', 'Hygiea'].includes(child.name)) {
+                child.visible = this.state.showAsteroids;
             }
-        }
+        });
         
-        // אם לא נמצא, חפש בשמש
-        if (!planetObject && planetName === 'sun' && this.sun) {
-            if (this.sun.group && this.sun.group.position) {
-                planetObject = this.sun.group;
-            } else if (this.sun.mesh && this.sun.mesh.position) {
-                planetObject = this.sun.mesh;
-            }
-        }
-        
-        if (!planetObject || !this.camera) {
-            console.warn(`Planet ${planetName} not found for focus`);
-            return;
-        }
-        
-        const planetPosition = planetObject.position.clone();
-        const distance = planetName === 'sun' ? 100 : 
-                        ['jupiter', 'saturn'].includes(planetName) ? 80 :
-                        ['uranus', 'neptune'].includes(planetName) ? 60 : 30;
-        
-        // מיקום המצלמה ליד כוכב הלכת
-        const cameraPosition = planetPosition.clone();
-        cameraPosition.add(new THREE.Vector3(distance, distance * 0.5, distance));
-        
-        this.camera.position.copy(cameraPosition);
-        this.camera.lookAt(planetPosition);
-        
-        if (this.controls && this.controls.target) {
-            this.controls.target.copy(planetPosition);
-        }
-        
-        console.log(`Focused on ${planetName}`);
+        console.log('Asteroid belt visibility:', this.state.showAsteroids);
     }
 
     // סיום טעינה
     finishLoading() {
         this.updateLoadingProgress('מוכן!', 100);
-        this.isLoading = false;
+        this.state.isLoading = false;
         
         // הסתרת מסך הטעינה
         setTimeout(() => {
@@ -900,28 +947,6 @@ class ImprovedSolarSystemApp {
             <button onclick="location.reload()">🔄 טען מחדש</button>
         `;
         document.body.appendChild(errorDiv);
-    }
-
-    // הצגת/הסתרת חגורת אסטרואידים
-    toggleAsteroidBelt(visible = null) {
-        if (visible === null) {
-            this.state.showAsteroids = !this.state.showAsteroids;
-        } else {
-            this.state.showAsteroids = visible;
-        }
-        
-        if (this.asteroidBelt) {
-            this.asteroidBelt.visible = this.state.showAsteroids;
-        }
-        
-        // עדכון אסטרואידים גדולים
-        this.scene.children.forEach(child => {
-            if (child.name && ['Ceres', 'Vesta', 'Pallas', 'Hygiea'].includes(child.name)) {
-                child.visible = this.state.showAsteroids;
-            }
-        });
-        
-        console.log('Asteroid belt visibility:', this.state.showAsteroids);
     }
 
     // ניקוי משאבים
