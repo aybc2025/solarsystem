@@ -1,4 +1,4 @@
-/* בקרות ממשק המשתמש - מותאם למובייל */
+/* בקרות ממשק המשתמש - מותאם למובייל עם תיקוני תצוגה */
 
 /* כפתור תפריט נייד (Hamburger Menu) */
 .mobile-menu-toggle {
@@ -6,7 +6,7 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1002;
+    z-index: 1300; /* תיקון: הקטנה מ-1002 ל-1300 - מתחת לפאנל מידע */
     background: rgba(0, 0, 0, 0.8);
     border: 2px solid #ffd700;
     border-radius: 8px;
@@ -62,11 +62,11 @@
     border: 2px solid #ffd700;
     border-radius: 12px;
     padding: 0;
-    z-index: 1001;
+    z-index: 1200; /* תיקון: הקטנה מ-1001 ל-1200 - מתחת לפאנל מידע */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(15px);
-    overflow: hidden;
+    overflow: visible; /* תיקון: שינוי מ-hidden ל-visible */
     transition: all 0.3s ease;
 }
 
@@ -77,6 +77,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative; /* תיקון: ודוא שהכותרת לא sticky בצורה שגויה */
 }
 
 .controls-header h3 {
@@ -105,175 +106,212 @@
     transform: rotate(90deg);
 }
 
+/* תוכן הבקרות */
 .controls-content {
     padding: 20px;
     max-height: calc(100vh - 120px);
-    overflow-y: auto;
+    overflow-y: auto; /* תיקון: ודוא שיש גלילה אם נדרש */
+    overflow-x: visible; /* תיקון: לא לחתוך תוכן בציר X */
 }
 
 /* קטגוריות בקרה */
 .control-section {
     margin-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 20px;
 }
 
 .control-section:last-child {
+    border-bottom: none;
     margin-bottom: 0;
 }
 
-/* בקרות זמן */
-.time-controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.speed-control {
-    margin-bottom: 20px;
-}
-
-.speed-control label {
-    display: block;
-    color: #ffffff;
-    margin-bottom: 8px;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.speed-control input[type="range"] {
-    width: 100%;
-    height: 6px;
-    background: #333;
-    border-radius: 3px;
-    outline: none;
-    margin-bottom: 5px;
-}
-
-.speed-control input[type="range"]::-webkit-slider-thumb {
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    background: #ffd700;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.speed-control input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-}
-
-#timeScaleValue {
-    color: #ffd700;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-/* בקרות תצוגה */
-.view-controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 20px;
-}
-
-/* כפתורים */
-.btn {
-    padding: 10px 15px;
-    border: 2px solid #ffd700;
-    background: rgba(0, 0, 0, 0.7);
-    color: #ffffff;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    text-align: center;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn:hover {
-    background: rgba(255, 215, 0, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-}
-
-.btn.primary {
-    background: linear-gradient(135deg, #ffd700, #ffed4e);
-    color: #000000;
-    font-weight: bold;
-}
-
-.btn.primary:hover {
-    background: linear-gradient(135deg, #ffed4e, #fff176);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
-}
-
-.btn.toggle.active {
-    background: rgba(255, 215, 0, 0.3);
-    border-color: #ffed4e;
-    color: #ffd700;
-}
-
-/* בחירת כוכבי לכת */
-.planet-selection {
-    margin-top: 20px;
-}
-
-.planet-selection h4 {
+.control-section h4 {
     color: #ffd700;
     margin: 0 0 15px 0;
     font-size: 16px;
     font-weight: bold;
 }
 
-.planet-buttons {
+/* בקרות ראשיות */
+.main-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* תיקון: אפשר עטיפה במסכים קטנים */
+}
+
+.control-btn {
+    flex: 1;
+    min-width: 100px; /* תיקון: ודוא רוחב מינימלי */
+    padding: 12px 15px;
+    border: 2px solid #ffd700;
+    background: rgba(0, 0, 0, 0.8);
+    color: #ffd700;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.control-btn:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.control-btn:active {
+    transform: translateY(0);
+}
+
+.control-btn.active {
+    background: rgba(255, 215, 0, 0.3);
+    color: #000;
+}
+
+/* סליידר מהירות זמן */
+.time-control {
+    margin-bottom: 20px;
+}
+
+.time-control label {
+    display: block;
+    color: #ffd700;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.time-control input[type="range"] {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #333;
+    outline: none;
+    -webkit-appearance: none;
+    margin-bottom: 10px;
+}
+
+.time-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ffd700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.time-control input[type="range"]::-webkit-slider-thumb:hover {
+    background: #ffed4e;
+    transform: scale(1.2);
+}
+
+.time-control input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ffd700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.time-control input[type="range"]::-moz-range-thumb:hover {
+    background: #ffed4e;
+    transform: scale(1.2);
+}
+
+#timeScaleValue {
+    display: inline-block;
+    background: rgba(255, 215, 0, 0.2);
+    padding: 5px 10px;
+    border-radius: 15px;
+    color: #ffd700;
+    font-size: 14px;
+    font-weight: bold;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* אפשרויות תצוגה */
+.view-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.view-options label {
+    display: flex;
+    align-items: center;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 8px 0; /* תיקון: הוספת padding לנוחות לחיצה */
+}
+
+.view-options input[type="checkbox"] {
+    margin-left: 10px; /* תיקון: שמאל במקום ימין בגלל RTL */
+    width: 18px;
+    height: 18px;
+    accent-color: #ffd700;
+    cursor: pointer;
+}
+
+.view-options label:hover {
+    color: #ffd700;
+    background: rgba(255, 215, 0, 0.1); /* תיקון: הוספת hover effect */
+    padding: 8px 5px;
+    border-radius: 5px;
+}
+
+/* רשת כפתורי כוכבי הלכת */
+.planets-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
+    margin-top: 10px;
 }
 
 .planet-btn {
-    padding: 12px 15px;
+    padding: 10px 12px;
     border: 1px solid #666;
     background: rgba(30, 30, 50, 0.8);
     color: #ffffff;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
-    text-align: right;
+    font-size: 13px;
+    text-align: center;
     transition: all 0.3s ease;
     min-height: 44px;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 10px;
+    justify-content: center;
+    white-space: nowrap; /* תיקון: מניעת שבירת שורות */
 }
 
 .planet-btn:hover {
     background: rgba(50, 50, 80, 0.9);
     border-color: #ffd700;
-    transform: translateX(-5px);
+    transform: scale(1.05); /* תיקון: שינוי מ-translateX ל-scale */
+    color: #ffd700;
 }
 
 .planet-btn.active {
     background: rgba(255, 215, 0, 0.2);
     border-color: #ffd700;
     color: #ffd700;
+    font-weight: bold;
 }
 
 /* בקרות מהירות נגישות */
 .quick-controls {
-    display: none;
+    display: flex; /* תיקון: שינוי מ-none ל-flex */
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: 1100; /* תיקון: הקטנה מ-1000 ל-1100 */
     gap: 10px;
     flex-direction: column;
 }
@@ -299,6 +337,10 @@
     transform: scale(1.1);
 }
 
+.quick-btn:active {
+    transform: scale(0.95);
+}
+
 /* עזרת ניווט */
 .nav-help {
     position: fixed;
@@ -311,12 +353,14 @@
     font-size: 12px;
     color: #ffffff;
     backdrop-filter: blur(10px);
-    z-index: 999;
+    z-index: 1050; /* תיקון: הקטנה מ-999 ל-1050 */
+    max-width: calc(100vw - 400px); /* תיקון: ודוא שלא חוצה את התפריט */
 }
 
 .help-item {
     margin-bottom: 5px;
     opacity: 0.8;
+    line-height: 1.4; /* תיקון: שיפור קריאות */
 }
 
 .help-item:last-child {
@@ -335,45 +379,44 @@
     font-size: 12px;
     color: #ffd700;
     backdrop-filter: blur(10px);
-    z-index: 999;
-    display: flex;
-    gap: 15px;
+    z-index: 1050; /* תיקון: הקטנה מגובה מדי */
 }
 
-/* מצבי תצוגה לפי גודל מסך */
-.desktop-only {
-    display: block;
+.stats-item {
+    margin-bottom: 3px;
 }
 
-.mobile-only {
-    display: none;
+.stats-item:last-child {
+    margin-bottom: 0;
 }
 
-/* Media Queries - התאמה למסכים שונים */
-
-/* טאבלט - 768px ומטה */
+/* תיקון עבור מובייל */
 @media (max-width: 768px) {
     .mobile-menu-toggle {
         display: flex;
+        z-index: 1350; /* גבוה יותר במובייל */
     }
 
     .controls-panel {
         position: fixed;
         top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        max-height: 100vh;
+        left: -100%; /* תיקון: התחלה מחוץ למסך */
+        width: 100vw;
+        max-width: 320px;
+        height: 100vh;
+        max-height: none;
         border-radius: 0;
-        border: none;
-        z-index: 1500;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
+        border-left: none;
+        border-top: none;
+        border-bottom: none;
+        z-index: 1250; /* מתחת לכפתור התפריט */
+        transition: left 0.3s ease; /* תיקון: אנימציית כניסה */
+        overflow-y: auto; /* תיקון: ודוא גלילה */
+        overflow-x: hidden; /* תיקון: מניעת גלילה אופקית */
     }
 
     .controls-panel.open {
-        transform: translateX(0);
+        left: 0; /* תיקון: הצגת התפריט */
     }
 
     .close-controls {
@@ -381,105 +424,36 @@
     }
 
     .controls-content {
-        max-height: calc(100vh - 80px);
-        padding: 15px 20px;
+        padding: 15px;
+        max-height: calc(100vh - 80px); /* תיקון: התאמה לגובה */
+        overflow-y: auto;
+        overflow-x: visible; /* תיקון: ודוא שהתוכן לא נחתך */
     }
 
-    .time-controls {
-        justify-content: center;
-    }
-
-    .view-controls {
-        grid-template-columns: 1fr 1fr;
+    .planets-grid {
+        grid-template-columns: 1fr; /* תיקון: טור יחיד במובייל */
         gap: 10px;
     }
 
-    .planet-buttons {
-        grid-template-columns: 1fr;
-        gap: 10px;
+    .planet-btn {
+        min-height: 50px; /* תיקון: הגדלת גובה לנוחות מגע */
+        font-size: 14px;
     }
 
-    .quick-controls {
-        display: flex;
-        bottom: 90px;
-    }
-
+    /* תיקון: הסתרת אלמנטים שלא רלוונטיים במובייל */
     .nav-help {
-        bottom: 80px;
-        left: 20px;
-        right: 80px;
-        font-size: 11px;
-        padding: 10px;
-    }
-
-    .performance-stats {
-        top: 80px;
-        right: 20px;
-        left: 20px;
-        justify-content: space-between;
-    }
-
-    .desktop-only {
         display: none;
     }
 
-    .mobile-only {
-        display: block;
-    }
-
-    /* הסתרת פרטים מיותרים במובייל */
-    .control-section {
-        margin-bottom: 20px;
-    }
-
-    .btn {
-        font-size: 13px;
-        padding: 12px 10px;
-    }
-
-    .planet-btn {
-        font-size: 13px;
-        padding: 15px 12px;
-    }
-}
-
-/* סמארטפון - 480px ומטה */
-@media (max-width: 480px) {
-    .mobile-menu-toggle {
-        top: 15px;
-        right: 15px;
-        width: 45px;
-        height: 45px;
-    }
-
-    .controls-content {
-        padding: 15px;
-    }
-
-    .view-controls {
-        grid-template-columns: 1fr;
-        gap: 8px;
-    }
-
-    .time-controls {
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .btn {
-        font-size: 14px;
-        padding: 15px 10px;
-        min-height: 50px;
-    }
-
-    .planet-btn {
-        font-size: 14px;
-        padding: 18px 15px;
-        min-height: 50px;
+    .performance-stats {
+        top: 80px; /* תיקון: הזחה למטה כדי שלא יחפוף לכפתור התפריט */
+        right: 20px;
+        font-size: 10px;
+        padding: 8px 10px;
     }
 
     .quick-controls {
-        bottom: 80px;
+        bottom: 80px; /* תיקון: הזחה למעלה כדי שלא יחפוף לניווט */
         right: 15px;
         gap: 8px;
     }
@@ -489,211 +463,96 @@
         height: 45px;
         font-size: 16px;
     }
-
-    .nav-help {
-        bottom: 70px;
-        left: 15px;
-        right: 75px;
-        padding: 8px;
-        font-size: 10px;
-    }
-
-    .performance-stats {
-        top: 70px;
-        right: 15px;
-        left: 15px;
-        padding: 8px 12px;
-        font-size: 11px;
-        gap: 10px;
-    }
-
-    .controls-header h3 {
-        font-size: 16px;
-    }
-
-    .planet-selection h4 {
-        font-size: 15px;
-    }
 }
 
-/* מסכים קטנים מאוד - 360px ומטה */
-@media (max-width: 360px) {
-    .mobile-menu-toggle {
-        width: 40px;
-        height: 40px;
-        top: 10px;
-        right: 10px;
-    }
-
-    .hamburger-line {
-        width: 20px;
-        height: 2px;
+/* תיקון עבור מסכים קטנים מאוד */
+@media (max-width: 480px) {
+    .controls-panel {
+        width: 100vw;
+        max-width: none;
     }
 
     .controls-content {
         padding: 12px;
     }
 
-    .btn {
-        font-size: 12px;
-        padding: 12px 8px;
-        min-height: 48px;
+    .control-section {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
     }
 
-    .planet-btn {
-        font-size: 12px;
-        padding: 15px 12px;
-        min-height: 48px;
-    }
-
-    .quick-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 14px;
-    }
-
-    .quick-controls {
-        bottom: 70px;
-        right: 10px;
-    }
-
-    .nav-help {
-        bottom: 60px;
-        left: 10px;
-        right: 65px;
-        padding: 6px;
-        font-size: 9px;
-    }
-
-    .performance-stats {
-        top: 60px;
-        right: 10px;
-        left: 10px;
-        padding: 6px 10px;
-        font-size: 10px;
+    .main-controls {
+        flex-direction: column; /* תיקון: סידור אנכי במסכים קטנים */
         gap: 8px;
     }
-}
 
-/* מצב לנדסקייפ במובייל */
-@media (max-width: 768px) and (orientation: landscape) {
-    .controls-panel.open {
-        width: 50%;
-        right: 0;
-        left: auto;
-        transform: translateX(100%);
+    .control-btn {
+        min-width: auto;
+        padding: 10px 12px;
+        font-size: 13px;
     }
 
-    .controls-panel.open.open {
-        transform: translateX(0);
+    .time-control input[type="range"] {
+        height: 8px; /* תיקון: הגדלה לנוחות מגע */
     }
 
-    .quick-controls {
-        bottom: 20px;
-        right: 20px;
-        flex-direction: row;
+    .time-control input[type="range"]::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
     }
 
-    .nav-help {
-        bottom: 20px;
-        left: 20px;
-        right: auto;
-        width: 200px;
+    .view-options {
+        gap: 15px; /* תיקון: הגדלת מרווח למגע נוח */
     }
 
-    .performance-stats {
-        top: 20px;
-        left: 20px;
-        right: auto;
-        width: auto;
+    .view-options label {
+        padding: 10px 5px; /* תיקון: הגדלת אזור מגע */
+    }
+
+    .view-options input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-left: 12px;
     }
 }
 
-/* אנימציות נוספות */
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
+/* תיקונים נוספים לבעיות תצוגה */
+
+/* מניעת overflow בכל האלמנטים */
+.controls-panel *,
+.controls-panel *::before,
+.controls-panel *::after {
+    box-sizing: border-box;
 }
 
-@keyframes slideOutRight {
-    from {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-/* כלל כללי למניעת גלילה כאשר התפריט פתוח */
-body.menu-open {
-    overflow: hidden;
-}
-
-/* שיפורי נגישות */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* מצב כהה/בהיר לפי העדפות המערכת */
-@media (prefers-color-scheme: light) {
+/* תיקון בעיות backdrop-filter */
+@supports not (backdrop-filter: blur(15px)) {
     .controls-panel {
-        background: rgba(255, 255, 255, 0.95);
-        border-color: #333;
+        background: rgba(0, 0, 0, 0.95); /* fallback לדפדפנים ישנים */
     }
-
-    .controls-header {
-        background: linear-gradient(135deg, #f0f0f0, #ffffff);
-    }
-
-    .controls-header h3 {
-        color: #333;
-    }
-
-    .btn {
-        color: #333;
-        border-color: #333;
-    }
-
-    .planet-btn {
-        background: rgba(240, 240, 240, 0.9);
-        color: #333;
-        border-color: #ccc;
+    
+    .mobile-menu-toggle {
+        background: rgba(0, 0, 0, 0.9);
     }
 }
 
-/* התאמות למקלדת */
-.btn:focus,
-.planet-btn:focus,
-.mobile-menu-toggle:focus,
-.quick-btn:focus {
-    outline: 2px solid #ffd700;
-    outline-offset: 2px;
+/* תיקון בעיות z-index stacking context */
+.controls-panel {
+    isolation: isolate; /* יצירת stacking context חדש */
 }
 
-/* Scrollbar עיצוב */
+/* תיקון עבור מצב מסך מלא */
+@media (display-mode: fullscreen) {
+    .controls-panel {
+        z-index: 1800; /* z-index גבוה יותר במסך מלא אבל עדיין מתחת לפאנל מידע */
+    }
+    
+    .mobile-menu-toggle {
+        z-index: 1900;
+    }
+}
+
+/* תיקון בעיות scroll */
 .controls-content::-webkit-scrollbar {
     width: 6px;
 }
@@ -712,13 +571,43 @@ body.menu-open {
     background: rgba(255, 215, 0, 0.7);
 }
 
-/* הדפסה - הסתרת בקרות */
-@media print {
-    .controls-panel,
-    .mobile-menu-toggle,
-    .quick-controls,
-    .nav-help,
-    .performance-stats {
-        display: none !important;
+/* תיקון overlap עם אלמנטים אחרים */
+.controls-panel.overlap-safe {
+    transform: translateX(-10px); /* תיקון: הזחה קלה אם יש חפיפה */
+}
+
+/* תיקון עבור orientation changes */
+@media (orientation: landscape) and (max-height: 500px) {
+    .controls-panel {
+        max-height: calc(100vh - 20px);
+        top: 10px;
+    }
+    
+    .controls-content {
+        max-height: calc(100vh - 60px);
+        padding: 10px 15px;
+    }
+    
+    .control-section {
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+    }
+}
+
+/* הגנה מפני glitches ויזואליים */
+.controls-panel {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* תיקון עבור high-DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .controls-panel {
+        border-width: 1.5px; /* תיקון: גבול דק יותר במסכי רזולוציה גבוהה */
+    }
+    
+    .mobile-menu-toggle {
+        border-width: 1.5px;
     }
 }
