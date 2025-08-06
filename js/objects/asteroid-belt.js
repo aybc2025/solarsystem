@@ -6,12 +6,12 @@ class AsteroidBelt {
         this.material = null;
         this.particleSystem = null;
         
-        // הגדרות חגורת האסטרואידים
+        // הגדרות חגורת האסטרואידים - תיקון מיקום
         this.settings = {
             asteroidCount: 5000,
-            innerRadius: 180,  // בקנה מידה - בין מאדים לצדק
-            outerRadius: 220,
-            thickness: 20,
+            innerRadius: 120,  // תיקון: אחרי מאדים (90) + מרווח
+            outerRadius: 180,  // תיקון: לפני צדק (200) - מרווח
+            thickness: 15,     // הקטנה מ-20 ל-15 לחגורה יותר מדויקת
             minSize: 0.5,
             maxSize: 3.0,
             rotationSpeed: 0.00005,
@@ -21,10 +21,10 @@ class AsteroidBelt {
         // אסטרואידים בודדים גדולים יותר
         this.majorAsteroids = [];
         this.majorAsteroidData = [
-            { name: 'Ceres', radius: 2.5, distance: 185, color: 0x999999 },
-            { name: 'Vesta', radius: 1.8, distance: 195, color: 0xaaaaaa },
-            { name: 'Pallas', radius: 1.5, distance: 205, color: 0x888888 },
-            { name: 'Juno', radius: 1.2, distance: 215, color: 0x777777 }
+            { name: 'Ceres', radius: 2.5, distance: 135, color: 0x999999 },     // במרכז החגורה
+            { name: 'Vesta', radius: 1.8, distance: 145, color: 0xaaaaaa },     // מעט יותר רחוק
+            { name: 'Pallas', radius: 1.5, distance: 155, color: 0x888888 },    // עוד יותר רחוק
+            { name: 'Juno', radius: 1.2, distance: 165, color: 0x777777 }       // בחלק החיצוני
         ];
         
         // אנימציה
@@ -76,119 +76,103 @@ class AsteroidBelt {
             const angle = Math.random() * Math.PI * 2;
             
             // התפלגות רדיוס עם צפיפות גבוהה יותר באמצע
-            const radiusNormalized = this.generateRadiusDistribution();
-            const radius = MathUtils.lerp(
-                this.settings.innerRadius,
-                this.settings.outerRadius,
-                radiusNormalized
-            );
+            const radiusRatio = this.generateRadiusDistribution();
+            const radius = this.settings.innerRadius + radiusRatio * (this.settings.outerRadius - this.settings.innerRadius);
             
-            // גובה עם התפלגות גאוסיאנית
-            const height = MathUtils.random.gaussian(0, this.settings.thickness * 0.3);
+            // גובה אקראי (חגורה לא שטוחה לגמרי)
+            const height = (Math.random() - 0.5) * this.settings.thickness;
             
-            // מיקום בקואורדינטות קרטזיות
             positions[i3] = Math.cos(angle) * radius;
-            positions[i3 + 1] = Math.max(-this.settings.thickness, 
-                                       Math.min(this.settings.thickness, height));
+            positions[i3 + 1] = height;
             positions[i3 + 2] = Math.sin(angle) * radius;
             
-            // צבע עם וריאציות
-            const baseColor = new THREE.Color();
-            const colorVariations = [0x666666, 0x777777, 0x888888, 0x999999, 0x555555];
-            baseColor.setHex(MathUtils.random.choice(colorVariations));
+            // צבעים משתנים - חום, אפור, כתום מתכתי
+            const colorVariant = Math.random();
+            if (colorVariant < 0.4) {
+                // אפור כהה (אסטרואידים פחמיים)
+                colors[i3] = 0.25 + Math.random() * 0.15;     // R
+                colors[i3 + 1] = 0.25 + Math.random() * 0.15; // G
+                colors[i3 + 2] = 0.25 + Math.random() * 0.15; // B
+            } else if (colorVariant < 0.7) {
+                // חום (אסטרואידים סיליקטיים)
+                colors[i3] = 0.4 + Math.random() * 0.25;     // R
+                colors[i3 + 1] = 0.25 + Math.random() * 0.2; // G
+                colors[i3 + 2] = 0.1 + Math.random() * 0.15; // B
+            } else {
+                // כתום-אדום (אסטרואידים מתכתיים עשירים בברזל)
+                colors[i3] = 0.6 + Math.random() * 0.3;     // R
+                colors[i3 + 1] = 0.3 + Math.random() * 0.2; // G
+                colors[i3 + 2] = 0.05 + Math.random() * 0.1; // B
+            }
             
-            // הוספת רעש לצבע
-            const colorNoise = (Math.random() - 0.5) * 0.2;
-            colors[i3] = Math.max(0, Math.min(1, baseColor.r + colorNoise));
-            colors[i3 + 1] = Math.max(0, Math.min(1, baseColor.g + colorNoise));
-            colors[i3 + 2] = Math.max(0, Math.min(1, baseColor.b + colorNoise));
-            
-            // גודל עם התפלגות power law (הרבה קטנים, מעט גדולים)
+            // גדלים משתנים עם התפלגות פרבולית (הרבה קטנים, מעט גדולים)
             const sizeRandom = Math.random();
-            const size = this.settings.minSize + 
-                        Math.pow(sizeRandom, 3) * (this.settings.maxSize - this.settings.minSize);
-            sizes[i] = size;
+            sizes[i] = this.settings.minSize + Math.pow(sizeRandom, 2) * (this.settings.maxSize - this.settings.minSize);
             
-            // סיבוב אקראי
+            // זוויות סיבוב ראשוניות
             rotations[i] = Math.random() * Math.PI * 2;
             
-            // מהירות מסלול (חוק שלישי של קפלר - מהירות נמוכה יותר ברדיוס גדול יותר)
-            const orbitalSpeed = Math.sqrt(1 / radius) * 0.001;
+            // מהירויות מסלול ריאליסטיות (חוק קפלר השלישי)
+            const orbitalSpeed = Math.sqrt(1 / radius) * 0.0001;
             velocities[i3] = -Math.sin(angle) * orbitalSpeed;
             velocities[i3 + 1] = 0;
             velocities[i3 + 2] = Math.cos(angle) * orbitalSpeed;
         }
         
-        // הגדרת מאפיינים
+        // הגדרת attributes
         this.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         this.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         this.geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
         this.geometry.setAttribute('rotation', new THREE.BufferAttribute(rotations, 1));
         this.geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
-
-        // חומר עם שיידר מותאם
+        
+        // חומר מתקדם עם shaders
         this.material = new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0.0 },
-                pixelRatio: { value: window.devicePixelRatio },
                 twinkleIntensity: { value: 0.3 }
             },
             vertexShader: `
                 attribute float size;
                 attribute float rotation;
-                attribute vec3 color;
                 attribute vec3 velocity;
                 
                 varying vec3 vColor;
-                varying float vRotation;
                 varying float vSize;
+                varying float vRotation;
                 
                 uniform float time;
-                uniform float pixelRatio;
                 
                 void main() {
                     vColor = color;
-                    vRotation = rotation + time * 0.5;
                     vSize = size;
+                    vRotation = rotation + time * 0.1;
                     
-                    // מיקום עם אנימציית מסלול איטית
-                    vec3 pos = position + velocity * time * 10.0;
+                    // עדכון מיקום במסלול
+                    vec3 pos = position + velocity * time * 100.0;
                     
                     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                    
-                    gl_PointSize = size * pixelRatio * (100.0 / -mvPosition.z);
+                    gl_PointSize = size * (300.0 / -mvPosition.z);
                     gl_Position = projectionMatrix * mvPosition;
                 }
             `,
             fragmentShader: `
                 varying vec3 vColor;
-                varying float vRotation;
                 varying float vSize;
+                varying float vRotation;
                 
                 uniform float time;
                 uniform float twinkleIntensity;
                 
-                // פונקציית רעש לנצנוץ
-                float random(vec2 st) {
-                    return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
-                }
-                
                 void main() {
-                    vec2 center = gl_PointCoord - vec2(0.5);
-                    float distance = length(center);
+                    // צורת אסטרואיד לא סדירה
+                    vec2 coord = gl_PointCoord - vec2(0.5);
+                    float distance = length(coord);
                     
-                    if (distance > 0.5) discard;
-                    
-                    // צורת אסטרואיד לא עגולה
-                    vec2 rotatedCoord = vec2(
-                        center.x * cos(vRotation) - center.y * sin(vRotation),
-                        center.x * sin(vRotation) + center.y * cos(vRotation)
-                    );
-                    
-                    float asteroidShape = 1.0 - length(rotatedCoord * vec2(1.2, 0.8)) * 2.0;
-                    asteroidShape *= 1.0 - random(rotatedCoord + time * 0.1) * 0.3;
-                    
-                    if (asteroidShape <= 0.0) discard;
+                    // צורה אליפטית לא סדירה
+                    float angle = atan(coord.y, coord.x) + vRotation;
+                    float irregularity = 0.8 + 0.2 * sin(angle * 3.0 + time * 0.5);
+                    float asteroidShape = 1.0 - smoothstep(0.3 * irregularity, 0.5 * irregularity, distance);
                     
                     // נצנוץ עדין
                     float twinkle = sin(time * 3.0 + vSize * 10.0) * twinkleIntensity + (1.0 - twinkleIntensity);
@@ -287,12 +271,8 @@ class AsteroidBelt {
         for (let i = 0; i < positions.length; i += 3) {
             const vertex = new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]);
             
-            // הוספת רעש לכל קודקוד
-            const noise = MathUtils.noise.perlin(
-                vertex.x * 0.5,
-                vertex.y * 0.5,
-                vertex.z * 0.5
-            );
+            // הוספת רעש לכל קודקוד (פונקציית רעש פשוטה)
+            const noise = Math.sin(vertex.x * 0.5) * Math.sin(vertex.y * 0.5) * Math.sin(vertex.z * 0.5);
             
             const distortion = 1 + noise * 0.4;
             vertex.multiplyScalar(distortion);
@@ -335,7 +315,7 @@ class AsteroidBelt {
     // הגדרת צפיפות אסטרואידים
     setDensity(density) {
         // density בין 0.1 ל-2.0
-        const newCount = Math.floor(this.settings.asteroidCount * MathUtils.clamp(density, 0.1, 2.0));
+        const newCount = Math.floor(5000 * Math.max(0.1, Math.min(2.0, density)));
         
         if (newCount !== this.settings.asteroidCount) {
             this.settings.asteroidCount = newCount;
@@ -354,7 +334,7 @@ class AsteroidBelt {
     // הגדרת עוצמת נצנוץ
     setTwinkleIntensity(intensity) {
         if (this.material && this.material.uniforms) {
-            this.material.uniforms.twinkleIntensity.value = MathUtils.clamp(intensity, 0, 1);
+            this.material.uniforms.twinkleIntensity.value = Math.max(0, Math.min(1, intensity));
         }
     }
 
@@ -427,101 +407,77 @@ class AsteroidBelt {
         return { collision: false };
     }
 
-    // יצירת אפקט מטאור
-    createMeteorShower(count = 10) {
-        const meteors = [];
+    // קבלת אסטרואיד הקרוב ביותר למיקום
+    getNearestAsteroid(position) {
+        let nearest = null;
+        let minDistance = Infinity;
         
-        for (let i = 0; i < count; i++) {
-            // בחירת אסטרואיד אקראי מהחגורה
-            const angle = Math.random() * Math.PI * 2;
-            const radius = MathUtils.lerp(this.settings.innerRadius, this.settings.outerRadius, Math.random());
-            
-            const meteorGeometry = new THREE.SphereGeometry(0.2, 8, 8);
-            const meteorMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffaa00,
-                transparent: true,
-                opacity: 0.8
-            });
-            
-            const meteor = new THREE.Mesh(meteorGeometry, meteorMaterial);
-            meteor.position.set(
-                Math.cos(angle) * radius,
-                (Math.random() - 0.5) * this.settings.thickness,
-                Math.sin(angle) * radius
-            );
-            
-            // כיוון אקראי לתנועה
-            const direction = new THREE.Vector3(
-                (Math.random() - 0.5) * 2,
-                (Math.random() - 0.5) * 2,
-                (Math.random() - 0.5) * 2
-            ).normalize();
-            
-            meteor.userData = {
-                velocity: direction.multiplyScalar(0.5),
-                life: 1.0,
-                decay: 0.002
-            };
-            
-            meteors.push(meteor);
-            this.mesh.add(meteor);
-        }
+        this.majorAsteroids.forEach(asteroid => {
+            const distance = asteroid.position.distanceTo(position);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearest = asteroid;
+            }
+        });
         
-        return meteors;
+        return { asteroid: nearest, distance: minDistance };
     }
 
-    // קבלת מידע על החגורה
-    getBeltInfo() {
+    // קבלת מידע סטטיסטי על החגורה
+    getStatistics() {
         return {
-            settings: { ...this.settings },
-            animation: { ...this.animation },
-            majorAsteroids: this.majorAsteroids.map(asteroid => ({
-                name: asteroid.name,
-                position: asteroid.position.toArray(),
-                radius: asteroid.userData?.orbitalRadius || 0
-            })),
-            particleCount: this.settings.asteroidCount,
-            isEnabled: this.settings.enabled
+            totalAsteroids: this.settings.asteroidCount + this.majorAsteroids.length,
+            majorAsteroids: this.majorAsteroids.length,
+            innerRadius: this.settings.innerRadius,
+            outerRadius: this.settings.outerRadius,
+            thickness: this.settings.thickness,
+            volume: Math.PI * (Math.pow(this.settings.outerRadius, 2) - Math.pow(this.settings.innerRadius, 2)) * this.settings.thickness,
+            density: this.settings.asteroidCount / (Math.PI * (Math.pow(this.settings.outerRadius, 2) - Math.pow(this.settings.innerRadius, 2)))
         };
     }
 
-    // קבלת רשימת אסטרואידים גדולים
-    getMajorAsteroids() {
-        return this.majorAsteroids.map(asteroid => ({
-            name: asteroid.name,
-            position: asteroid.position.clone(),
-            mesh: asteroid
-        }));
-    }
-
-    // מיקוד על אסטרואיד ספציפי
-    focusOnAsteroid(asteroidName) {
+    // קבלת מידע על אסטרואיד מסוים
+    getAsteroidInfo(asteroidName) {
         const asteroid = this.majorAsteroids.find(a => a.name === asteroidName);
-        return asteroid ? asteroid.position.clone() : null;
+        if (!asteroid) return null;
+        
+        const data = this.majorAsteroidData.find(d => d.name === asteroidName);
+        if (!data) return null;
+        
+        return {
+            name: asteroidName,
+            radius: data.radius,
+            distance: data.distance,
+            position: asteroid.position.clone(),
+            color: data.color,
+            type: this.getAsteroidType(asteroidName)
+        };
     }
 
-    // יצירת מפת צפיפות
-    getDensityMap(resolution = 64) {
-        const densityMap = new Array(resolution * resolution).fill(0);
+    // זיהוי סוג האסטרואיד
+    getAsteroidType(asteroidName) {
+        const types = {
+            'Ceres': 'כוכב לכת ננסי עם מים תת-קרקעיים',
+            'Vesta': 'אסטרואיד מתכתי עם ליבת ברזל',
+            'Pallas': 'אסטרואיד סיליקטי גדול',
+            'Juno': 'אסטרואיד סלעי עם מתכת'
+        };
         
-        if (!this.geometry) return densityMap;
-        
-        const positions = this.geometry.attributes.position.array;
-        
-        for (let i = 0; i < positions.length; i += 3) {
-            const x = positions[i];
-            const z = positions[i + 2];
-            
-            // המרה לקואורדינטות מפה
-            const mapX = Math.floor(((x + this.settings.outerRadius) / (this.settings.outerRadius * 2)) * resolution);
-            const mapZ = Math.floor(((z + this.settings.outerRadius) / (this.settings.outerRadius * 2)) * resolution);
-            
-            if (mapX >= 0 && mapX < resolution && mapZ >= 0 && mapZ < resolution) {
-                densityMap[mapZ * resolution + mapX]++;
-            }
+        return types[asteroidName] || 'אסטרואיד סלעי';
+    }
+
+    // שיוך החגורה לסצנה
+    addToScene(scene) {
+        if (this.mesh && scene) {
+            scene.add(this.mesh);
         }
-        
-        return densityMap;
+    }
+
+    // הסרה מהסצנה
+    removeFromScene(scene) {
+        if (this.mesh && scene) {
+            scene.remove(this.mesh);
+        }
     }
 
     // ניקוי משאבים
@@ -529,11 +485,13 @@ class AsteroidBelt {
         // ניקוי גיאומטריה
         if (this.geometry) {
             this.geometry.dispose();
+            this.geometry = null;
         }
         
         // ניקוי חומר
         if (this.material) {
             this.material.dispose();
+            this.material = null;
         }
         
         // ניקוי אסטרואידים גדולים
@@ -541,15 +499,30 @@ class AsteroidBelt {
             if (asteroid.geometry) asteroid.geometry.dispose();
             if (asteroid.material) asteroid.material.dispose();
         });
-        
         this.majorAsteroids = [];
-        this.isInitialized = false;
         
-        console.log('Asteroid Belt disposed');
+        // איפוס מערכת החלקיקים
+        this.particleSystem = null;
+        this.mesh = null;
+        this.isInitialized = false;
+    }
+
+    // חזרת המאפיינים הבסיסיים
+    getBasicInfo() {
+        return {
+            name: 'חגורת האסטרואידים',
+            nameEn: 'Asteroid Belt', 
+            location: 'בין מאדים לצדק',
+            distance: `${this.settings.innerRadius}-${this.settings.outerRadius} יחידות סקלה`,
+            realDistance: '2.2-3.2 AU מהשמש',
+            asteroidCount: this.settings.asteroidCount,
+            majorBodies: ['קרס', 'וסטה', 'פלאס', 'יונו'],
+            description: 'חגורת האסטרואידים היא אזור בין מאדים לצדק המכיל מאות אלפי גרמי שמיים סלעיים. בניגוד לתיאורים בסרטים, האזור די ריק - המרחק הממוצע בין אסטרואידים הוא כמיליון קילומטר!'
+        };
     }
 }
 
-// ייצוא המחלקה
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = AsteroidBelt;
+// הפוך את המחלקה זמינה גלובלית
+if (typeof window !== 'undefined') {
+    window.AsteroidBelt = AsteroidBelt;
 }
