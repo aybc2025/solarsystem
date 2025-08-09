@@ -14,18 +14,18 @@
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
     
     <!-- Preload Critical Resources -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" as="script">
     
-    <!-- CSS Files - סדר חשוב לz-index -->
+    <!-- CSS Files - סדר חשוב ל-z-index -->
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/controls.css">
-    <link rel="stylesheet" href="styles/info-panel.css"> <!-- אחרון כדי לדרוס z-index -->
+    <link rel="stylesheet" href="styles/info-panel.css">
     
     <!-- Inline Critical CSS -->
     <style>
-        /* Critical CSS לטעינה מהירה */
         body {
             margin: 0;
             padding: 0;
@@ -41,7 +41,6 @@
             background: #000;
         }
         
-        /* תיקון: ודוא שמסך הטעינה מעל הכל */
         #loading {
             position: fixed;
             top: 0;
@@ -53,17 +52,16 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 2000; /* מעל הכל */
+            z-index: 2000;
             color: #ffd700;
             font-size: 18px;
         }
         
-        /* אנימציה לטעינה */
         .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255, 215, 0, 0.3);
-            border-top: 3px solid #ffd700;
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 215, 0, 0.3);
+            border-top: 4px solid #ffd700;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
@@ -72,6 +70,22 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        .progress-container {
+            width: 300px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ff8c00);
+            border-radius: 3px;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
@@ -160,18 +174,6 @@
         </div>
     </div>
 
-    <!-- פאנל מידע על כוכבי הלכת - z-index הכי גבוה -->
-    <div id="infoPanel" class="hidden" role="dialog" aria-labelledby="planetName" aria-hidden="true">
-        <div class="info-header">
-            <h3 id="planetName">מידע על כוכב הלכת</h3>
-            <button class="close-btn" aria-label="סגור פאנל מידע">&times;</button>
-        </div>
-        <div class="info-content">
-            <div id="planetPreview" class="planet-image" aria-label="תצוגה מקדימה של כוכב הלכת"></div>
-            <div id="planetData" class="planet-data"></div>
-        </div>
-    </div>
-
     <!-- בקרות מהירות -->
     <div id="quickControls" class="quick-controls" role="toolbar" aria-label="בקרות מהירות">
         <button class="quick-btn" id="quickPause" title="השהה/המשך (רווח)" aria-label="השהה או המשך">⏯️</button>
@@ -199,131 +201,13 @@
 
     <!-- JavaScript Libraries - סדר טעינה חשוב -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-// OrbitControls fallback - simplified version
-THREE.OrbitControls = function(camera, domElement) {
-    this.camera = camera;
-    this.domElement = domElement;
-    this.target = new THREE.Vector3();
-    this.enableDamping = true;
-    this.dampingFactor = 0.05;
-    this.enableZoom = true;
-    this.enablePan = true;
-    this.maxDistance = 2000;
-    this.minDistance = 10;
-    
-    let rotateSpeed = 0.005;
-    let panSpeed = 0.5;
-    let zoomSpeed = 0.1;
-    let mouseDown = false;
-    let mouseX = 0, mouseY = 0;
-    
-    const spherical = new THREE.Spherical();
-    const offset = new THREE.Vector3();
-    
-    this.update = function() {
-        // Basic update function
-        return true;
-    };
-    
-    // Mouse events
-    domElement.addEventListener('mousedown', (e) => {
-        mouseDown = true;
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-    });
-    
-    domElement.addEventListener('mousemove', (e) => {
-        if (!mouseDown) return;
-        
-        const deltaX = e.clientX - mouseX;
-        const deltaY = e.clientY - mouseY;
-        
-        offset.copy(camera.position).sub(this.target);
-        spherical.setFromVector3(offset);
-        
-        spherical.theta -= deltaX * rotateSpeed;
-        spherical.phi += deltaY * rotateSpeed;
-        spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
-        
-        offset.setFromSpherical(spherical);
-        camera.position.copy(this.target).add(offset);
-        camera.lookAt(this.target);
-        
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-    });
-    
-    domElement.addEventListener('mouseup', () => {
-        mouseDown = false;
-    });
-    
-    domElement.addEventListener('wheel', (e) => {
-        const scale = e.deltaY > 0 ? 1.1 : 0.9;
-        camera.position.multiplyScalar(scale);
-        e.preventDefault();
-    });
-    
-    // Touch events for mobile
-    let touchStartDistance = 0;
-    
-    domElement.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 1) {
-            mouseDown = true;
-            mouseX = e.touches[0].clientX;
-            mouseY = e.touches[0].clientY;
-        } else if (e.touches.length === 2) {
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            touchStartDistance = Math.sqrt(dx * dx + dy * dy);
-        }
-    });
-    
-    domElement.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 1 && mouseDown) {
-            const deltaX = e.touches[0].clientX - mouseX;
-            const deltaY = e.touches[0].clientY - mouseY;
-            
-            offset.copy(camera.position).sub(this.target);
-            spherical.setFromVector3(offset);
-            
-            spherical.theta -= deltaX * rotateSpeed;
-            spherical.phi += deltaY * rotateSpeed;
-            spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
-            
-            offset.setFromSpherical(spherical);
-            camera.position.copy(this.target).add(offset);
-            camera.lookAt(this.target);
-            
-            mouseX = e.touches[0].clientX;
-            mouseY = e.touches[0].clientY;
-        } else if (e.touches.length === 2) {
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (touchStartDistance > 0) {
-                const scale = distance / touchStartDistance;
-                camera.position.multiplyScalar(scale);
-                touchStartDistance = distance;
-            }
-        }
-        e.preventDefault();
-    });
-    
-    domElement.addEventListener('touchend', () => {
-        mouseDown = false;
-        touchStartDistance = 0;
-    });
-};
-
-console.log('OrbitControls fallback loaded');
-</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
     
     <!-- Application JavaScript Files - סדר חשוב -->
     <script src="js/data/planets-improved.js"></script>
+    <script src="js/utils/math.js"></script>
+    <script src="js/objects/sun.js"></script>
     <script src="js/objects/planet.js"></script>
-    <script src="js/objects/asteroid-belt.js"></script>
     <script src="js/core/camera.js"></script>
     <script src="js/core/scene.js"></script>
     <script src="js/ui/info-panel.js"></script>
@@ -350,24 +234,24 @@ console.log('OrbitControls fallback loaded');
                     // אתחול
                     await solarSystemApp.init();
                     
-                    // יצירת ממשק משתמש
-                    if (typeof UIControls !== 'undefined') {
-                        uiControls = new UIControls();
-                        await uiControls.init(solarSystemApp);
-                    }
-                    
                     // יצירת פאנל מידע
                     if (typeof InfoPanel !== 'undefined') {
                         infoPanel = new InfoPanel();
                         await infoPanel.init(solarSystemApp);
                         
+                        // הפוך זמין גלובלית
+                        window.infoPanel = infoPanel;
+                    }
+                    
+                    // יצירת ממשק משתמש
+                    if (typeof UIControls !== 'undefined') {
+                        uiControls = new UIControls();
+                        await uiControls.init(solarSystemApp);
+                        
                         // חיבור בין הרכיבים
-                        if (uiControls) {
+                        if (uiControls && infoPanel) {
                             uiControls.infoPanel = infoPanel;
                         }
-                        
-                        // הפוך זמין גלובלית לשימוש בmain-improved.js
-                        window.infoPanel = infoPanel;
                     }
                     
                     console.log('✅ Solar System Application loaded successfully!');
@@ -377,6 +261,9 @@ console.log('OrbitControls fallback loaded');
                         console.error('Application error:', event.error);
                         showErrorMessage(`שגיאה באפליקציה: ${event.error.message}`);
                     });
+                    
+                    // הוספת מאזיני אירועים למובייל
+                    setupMobileEventListeners();
                     
                 } else {
                     throw new Error('ImprovedSolarSystemApp class not found');
@@ -388,15 +275,56 @@ console.log('OrbitControls fallback loaded');
             }
         }
 
+        // הגדרת מאזיני אירועים למובייל
+        function setupMobileEventListeners() {
+            // תפריט נייד
+            const mobileToggle = document.getElementById('mobileMenuToggle');
+            const controlsPanel = document.getElementById('controlsPanel');
+            const closeControls = document.getElementById('closeControls');
+            
+            if (mobileToggle && controlsPanel) {
+                mobileToggle.addEventListener('click', () => {
+                    const isOpen = controlsPanel.classList.contains('open');
+                    
+                    if (isOpen) {
+                        controlsPanel.classList.remove('open');
+                        mobileToggle.classList.remove('active');
+                        document.body.style.overflow = '';
+                    } else {
+                        controlsPanel.classList.add('open');
+                        mobileToggle.classList.add('active');
+                        document.body.style.overflow = 'hidden';
+                    }
+                });
+            }
+            
+            if (closeControls && controlsPanel) {
+                closeControls.addEventListener('click', () => {
+                    controlsPanel.classList.remove('open');
+                    mobileToggle.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+            
+            // סגירה בלחיצה מחוץ לתפריט
+            document.addEventListener('click', (event) => {
+                if (controlsPanel && controlsPanel.classList.contains('open') &&
+                    !controlsPanel.contains(event.target) &&
+                    !mobileToggle.contains(event.target)) {
+                    controlsPanel.classList.remove('open');
+                    mobileToggle.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
         // הצגת הודעת שגיאה
         function showErrorMessage(message) {
-            // הסתרת מסך טעינה
             const loading = document.getElementById('loading');
             if (loading) {
                 loading.style.display = 'none';
             }
             
-            // יצירת הודעת שגיאה
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error-message';
             errorDiv.style.cssText = `
@@ -434,7 +362,6 @@ console.log('OrbitControls fallback loaded');
 
         // בדיקת תמיכה בדפדפן
         function checkBrowserSupport() {
-            // בדיקת WebGL
             const canvas = document.createElement('canvas');
             const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
             
@@ -443,7 +370,6 @@ console.log('OrbitControls fallback loaded');
                 return false;
             }
             
-            // בדיקת ES6
             try {
                 eval('const test = () => {};');
             } catch (e) {
@@ -458,7 +384,6 @@ console.log('OrbitControls fallback loaded');
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('📄 DOM Content Loaded');
             
-            // בדיקת תמיכה
             if (!checkBrowserSupport()) {
                 return;
             }
@@ -467,7 +392,6 @@ console.log('OrbitControls fallback loaded');
             if (typeof THREE === 'undefined') {
                 console.log('⏳ Waiting for Three.js to load...');
                 
-                // המתנה עד 5 שניות
                 let attempts = 0;
                 const maxAttempts = 50;
                 
@@ -485,37 +409,34 @@ console.log('OrbitControls fallback loaded');
                 
                 waitForThree();
             } else {
-                // Three.js כבר טעון
                 initializeApp();
             }
         });
 
         // טיפול בשינוי גודל חלון
         window.addEventListener('resize', () => {
-            if (solarSystemApp && solarSystemApp.onWindowResize) {
-                solarSystemApp.onWindowResize();
+            if (solarSystemApp && solarSystemApp.handleResize) {
+                solarSystemApp.handleResize();
             }
         });
 
         // טיפול בשינוי orientation במובייל
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
-                if (solarSystemApp && solarSystemApp.onWindowResize) {
-                    solarSystemApp.onWindowResize();
+                if (solarSystemApp && solarSystemApp.handleResize) {
+                    solarSystemApp.handleResize();
                 }
             }, 100);
         });
 
         // מניעת התנהגות ברירת מחדל במגע
         document.addEventListener('touchstart', (e) => {
-            // מניעת zoom כפול בלחיצה כפולה
             if (e.touches.length > 1) {
                 e.preventDefault();
             }
         }, { passive: false });
 
         document.addEventListener('touchmove', (e) => {
-            // אפשר scroll רק באלמנטים מסוימים
             const allowScrollElements = ['.info-content', '.controls-content'];
             const isScrollable = allowScrollElements.some(selector => 
                 e.target.closest(selector)
@@ -528,20 +449,15 @@ console.log('OrbitControls fallback loaded');
 
         // קיצורי מקלדת גלובליים
         document.addEventListener('keydown', (event) => {
-            // מניעת F5, Ctrl+R במקרה של שגיאות
             if ((event.code === 'F5') || (event.ctrlKey && event.code === 'KeyR')) {
                 if (solarSystemApp && solarSystemApp.isInitialized) {
-                    // האפליקציה פועלת, אפשר רענון
                     return;
                 } else {
-                    // האפליקציה לא פועלת, מניעת רענון אוטומטי
                     event.preventDefault();
                 }
             }
             
-            // קיצורי דרך נוספים
             if (event.altKey && event.code === 'KeyH') {
-                // Alt+H - הצגה/הסתרת עזרה
                 event.preventDefault();
                 const helpElement = document.getElementById('navHelp');
                 if (helpElement) {
@@ -550,7 +466,6 @@ console.log('OrbitControls fallback loaded');
             }
             
             if (event.altKey && event.code === 'KeyP') {
-                // Alt+P - הצגה/הסתרת סטטיסטיקות ביצועים
                 event.preventDefault();
                 const statsElement = document.getElementById('performanceStats');
                 if (statsElement) {
@@ -561,7 +476,6 @@ console.log('OrbitControls fallback loaded');
 
         // הוספת מאזיני accessibility
         document.addEventListener('focus', (event) => {
-            // הוספת focus visible לאלמנטים אינטראקטיביים
             if (event.target.matches('button, input, [tabindex]')) {
                 event.target.classList.add('focus-visible');
             }
@@ -571,30 +485,26 @@ console.log('OrbitControls fallback loaded');
             event.target.classList.remove('focus-visible');
         });
 
-        // **הוספה: פונקציות עזר גלובליות לממשק**
+        // פונקציות עזר גלובליות
         window.appHelpers = {
-            // פתיחת מידע על כוכב לכת מהקונסולה
             showPlanetInfo: (planetName) => {
                 if (window.infoPanel) {
                     window.infoPanel.showPlanetInfo(planetName);
                 }
             },
             
-            // קיצור למעבר לכוכב לכת
             goToPlanet: (planetName) => {
                 if (solarSystemApp && solarSystemApp.selectPlanet) {
                     solarSystemApp.selectPlanet(planetName);
                 }
             },
             
-            // שליטה במהירות זמן
             setSpeed: (speed) => {
                 if (solarSystemApp && solarSystemApp.setTimeScale) {
                     solarSystemApp.setTimeScale(speed);
                 }
             },
             
-            // קבלת מידע על מצב האפליקציה
             getStatus: () => {
                 if (!solarSystemApp) return 'Application not loaded';
                 
@@ -631,9 +541,8 @@ console.log('OrbitControls fallback loaded');
         `);
     </script>
 
-    <!-- Service Worker לPWA (אופציונלי) -->
+    <!-- Service Worker לPWA -->
     <script>
-        // רישום Service Worker אם זמין
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
@@ -646,8 +555,6 @@ console.log('OrbitControls fallback loaded');
             });
         }
     </script>
-
-    <!-- Analytics או Script נוספים כאן -->
     
 </body>
 </html>
