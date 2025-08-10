@@ -1,4 +1,4 @@
-/* פאנל מידע על כוכבי הלכת - מותאם למובייל עם z-index מתוקן */
+/* פאנל מידע על כוכבי הלכת - מתוקם עם z-index נכון */
 
 /* פאנל מידע ראשי */
 #infoPanel {
@@ -12,12 +12,13 @@
     background: rgba(0, 0, 0, 0.95);
     border: 2px solid #ffd700;
     border-radius: 15px;
-    z-index: 1500; /* תיקון: הגדלה מ-1100 ל-1500 */
+    z-index: 1500; /* z-index גבוה */
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(20px);
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    isolation: isolate; /* יצירת stacking context חדש */
 }
 
 #infoPanel.hidden {
@@ -35,7 +36,7 @@
     justify-content: space-between;
     align-items: center;
     position: relative;
-    z-index: 1510; /* תיקון: ודוא שהכותרת מעל הכל */
+    z-index: 1510;
 }
 
 .info-header::before {
@@ -73,7 +74,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    z-index: 1520; /* ודוא שכפתור הסגירה מעל הכל */
+    z-index: 1520;
     position: relative;
 }
 
@@ -92,7 +93,7 @@
     max-height: calc(85vh - 100px);
     overflow-y: auto;
     direction: rtl;
-    z-index: 1505; /* ודוא שהתוכן מעל הרקע */
+    z-index: 1505;
     position: relative;
 }
 
@@ -159,13 +160,13 @@
     border-bottom: none;
 }
 
-.data-item .label {
+.data-item .data-label {
     font-weight: bold;
     color: #ffd700;
     flex: 1;
 }
 
-.data-item .value {
+.data-item .data-value {
     text-align: left;
     direction: ltr;
     flex: 1;
@@ -387,7 +388,7 @@
     background: rgba(255, 215, 0, 0.7);
 }
 
-/* תיקון: ודוא שהפאנל תמיד מעל הכל */
+/* רקע כהה מאחורי הפאנל */
 #infoPanel::before {
     content: '';
     position: fixed;
@@ -396,7 +397,7 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.3);
-    z-index: 1400;
+    z-index: -1;
     pointer-events: none;
 }
 
@@ -416,7 +417,7 @@
         left: 50%;
         transform: translateX(-50%);
         border-radius: 12px;
-        z-index: 1500; /* ודוא שגם במובייל z-index גבוה */
+        z-index: 1500;
     }
 
     .info-header {
@@ -501,7 +502,7 @@
         transform: none;
         border-radius: 0;
         border: none;
-        z-index: 1500; /* ודוא שגם במסך קטן z-index גבוה */
+        z-index: 1500;
     }
 
     .info-header {
@@ -546,7 +547,7 @@
         gap: 4px;
     }
 
-    .data-item .value {
+    .data-item .data-value {
         text-align: right;
         direction: rtl;
     }
@@ -620,13 +621,6 @@
     animation: slideInFromTop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* תיקון בעיות תצוגה נוספות */
-#infoPanel {
-    /* ודוא שהפאנל לא מתחבא מאחורי אלמנטים אחרים */
-    isolation: isolate;
-    contain: layout style paint;
-}
-
 /* תיקון עבור דפדפנים ישנים */
 #infoPanel {
     -webkit-transform: translate(-50%, -50%);
@@ -642,6 +636,6 @@
 /* תיקון עבור מצב מסך מלא */
 @media (display-mode: fullscreen) {
     #infoPanel {
-        z-index: 2000; /* z-index עוד יותר גבוה במסך מלא */
+        z-index: 2000;
     }
 }
