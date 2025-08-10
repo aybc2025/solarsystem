@@ -1,4 +1,4 @@
-/* בקרות ממשק המשתמש - מותאם למובייל עם z-index מתוקן */
+/* בקרות ממשק המשתמש - מתוקן עם z-index נכון */
 
 /* כפתור תפריט נייד (Hamburger Menu) */
 .mobile-menu-toggle {
@@ -6,8 +6,8 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1100; /* תיקון: הקטנה כדי להיות מתחת לפאנל מידע */
-    background: rgba(0, 0, 0, 0.9);
+    z-index: 1300; /* z-index מתאים */
+    background: rgba(0, 0, 0, 0.8);
     border: 2px solid #ffd700;
     border-radius: 8px;
     width: 50px;
@@ -20,6 +20,7 @@
     padding: 0;
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
+    isolation: isolate;
 }
 
 .mobile-menu-toggle:hover {
@@ -29,7 +30,6 @@
 
 .mobile-menu-toggle.active {
     background: rgba(255, 215, 0, 0.3);
-    z-index: 1200; /* גבוה יותר כשפעיל */
 }
 
 .hamburger-line {
@@ -63,12 +63,13 @@
     border: 2px solid #ffd700;
     border-radius: 12px;
     padding: 0;
-    z-index: 1000; /* תיקון: מתחת לתפריט נייד ופאנל מידע */
+    z-index: 1200; /* z-index מתחת לפאנל מידע */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(15px);
     overflow: visible;
     transition: all 0.3s ease;
+    isolation: isolate;
 }
 
 .controls-header {
@@ -312,7 +313,7 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 900; /* תיקון: נמוך מכל התפריטים */
+    z-index: 1100; /* z-index נמוך יותר */
     gap: 10px;
     flex-direction: column;
 }
@@ -354,7 +355,7 @@
     font-size: 12px;
     color: #ffffff;
     backdrop-filter: blur(10px);
-    z-index: 800; /* תיקון: נמוך מהתפריטים */
+    z-index: 1050; /* z-index נמוך */
     max-width: calc(100vw - 400px);
 }
 
@@ -380,7 +381,7 @@
     font-size: 12px;
     color: #ffd700;
     backdrop-filter: blur(10px);
-    z-index: 850; /* תיקון: נמוך מהתפריטים */
+    z-index: 1050; /* z-index נמוך */
 }
 
 .stats-item {
@@ -395,11 +396,7 @@
 @media (max-width: 768px) {
     .mobile-menu-toggle {
         display: flex;
-        z-index: 1100;
-    }
-
-    .mobile-menu-toggle.active {
-        z-index: 1200; /* גבוה יותר כשפעיל אבל עדיין מתחת לפאנל מידע */
+        z-index: 1350;
     }
 
     .controls-panel {
@@ -414,7 +411,7 @@
         border-left: none;
         border-top: none;
         border-bottom: none;
-        z-index: 1050; /* מתחת לכפתור התפריט ופאנל המידע */
+        z-index: 1250;
         transition: left 0.3s ease;
         overflow-y: auto;
         overflow-x: hidden;
@@ -454,14 +451,12 @@
         right: 20px;
         font-size: 10px;
         padding: 8px 10px;
-        z-index: 850;
     }
 
     .quick-controls {
         bottom: 80px;
         right: 15px;
         gap: 8px;
-        z-index: 900;
     }
 
     .quick-btn {
@@ -522,32 +517,6 @@
     }
 }
 
-/* תיקוני z-index נוספים לוודא סדר נכון */
-
-/* כפתור תפריט נייד - הכי גבוה במובייל */
-@media (max-width: 768px) {
-    .mobile-menu-toggle {
-        z-index: 1400; /* תיקון: גבוה יותר במובייל */
-    }
-    
-    .mobile-menu-toggle.active {
-        z-index: 1450; /* עוד יותר גבוה כשפעיל */
-    }
-    
-    .controls-panel {
-        z-index: 1300; /* מתחת לכפתור התפריט */
-    }
-    
-    .controls-panel.open {
-        z-index: 1350; /* גבוה יותר כשפתוח */
-    }
-}
-
-/* וידוא שפאנל המידע תמיד הכי גבוה */
-.info-panel, #infoPanel {
-    z-index: 1500 !important; /* הכי גבוה */
-}
-
 /* מניעת overflow בכל האלמנטים */
 .controls-panel *,
 .controls-panel *::before,
@@ -566,15 +535,6 @@
     }
 }
 
-/* תיקון בעיות z-index stacking context */
-.controls-panel {
-    isolation: isolate;
-}
-
-.mobile-menu-toggle {
-    isolation: isolate;
-}
-
 /* תיקון עבור מצב מסך מלא */
 @media (display-mode: fullscreen) {
     .controls-panel {
@@ -583,10 +543,6 @@
     
     .mobile-menu-toggle {
         z-index: 1900;
-    }
-    
-    .mobile-menu-toggle.active {
-        z-index: 1950;
     }
 }
 
@@ -607,11 +563,6 @@
 
 .controls-content::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 215, 0, 0.7);
-}
-
-/* תיקון overlap עם אלמנטים אחרים */
-.controls-panel.overlap-safe {
-    transform: translateX(-10px);
 }
 
 /* תיקון עבור orientation changes */
@@ -639,12 +590,6 @@
     -webkit-font-smoothing: antialiased;
 }
 
-.mobile-menu-toggle {
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-    -webkit-font-smoothing: antialiased;
-}
-
 /* תיקון עבור high-DPI displays */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
     .controls-panel {
@@ -653,28 +598,5 @@
     
     .mobile-menu-toggle {
         border-width: 1.5px;
-    }
-}
-
-/* התאמות מגע למכשירים ניידים */
-@media (hover: none) and (pointer: coarse) {
-    .control-btn,
-    .planet-btn,
-    .quick-btn {
-        min-height: 44px;
-        min-width: 44px;
-    }
-    
-    .control-btn:hover,
-    .planet-btn:hover,
-    .quick-btn:hover {
-        transform: none;
-    }
-    
-    .control-btn:active,
-    .planet-btn:active,
-    .quick-btn:active {
-        transform: scale(0.95);
-        opacity: 0.8;
     }
 }
