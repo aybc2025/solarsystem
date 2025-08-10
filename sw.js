@@ -14,6 +14,7 @@ const ESSENTIAL_URLS = [
 const EXISTING_URLS = [
     './js/main-improved.js',
     './js/data/planets-improved.js',
+    './js/controls/OrbitControls.js',
     './js/utils/math.js',
     './js/objects/sun.js',
     './js/objects/planet.js',
