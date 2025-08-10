@@ -1,4 +1,4 @@
-// פאנל מידע על כוכבי הלכת - מתוקן עם הצגת מידע מלאה
+// פאנל מידע על כוכבי הלכת - מתוקן עם שדה rotation
 class InfoPanel {
     constructor() {
         this.app = null;
@@ -12,7 +12,7 @@ class InfoPanel {
             planetName: null,
             planetPreview: null,
             closeButton: null,
-            planetData: null,
+            dataElements: new Map(),
             descriptionElement: null
         };
         
@@ -23,14 +23,15 @@ class InfoPanel {
                 angle: 0,
                 speed: 0.01,
                 active: false
-            }
+            },
+            planetElement: null
         };
         
         // הגדרות
         this.settings = {
             animationDuration: 400,
             autoHide: false,
-            showAdvancedData: true
+            showAdvancedData: false
         };
         
         this.isInitialized = false;
@@ -41,8 +42,8 @@ class InfoPanel {
         try {
             this.app = app;
             
-            // איתור או יצירת אלמנטים בDOM
-            this.findOrCreateDOMElements();
+            // איתור אלמנטים בDOM
+            this.findDOMElements();
             
             // הגדרת מאזיני אירועים
             this.setupEventListeners();
@@ -59,338 +60,111 @@ class InfoPanel {
         }
     }
 
-    // איתור או יצירת אלמנטים בDOM
-    findOrCreateDOMElements() {
-        // חיפוש אלמנט קיים
+    // איתור אלמנטים בDOM
+    findDOMElements() {
         this.elements.panel = document.getElementById('infoPanel');
+        this.elements.planetName = document.getElementById('planetName');
+        this.elements.planetPreview = document.getElementById('planetPreview');
+        this.elements.closeButton = document.querySelector('#infoPanel .close-btn');
+        this.elements.descriptionElement = document.getElementById('planetDescription');
         
-        // אם לא קיים, צור אחד חדש
+        // אלמנטי נתונים - תיקון: הוספת rotation
+        const dataIds = ['distance', 'diameter', 'mass', 'period', 'temperature', 'rotation'];
+        dataIds.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                this.elements.dataElements.set(id, element);
+            } else if (id === 'rotation') {
+                // יצירת אלמנט rotation אם לא קיים
+                console.log('Creating missing rotation element');
+                this.createRotationElement();
+            }
+        });
+        
         if (!this.elements.panel) {
+            console.warn('Info panel element not found - creating dynamically');
             this.createInfoPanel();
         }
-        
-        // איתור אלמנטים פנימיים
-        this.elements.planetName = this.elements.panel.querySelector('#planetName') || 
-                                  this.elements.panel.querySelector('.planet-name') ||
-                                  this.elements.panel.querySelector('h3');
-        
-        this.elements.planetPreview = this.elements.panel.querySelector('#planetPreview') || 
-                                     this.elements.panel.querySelector('.planet-image');
-        
-        this.elements.closeButton = this.elements.panel.querySelector('.close-btn') || 
-                                   this.elements.panel.querySelector('.close-button');
-        
-        this.elements.planetData = this.elements.panel.querySelector('.planet-data') || 
-                                  this.elements.panel.querySelector('.info-content');
-        
-        this.elements.descriptionElement = this.elements.panel.querySelector('#planetDescription') || 
-                                          this.elements.panel.querySelector('.planet-description');
-        
-        console.log('DOM elements found/created:', {
-            panel: !!this.elements.panel,
-            name: !!this.elements.planetName,
-            preview: !!this.elements.planetPreview,
-            close: !!this.elements.closeButton,
-            data: !!this.elements.planetData,
-            description: !!this.elements.descriptionElement
-        });
     }
 
-    // יצירת פאנל מידע חדש
+    // יצירת אלמנט rotation חסר
+    createRotationElement() {
+        const planetData = document.querySelector('.planet-data');
+        if (planetData) {
+            const rotationItem = document.createElement('div');
+            rotationItem.className = 'data-item';
+            rotationItem.innerHTML = `
+                <span class="data-label">תקופת סיבוב:</span>
+                <span id="rotation" class="data-value">-</span>
+            `;
+            planetData.appendChild(rotationItem);
+            
+            const rotationElement = document.getElementById('rotation');
+            if (rotationElement) {
+                this.elements.dataElements.set('rotation', rotationElement);
+            }
+        }
+    }
+
+    // יצירת פאנל מידע דינמי
     createInfoPanel() {
-        const infoPanel = document.createElement('div');
-        infoPanel.id = 'infoPanel';
-        infoPanel.className = 'info-panel hidden';
-        infoPanel.innerHTML = `
+        const panel = document.createElement('div');
+        panel.id = 'infoPanel';
+        panel.className = 'hidden';
+        panel.innerHTML = `
             <div class="info-header">
-                <h3 id="planetName" class="planet-name">מידע על כוכב הלכת</h3>
-                <button class="close-btn" aria-label="סגור">&times;</button>
+                <h3 id="planetName">מידע על כוכב הלכת</h3>
+                <button class="close-btn">&times;</button>
             </div>
             <div class="info-content">
-                <div id="planetPreview" class="planet-image">
-                    <div class="planet-sphere"></div>
-                </div>
+                <div id="planetPreview" class="planet-image"></div>
                 <div class="planet-data">
-                    <div class="data-section basic-data">
-                        <h4>נתונים בסיסיים</h4>
-                        <div class="data-grid">
-                            <div class="data-item">
-                                <span class="data-label">מרחק מהשמש:</span>
-                                <span id="distance" class="data-value">-</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">קוטר:</span>
-                                <span id="diameter" class="data-value">-</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">מסה:</span>
-                                <span id="mass" class="data-value">-</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">תקופת מסלול:</span>
-                                <span id="period" class="data-value">-</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">יום (סיבוב):</span>
-                                <span id="rotation" class="data-value">-</span>
-                            </div>
-                            <div class="data-item">
-                                <span class="data-label">טמפרטורה:</span>
-                                <span id="temperature" class="data-value">-</span>
-                            </div>
-                        </div>
+                    <div class="data-item">
+                        <span class="data-label">מרחק מהשמש:</span>
+                        <span id="distance" class="data-value">-</span>
                     </div>
-                    <div id="planetDescription" class="planet-description">
-                        <h4>תיאור</h4>
-                        <p></p>
+                    <div class="data-item">
+                        <span class="data-label">קוטר:</span>
+                        <span id="diameter" class="data-value">-</span>
                     </div>
-                    <div id="planetFacts" class="planet-facts">
-                        <h4>עובדות מעניינות</h4>
-                        <ul class="facts-list"></ul>
+                    <div class="data-item">
+                        <span class="data-label">מסה:</span>
+                        <span id="mass" class="data-value">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">תקופת מסלול:</span>
+                        <span id="period" class="data-value">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">טמפרטורה:</span>
+                        <span id="temperature" class="data-value">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">תקופת סיבוב:</span>
+                        <span id="rotation" class="data-value">-</span>
                     </div>
                 </div>
+                <div id="planetDescription" class="planet-description"></div>
             </div>
         `;
         
-        // הוספה לbody
-        document.body.appendChild(infoPanel);
-        this.elements.panel = infoPanel;
+        document.body.appendChild(panel);
         
-        // הוספת סגנונות בסיסיים אם לא קיימים
-        this.addBasicStyles();
+        // עדכון הפניות
+        this.elements.panel = panel;
+        this.elements.planetName = panel.querySelector('#planetName');
+        this.elements.planetPreview = panel.querySelector('#planetPreview');
+        this.elements.closeButton = panel.querySelector('.close-btn');
+        this.elements.descriptionElement = panel.querySelector('#planetDescription');
         
-        console.log('✅ Info panel created dynamically');
-    }
-
-    // הוספת סגנונות בסיסיים
-    addBasicStyles() {
-        const existingStyle = document.getElementById('info-panel-styles');
-        if (existingStyle) return;
-        
-        const style = document.createElement('style');
-        style.id = 'info-panel-styles';
-        style.textContent = `
-            .info-panel {
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                width: 500px;
-                max-width: 90vw;
-                max-height: 85vh;
-                background: rgba(0, 0, 0, 0.95);
-                border: 2px solid #ffd700;
-                border-radius: 15px;
-                z-index: 1500;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-                backdrop-filter: blur(20px);
-                overflow: hidden;
-                transition: all 0.3s ease;
-                font-family: 'Segoe UI', Arial, sans-serif;
-                direction: rtl;
-                text-align: right;
+        // עדכון אלמנטי נתונים
+        const dataIds = ['distance', 'diameter', 'mass', 'period', 'temperature', 'rotation'];
+        dataIds.forEach(id => {
+            const element = panel.querySelector(`#${id}`);
+            if (element) {
+                this.elements.dataElements.set(id, element);
             }
-            
-            .info-panel.hidden {
-                display: none;
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.8);
-            }
-            
-            .info-header {
-                background: linear-gradient(135deg, #1a1a2e, #0a0a0a);
-                padding: 20px;
-                border-bottom: 2px solid #ffd700;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            
-            .planet-name {
-                margin: 0;
-                color: #ffd700;
-                font-size: 24px;
-                font-weight: bold;
-                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-            }
-            
-            .close-btn {
-                background: none;
-                border: 2px solid #ffd700;
-                color: #ffd700;
-                width: 35px;
-                height: 35px;
-                border-radius: 50%;
-                cursor: pointer;
-                font-size: 18px;
-                font-weight: bold;
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .close-btn:hover {
-                background: rgba(255, 215, 0, 0.2);
-                transform: rotate(90deg) scale(1.1);
-            }
-            
-            .info-content {
-                padding: 20px;
-                max-height: calc(85vh - 100px);
-                overflow-y: auto;
-                color: white;
-            }
-            
-            .planet-image {
-                text-align: center;
-                margin-bottom: 20px;
-            }
-            
-            .planet-sphere {
-                width: 100px;
-                height: 100px;
-                margin: 0 auto;
-                border-radius: 50%;
-                background: linear-gradient(45deg, #333, #666);
-                box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-                animation: planetRotate 20s linear infinite;
-            }
-            
-            @keyframes planetRotate {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-            
-            .data-section {
-                margin-bottom: 20px;
-                padding: 15px;
-                background: rgba(255, 255, 255, 0.05);
-                border-radius: 10px;
-                border: 1px solid rgba(255, 215, 0, 0.2);
-            }
-            
-            .data-section h4 {
-                color: #ffd700;
-                margin: 0 0 15px 0;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            
-            .data-grid {
-                display: grid;
-                gap: 10px;
-            }
-            
-            .data-item {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 8px 0;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            
-            .data-item:last-child {
-                border-bottom: none;
-            }
-            
-            .data-label {
-                font-weight: bold;
-                color: #ffd700;
-                flex: 1;
-            }
-            
-            .data-value {
-                color: #ffffff;
-                flex: 1;
-                text-align: left;
-                direction: ltr;
-            }
-            
-            .planet-description {
-                margin-bottom: 20px;
-            }
-            
-            .planet-description h4 {
-                color: #ffd700;
-                margin: 0 0 10px 0;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            
-            .planet-description p {
-                line-height: 1.6;
-                color: #e0e0e0;
-                font-size: 14px;
-                text-align: justify;
-                margin: 0;
-            }
-            
-            .planet-facts {
-                background: rgba(255, 215, 0, 0.1);
-                border-radius: 10px;
-                padding: 15px;
-            }
-            
-            .planet-facts h4 {
-                color: #ffd700;
-                margin: 0 0 10px 0;
-                font-size: 16px;
-                font-weight: bold;
-            }
-            
-            .facts-list {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-            
-            .facts-list li {
-                padding: 8px 0;
-                position: relative;
-                padding-right: 20px;
-                color: #e0e0e0;
-                font-size: 13px;
-                line-height: 1.5;
-            }
-            
-            .facts-list li::before {
-                content: '★';
-                position: absolute;
-                right: 0;
-                color: #ffd700;
-                font-size: 12px;
-            }
-            
-            @media (max-width: 768px) {
-                .info-panel {
-                    width: 95vw;
-                    max-height: 90vh;
-                    top: 5vh;
-                    transform: translateX(-50%);
-                }
-                
-                .info-header {
-                    padding: 15px;
-                }
-                
-                .planet-name {
-                    font-size: 20px;
-                }
-                
-                .info-content {
-                    padding: 15px;
-                    max-height: calc(90vh - 80px);
-                }
-                
-                .planet-sphere {
-                    width: 80px;
-                    height: 80px;
-                }
-            }
-        `;
-        
-        document.head.appendChild(style);
+        });
     }
 
     // הגדרת מאזיני אירועים
@@ -422,6 +196,7 @@ class InfoPanel {
     // הכנת אנימציות
     setupAnimations() {
         if (this.elements.planetPreview) {
+            this.animations.planetElement = this.elements.planetPreview;
             this.animations.planetRotation = {
                 angle: 0,
                 speed: 0.01,
@@ -430,129 +205,215 @@ class InfoPanel {
         }
     }
 
-    // הצגת מידע על כוכב לכת - תיקון עיקרי
+    // הצגת מידע על כוכב לכת
     showPlanetInfo(planetName) {
-        if (!planetName || typeof PLANETS_DATA === 'undefined') {
-            console.warn('Cannot show planet info: missing data');
+        if (typeof PLANETS_DATA === 'undefined') {
+            console.error('PLANETS_DATA not found');
             return;
         }
         
         const planetData = PLANETS_DATA[planetName];
-        if (!planetData) {
-            console.warn(`Planet data not found for: ${planetName}`);
-            return;
-        }
+        if (!planetData || !this.elements.panel) return;
         
         this.currentPlanet = planetName;
-        
-        console.log(`Showing info for: ${planetName}`, planetData);
         
         // עדכון כותרת
         if (this.elements.planetName) {
             this.elements.planetName.textContent = planetData.name || planetName;
         }
         
-        // עדכון תצוגה מקדימה
-        this.updatePlanetPreview(planetName, planetData);
-        
-        // עדכון נתונים בסיסיים
-        this.updateBasicData(planetData);
+        // עדכון נתונים
+        this.updatePlanetData(planetData);
         
         // עדכון תיאור
         this.updateDescription(planetData);
         
-        // עדכון עובדות מעניינות
-        this.updateFacts(planetData);
+        // הוספת עובדות מעניינות
+        this.addInterestingFacts(planetData);
         
         // הצגת הפאנל
         this.show();
+        
+        console.log(`Displaying info for: ${planetName}`);
     }
 
-    // עדכון תצוגה מקדימה של כוכב הלכת
-    updatePlanetPreview(planetName, planetData) {
-        if (!this.elements.planetPreview) return;
+    // עדכון נתוני כוכב הלכת - תיקון
+    updatePlanetData(planetData) {
+        // עדכון מרחק
+        const distanceEl = this.elements.dataElements.get('distance');
+        if (distanceEl && planetData.distance) {
+            distanceEl.textContent = this.formatDistance(planetData.distance);
+        } else if (distanceEl) {
+            distanceEl.textContent = 'לא זמין';
+        }
         
-        const sphere = this.elements.planetPreview.querySelector('.planet-sphere');
-        if (sphere) {
-            // צבע לפי כוכב הלכת
-            const colors = {
-                sun: 'radial-gradient(circle at 30% 30%, #FFD700, #FF8C00)',
-                mercury: 'radial-gradient(circle at 30% 30%, #8C7853, #6C5833)',
-                venus: 'radial-gradient(circle at 30% 30%, #FFC649, #E6A629)',
-                earth: 'radial-gradient(circle at 30% 30%, #4F94CD, #1E6BA8)',
-                mars: 'radial-gradient(circle at 30% 30%, #CD5C5C, #AD3C3C)',
-                jupiter: 'radial-gradient(circle at 30% 30%, #D2691E, #B24905)',
-                saturn: 'radial-gradient(circle at 30% 30%, #FAD5A5, #DAB585)',
-                uranus: 'radial-gradient(circle at 30% 30%, #4FD0E7, #2FB0C7)',
-                neptune: 'radial-gradient(circle at 30% 30%, #4169E1, #2149C1)'
-            };
-            
-            sphere.style.background = colors[planetName] || colors.earth;
-            sphere.style.boxShadow = `0 0 20px ${planetData.color || '#ffd700'}33`;
+        // עדכון קוטר
+        const diameterEl = this.elements.dataElements.get('diameter');
+        if (diameterEl && planetData.radius) {
+            diameterEl.textContent = this.formatDiameter(planetData.radius * 2);
+        } else if (diameterEl) {
+            diameterEl.textContent = 'לא זמין';
+        }
+        
+        // עדכון מסה
+        const massEl = this.elements.dataElements.get('mass');
+        if (massEl && planetData.mass) {
+            massEl.textContent = this.formatMass(planetData.mass);
+        } else if (massEl) {
+            massEl.textContent = 'לא זמין';
+        }
+        
+        // עדכון תקופת מסלול
+        const periodEl = this.elements.dataElements.get('period');
+        if (periodEl && planetData.orbitalPeriod) {
+            periodEl.textContent = this.formatPeriod(planetData.orbitalPeriod);
+        } else if (periodEl) {
+            periodEl.textContent = 'לא זמין';
+        }
+        
+        // עדכון טמפרטורה
+        const tempEl = this.elements.dataElements.get('temperature');
+        if (tempEl && planetData.temperature) {
+            tempEl.textContent = this.formatTemperature(planetData.temperature);
+        } else if (tempEl) {
+            tempEl.textContent = 'לא זמין';
+        }
+        
+        // תיקון: עדכון תקופת סיבוב
+        const rotationEl = this.elements.dataElements.get('rotation');
+        if (rotationEl && planetData.rotationPeriod !== undefined) {
+            rotationEl.textContent = this.formatRotationPeriod(planetData.rotationPeriod);
+        } else if (rotationEl) {
+            rotationEl.textContent = 'לא זמין';
+        }
+        
+        // נתונים מתקדמים (אם מופעלים)
+        if (this.settings.showAdvancedData) {
+            this.updateAdvancedData(planetData);
         }
     }
 
-    // עדכון נתונים בסיסיים - תיקון עיקרי
-    updateBasicData(planetData) {
-        const dataElements = {
-            distance: this.formatDistance(planetData.distance),
-            diameter: this.formatDiameter(planetData.radius ? planetData.radius * 2 : null),
-            mass: this.formatMass(planetData.mass),
-            period: this.formatPeriod(planetData.orbitalPeriod),
-            rotation: this.formatRotation(planetData.rotationPeriod),
-            temperature: this.formatTemperature(planetData.temperature)
-        };
+    // פורמט תקופת סיבוב
+    formatRotationPeriod(period) {
+        if (period === undefined || period === null) return 'לא זמין';
         
-        // עדכון כל שדה
-        Object.entries(dataElements).forEach(([id, value]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = value || 'לא זמין';
-            } else {
-                console.warn(`Element not found: ${id}`);
+        const absPeriod = Math.abs(period);
+        
+        if (absPeriod < 1) {
+            const hours = absPeriod * 24;
+            return `${hours.toFixed(1)} שעות`;
+        } else {
+            const direction = period < 0 ? ' (הפוך)' : '';
+            return `${absPeriod.toFixed(1)} ימים${direction}`;
+        }
+    }
+
+    // עדכון נתונים מתקדמים
+    updateAdvancedData(planetData) {
+        let advancedSection = this.elements.panel.querySelector('.advanced-data');
+        
+        if (!advancedSection) {
+            advancedSection = document.createElement('div');
+            advancedSection.className = 'advanced-data';
+            advancedSection.innerHTML = `
+                <h4>נתונים מתקדמים</h4>
+                <div class="advanced-data-grid">
+                    <div class="data-item">
+                        <span class="label">כבידה:</span>
+                        <span class="value" id="gravity">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">מהירות בריחה:</span>
+                        <span class="value" id="escapeVelocity">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">צפיפות:</span>
+                        <span class="value" id="density">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">ירחים:</span>
+                        <span class="value" id="moons">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">אקסצנטריות:</span>
+                        <span class="value" id="eccentricity">-</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">נטיית ציר:</span>
+                        <span class="value" id="axialTilt">-</span>
+                    </div>
+                </div>
+            `;
+            
+            const infoContent = this.elements.panel.querySelector('.info-content');
+            if (infoContent) {
+                infoContent.appendChild(advancedSection);
             }
-        });
+        }
         
-        console.log('Updated basic data:', dataElements);
+        // חישוב ועדכון נתונים מתקדמים
+        const gravity = this.calculateSurfaceGravity(planetData);
+        const escapeVel = this.calculateEscapeVelocity(planetData);
+        const density = this.calculateDensity(planetData);
+        
+        // עדכון ערכים
+        const gravityEl = advancedSection.querySelector('#gravity');
+        const escapeVelEl = advancedSection.querySelector('#escapeVelocity');
+        const densityEl = advancedSection.querySelector('#density');
+        const moonsEl = advancedSection.querySelector('#moons');
+        const eccentricityEl = advancedSection.querySelector('#eccentricity');
+        const axialTiltEl = advancedSection.querySelector('#axialTilt');
+        
+        if (gravityEl) gravityEl.textContent = gravity ? `${gravity.toFixed(1)} m/s²` : 'לא זמין';
+        if (escapeVelEl) escapeVelEl.textContent = escapeVel ? `${(escapeVel/1000).toFixed(1)} km/s` : 'לא זמין';
+        if (densityEl) densityEl.textContent = density ? `${density.toFixed(2)} g/cm³` : 'לא זמין';
+        if (moonsEl) moonsEl.textContent = planetData.moons || planetData.moonCount || '0';
+        if (eccentricityEl) eccentricityEl.textContent = planetData.eccentricity ? planetData.eccentricity.toFixed(4) : 'לא זמין';
+        if (axialTiltEl) axialTiltEl.textContent = planetData.axialTilt ? `${planetData.axialTilt.toFixed(1)}°` : 'לא זמין';
+    }
+
+    // חישוב כבידת פני השטח
+    calculateSurfaceGravity(planetData) {
+        if (!planetData.mass || !planetData.radius) return null;
+        
+        const G = 6.67430e-11;
+        const mass = planetData.mass;
+        const radius = planetData.radius * 1000;
+        
+        return (G * mass) / (radius * radius);
+    }
+
+    // חישוב מהירות בריחה
+    calculateEscapeVelocity(planetData) {
+        if (!planetData.mass || !planetData.radius) return null;
+        
+        const G = 6.67430e-11;
+        const mass = planetData.mass;
+        const radius = planetData.radius * 1000;
+        
+        return Math.sqrt(2 * G * mass / radius);
+    }
+
+    // חישוב צפיפות
+    calculateDensity(planetData) {
+        if (!planetData.mass || !planetData.radius) return null;
+        
+        const volume = (4/3) * Math.PI * Math.pow(planetData.radius * 1000, 3);
+        return (planetData.mass / volume) / 1000;
     }
 
     // עדכון תיאור
     updateDescription(planetData) {
-        const descElement = this.elements.descriptionElement;
-        if (descElement && planetData.description) {
-            const p = descElement.querySelector('p');
-            if (p) {
-                p.textContent = planetData.description;
-            } else {
-                descElement.innerHTML = `<h4>תיאור</h4><p>${planetData.description}</p>`;
-            }
+        if (this.elements.descriptionElement && planetData.description) {
+            this.elements.descriptionElement.innerHTML = `<p>${planetData.description}</p>`;
         }
     }
 
-    // עדכון עובדות מעניינות
-    updateFacts(planetData) {
-        const factsElement = document.getElementById('planetFacts');
-        if (factsElement && planetData.facts && Array.isArray(planetData.facts)) {
-            const factsList = factsElement.querySelector('.facts-list');
-            if (factsList) {
-                factsList.innerHTML = '';
-                
-                planetData.facts.forEach(fact => {
-                    const listItem = document.createElement('li');
-                    listItem.textContent = fact;
-                    factsList.appendChild(listItem);
-                });
-            }
-        }
-    }
-
-    // פונקציות עיצוב נתונים - משופרות
+    // פונקציות עיצוב נתונים
     formatDistance(distance) {
-        if (!distance) return 'לא זמין';
-        
         if (distance < 1) {
             return `${(distance * 1000).toFixed(0)} אלף ק"מ`;
-        } else if (distance < 1000) {
+        } else if (distance < 100) {
             return `${distance.toFixed(1)} מיליון ק"מ`;
         } else {
             return `${(distance / 1000).toFixed(2)} מיליארד ק"מ`;
@@ -560,20 +421,17 @@ class InfoPanel {
     }
 
     formatDiameter(diameter) {
-        if (!diameter) return 'לא זמין';
-        return `${diameter.toLocaleString()} ק"מ`;
+        return `${diameter.toLocaleString('he-IL')} ק"מ`;
     }
 
     formatMass(mass) {
-        if (!mass) return 'לא זמין';
-        
         const earthMass = 5.972e24;
         const relativeToEarth = mass / earthMass;
         
         if (relativeToEarth < 0.01) {
-            return `${(relativeToEarth * 1000).toFixed(2)} אלפיות ממסת כדור הארץ`;
+            return `${(relativeToEarth * 100).toFixed(2)}% ממסת כדור הארץ`;
         } else if (relativeToEarth < 0.1) {
-            return `${relativeToEarth.toFixed(3)} ממסת כדור הארץ`;
+            return `${relativeToEarth.toFixed(3)} מסות כדור הארץ`;
         } else if (relativeToEarth < 10) {
             return `${relativeToEarth.toFixed(1)} מסות כדור הארץ`;
         } else {
@@ -582,44 +440,21 @@ class InfoPanel {
     }
 
     formatPeriod(period) {
-        if (!period) return 'לא זמין';
-        
         if (period < 1) {
-            return `${(period * 365).toFixed(0)} ימים`;
-        } else if (period < 2) {
+            return `${(period * 365.25).toFixed(0)} ימים`;
+        } else if (period < 10) {
             return `${period.toFixed(2)} שנות כדור הארץ`;
         } else {
             return `${period.toFixed(1)} שנות כדור הארץ`;
         }
     }
 
-    formatRotation(rotationPeriod) {
-        if (!rotationPeriod) return 'לא זמין';
-        
-        const absPeriod = Math.abs(rotationPeriod);
-        const direction = rotationPeriod < 0 ? ' (הפוך)' : '';
-        
-        if (absPeriod < 1) {
-            const hours = absPeriod * 24;
-            return `${hours.toFixed(1)} שעות${direction}`;
-        } else if (absPeriod < 7) {
-            return `${absPeriod.toFixed(1)} ימים${direction}`;
-        } else {
-            return `${absPeriod.toFixed(0)} ימים${direction}`;
-        }
-    }
-
     formatTemperature(temp) {
-        if (!temp) return 'לא זמין';
-        
         if (typeof temp === 'number') {
             return `${temp}°C`;
         } else if (typeof temp === 'object') {
             if (temp.avg !== undefined) return `${temp.avg}°C ממוצע`;
             if (temp.surface !== undefined) return `${temp.surface}°C פני השטח`;
-            if (temp.day !== undefined && temp.night !== undefined) {
-                return `${temp.day}°C ביום, ${temp.night}°C בלילה`;
-            }
             if (temp.min !== undefined && temp.max !== undefined) {
                 return `${temp.min}°C עד ${temp.max}°C`;
             }
@@ -627,12 +462,38 @@ class InfoPanel {
         return 'לא ידוע';
     }
 
+    // הוספת עובדות מעניינות
+    addInterestingFacts(planetData) {
+        if (!planetData.facts || !Array.isArray(planetData.facts)) return;
+        
+        let factsSection = this.elements.panel.querySelector('.interesting-facts');
+        
+        if (!factsSection) {
+            factsSection = document.createElement('div');
+            factsSection.className = 'interesting-facts';
+            factsSection.innerHTML = '<h4>עובדות מעניינות</h4><ul class="facts-list"></ul>';
+            
+            const infoContent = this.elements.panel.querySelector('.info-content');
+            if (infoContent) {
+                infoContent.appendChild(factsSection);
+            }
+        }
+        
+        const factsList = factsSection.querySelector('.facts-list');
+        factsList.innerHTML = '';
+        
+        // הצגת עד 5 עובדות
+        const factsToShow = planetData.facts.slice(0, 5);
+        factsToShow.forEach(fact => {
+            const factItem = document.createElement('li');
+            factItem.textContent = fact;
+            factsList.appendChild(factItem);
+        });
+    }
+
     // הצגת הפאנל
     show() {
-        if (!this.elements.panel) {
-            console.error('Cannot show panel: element not found');
-            return;
-        }
+        if (!this.elements.panel || this.isVisible) return;
         
         this.isVisible = true;
         this.elements.panel.classList.remove('hidden');
@@ -640,7 +501,8 @@ class InfoPanel {
         // אנימציית כניסה
         this.animateShow();
         
-        console.log('Info panel shown');
+        // התחלת אנימציית כוכב הלכת
+        this.startPlanetAnimation();
     }
 
     // הסתרת הפאנל
@@ -652,15 +514,15 @@ class InfoPanel {
         // אנימציית יציאה
         this.animateHide();
         
+        // עצירת אנימציות
+        this.stopPlanetAnimation();
+        
         // ניקוי מצב
         this.currentPlanet = null;
         
-        // הודעה לאפליקציה
         if (this.app && typeof this.app.deselectPlanet === 'function') {
             this.app.deselectPlanet();
         }
-        
-        console.log('Info panel hidden');
     }
 
     // אנימציית הצגה
@@ -668,7 +530,8 @@ class InfoPanel {
         if (!this.elements.panel) return;
         
         this.elements.panel.style.opacity = '0';
-        this.elements.panel.style.transform = 'translate(-50%, -60%) scale(0.8)';
+        this.elements.panel.style.transform = 'translate(-50%, -50%) scale(0.8)';
+        
         this.elements.panel.style.transition = `all ${this.settings.animationDuration}ms cubic-bezier(0.175, 0.885, 0.32, 1.275)`;
         
         requestAnimationFrame(() => {
@@ -683,7 +546,7 @@ class InfoPanel {
         
         this.elements.panel.style.transition = `all ${this.settings.animationDuration}ms ease-in`;
         this.elements.panel.style.opacity = '0';
-        this.elements.panel.style.transform = 'translate(-50%, -60%) scale(0.8)';
+        this.elements.panel.style.transform = 'translate(-50%, -50%) scale(0.8)';
         
         setTimeout(() => {
             this.elements.panel.classList.add('hidden');
@@ -692,18 +555,58 @@ class InfoPanel {
         }, this.settings.animationDuration);
     }
 
+    // התחלת אנימציית כוכב הלכת
+    startPlanetAnimation() {
+        if (!this.animations.planetRotation || !this.animations.planetElement) return;
+        
+        this.animations.planetRotation.active = true;
+        this.updatePlanetAnimation();
+    }
+
+    // עצירת אנימציית כוכב הלכת
+    stopPlanetAnimation() {
+        if (this.animations.planetRotation) {
+            this.animations.planetRotation.active = false;
+        }
+    }
+
+    // עדכון אנימציית כוכב הלכת
+    updatePlanetAnimation() {
+        if (!this.animations.planetRotation.active || !this.animations.planetElement) return;
+        
+        this.animations.planetRotation.angle += this.animations.planetRotation.speed;
+        
+        this.animations.planetElement.style.transform = `rotate(${this.animations.planetRotation.angle}rad)`;
+        
+        requestAnimationFrame(() => this.updatePlanetAnimation());
+    }
+
+    // הגדלת/הקטנת פאנל
+    toggleSize() {
+        if (!this.elements.panel) return;
+        
+        this.elements.panel.classList.toggle('expanded');
+        
+        if (this.elements.panel.classList.contains('expanded')) {
+            this.settings.showAdvancedData = true;
+            this.updatePlanetContent(PLANETS_DATA[this.currentPlanet]);
+        } else {
+            this.settings.showAdvancedData = false;
+            const advancedSections = this.elements.panel.querySelectorAll('.advanced-data, .interesting-facts, .earth-comparison, .moons-info');
+            advancedSections.forEach(section => section.remove());
+        }
+    }
+
+    // עדכון תוכן כוכב הלכת
+    updatePlanetContent(planetData) {
+        if (!planetData) return;
+        
+        console.log('Updating planet content for:', planetData.name);
+    }
+
     // עדכון מתמיד
     update(deltaTime) {
-        // כאן ניתן להוסיף אנימציות נוספות
-    }
-
-    // פונקציות נוספות לתאימות
-    onPlanetSelected(planetName) {
-        this.showPlanetInfo(planetName);
-    }
-
-    onPlanetDeselected() {
-        this.hide();
+        // האנימציה כבר רצה ב-requestAnimationFrame
     }
 
     // קבלת מידע על מצב הפאנל
@@ -715,16 +618,34 @@ class InfoPanel {
         };
     }
 
+    // שמירה וטעינה של הגדרות
+    saveSettings() {
+        return {
+            showAdvancedData: this.settings.showAdvancedData,
+            autoHide: this.settings.autoHide
+        };
+    }
+
+    loadSettings(settings) {
+        if (settings) {
+            Object.assign(this.settings, settings);
+        }
+    }
+
     // ניקוי משאבים
     dispose() {
-        // הסרת מאזיני אירועים
+        this.stopPlanetAnimation();
+        
         if (this.elements.closeButton) {
             this.elements.closeButton.removeEventListener('click', this.hide);
         }
         
-        // ניקוי רפרנסים
         Object.keys(this.elements).forEach(key => {
-            this.elements[key] = null;
+            if (key === 'dataElements') {
+                this.elements[key].clear();
+            } else {
+                this.elements[key] = null;
+            }
         });
         
         this.currentPlanet = null;
@@ -743,4 +664,3 @@ if (typeof module !== 'undefined' && module.exports) {
 // הפוך את המחלקה זמינה גלובלית
 if (typeof window !== 'undefined') {
     window.InfoPanel = InfoPanel;
-}
