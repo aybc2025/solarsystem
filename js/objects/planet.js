@@ -1,4 +1,4 @@
-// אובייקט כוכב לכת גנרי במערכת השמש - מתוקן עם גדלים נכונים
+// אובייקט כוכב לכת גנרי במערכת השמש - מתוקן עם תנועה אליפטית
 class SolarSystemPlanet {
     constructor(planetName) {
         this.name = planetName;
@@ -8,7 +8,6 @@ class SolarSystemPlanet {
         if (typeof PLANETS_DATA !== 'undefined' && PLANETS_DATA[planetName]) {
             this.data = PLANETS_DATA[planetName];
         } else {
-            // נתונים בסיסיים כחלופה עם נתונים מדויקים
             this.data = this.getAccuratePlanetData(planetName);
         }
         
@@ -32,20 +31,26 @@ class SolarSystemPlanet {
             aurorae: null
         };
         
-        // פרמטרי מסלול
+        // פרמטרי מסלול אליפטיים
         this.orbital = {
-            radius: 0,
+            semiMajorAxis: this.data.scaledDistance || 100,
+            eccentricity: this.data.eccentricity || 0,
+            inclination: (this.data.inclination || 0) * Math.PI / 180,
             speed: 0,
-            angle: Math.random() * Math.PI * 2, // זווית התחלה אקראית
-            inclination: 0,
-            eccentricity: 0,
+            meanAnomaly: Math.random() * Math.PI * 2,
+            eccentricAnomaly: 0,
+            trueAnomaly: 0,
+            radius: 0, // מרחק נוכחי מהשמש
             rotationSpeed: 0
         };
         
+        // חישוב מהירות מסלול
+        this.orbital.speed = Math.sqrt(1 / this.orbital.semiMajorAxis) * 0.001;
+        
         // הגדרות ויזואליות
         this.settings = {
-            radius: this.data.scaledRadius || 1, // **תיקון: שימוש ב-scaledRadius מהנתונים**
-            segments: 64, // **תיקון: הגדלה מ-32 ל-64 לתצוגה חלקה יותר**
+            radius: this.data.scaledRadius || 1,
+            segments: 64,
             atmosphereEnabled: false,
             cloudsEnabled: false,
             ringsEnabled: false,
@@ -87,7 +92,7 @@ class SolarSystemPlanet {
             await this.setupSpecialEffects();
             
             this.isInitialized = true;
-            console.log(`✅ Planet ${this.name} initialized successfully`);
+            console.log(`✅ Planet ${this.name} initialized with elliptical orbit`);
             
         } catch (error) {
             console.error(`❌ Failed to initialize planet ${this.name}:`, error);
@@ -95,34 +100,31 @@ class SolarSystemPlanet {
         }
     }
 
-    // הגדרת פרמטרי מסלול
+    // הגדרת פרמטרי מסלול אליפטיים
     setupOrbitalParameters() {
-        this.orbital.radius = this.data.scaledDistance || 100;
-        
         // חישוב מהירות מסלול לפי חוק קפלר השלישי
-        this.orbital.speed = Math.sqrt(1 / this.orbital.radius) * 0.001;
+        this.orbital.speed = Math.sqrt(1 / this.orbital.semiMajorAxis) * 0.001;
         
         // מהירות סיבוב עצמי
         this.orbital.rotationSpeed = this.data.rotationPeriod ? 
             (2 * Math.PI) / (Math.abs(this.data.rotationPeriod) * 60) : 0.01;
         
-        // פרמטרים מתקדמים
-        this.orbital.inclination = (this.data.inclination || 0) * Math.PI / 180;
-        this.orbital.eccentricity = this.data.eccentricity || 0;
-        
         // זווית התחלה מהנתונים
         const initialPos = INITIAL_POSITIONS[this.name];
         if (initialPos) {
-            this.orbital.angle = initialPos.angle;
+            this.orbital.meanAnomaly = initialPos.angle;
         }
+        
+        // חישוב מיקום התחלתי
+        this.updateOrbitalElements(0);
     }
 
     // יצירת רכיבים ויזואליים
     async createVisualComponents() {
         // יצירת גיאומטריה עם רזולוציה גבוהה
         this.geometry = new THREE.SphereGeometry(
-            this.settings.radius, // **שימוש ברדיוס המתוקן**
-            this.settings.segments, // **רזולוציה גבוהה**
+            this.settings.radius,
+            this.settings.segments,
             this.settings.segments / 2
         );
         
@@ -135,7 +137,7 @@ class SolarSystemPlanet {
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
         
-        // **הוספה: userData לזיהוי לחיצות**
+        // userData לזיהוי לחיצות
         this.mesh.userData = {
             planetName: this.name,
             data: this.data,
@@ -148,7 +150,7 @@ class SolarSystemPlanet {
         console.log(`Created visual components for ${this.name} with radius ${this.settings.radius}`);
     }
 
-    // יצירת חומר בסיסי
+    // יצירת חומר בסיסי - תיקון: ללא shininess ב-MeshLambertMaterial
     async createBasicMaterial() {
         const materialOptions = {
             color: this.data.color || 0x888888,
@@ -172,14 +174,15 @@ class SolarSystemPlanet {
                 break;
                 
             case 'earth':
-                // שילוב של ים ויבשה
-                materialOptions.shininess = 30;
-                this.material = new THREE.MeshPhongMaterial(materialOptions);
+                // שילוב של ים ויבשה - תיקון: שימוש ב-MeshPhongMaterial עבור shininess
+                this.material = new THREE.MeshPhongMaterial({
+                    ...materialOptions,
+                    shininess: 30
+                });
                 break;
                 
             case 'mars':
-                // משטח מאובק
-                materialOptions.roughness = 0.9;
+                // משטח מאובק - תיקון: ללא roughness
                 this.material = new THREE.MeshLambertMaterial(materialOptions);
                 break;
                 
@@ -187,9 +190,11 @@ class SolarSystemPlanet {
             case 'saturn':
             case 'uranus':
             case 'neptune':
-                // ענקי גז עם בנדות
-                materialOptions.shininess = 10;
-                this.material = new THREE.MeshPhongMaterial(materialOptions);
+                // ענקי גז עם בנדות - תיקון: שימוש ב-MeshPhongMaterial
+                this.material = new THREE.MeshPhongMaterial({
+                    ...materialOptions,
+                    shininess: 10
+                });
                 break;
                 
             default:
@@ -354,13 +359,55 @@ class SolarSystemPlanet {
         return mesh;
     }
 
+    // עדכון אלמנטים אורביטליים - משוואת קפלר
+    updateOrbitalElements(deltaTime) {
+        // עדכון Mean Anomaly
+        this.orbital.meanAnomaly += this.orbital.speed * deltaTime;
+        this.orbital.meanAnomaly = this.orbital.meanAnomaly % (2 * Math.PI);
+        
+        // פתרון משוואת קפלר לEccentric Anomaly
+        this.orbital.eccentricAnomaly = this.solveKeplerEquation(
+            this.orbital.meanAnomaly, 
+            this.orbital.eccentricity
+        );
+        
+        // חישוב True Anomaly
+        const E = this.orbital.eccentricAnomaly;
+        const e = this.orbital.eccentricity;
+        
+        const sinE = Math.sin(E);
+        const cosE = Math.cos(E);
+        
+        const beta = e / (1 + Math.sqrt(1 - e * e));
+        this.orbital.trueAnomaly = E + 2 * Math.atan2(beta * sinE, 1 - beta * cosE);
+        
+        // חישוב מרחק מהשמש
+        this.orbital.radius = this.orbital.semiMajorAxis * (1 - e * cosE);
+    }
+
+    // פתרון משוואת קפלר בשיטת ניוטון-רפסון
+    solveKeplerEquation(M, e, tolerance = 1e-6) {
+        let E = M; // ניחוש ראשוני
+        let delta = 1;
+        let iterations = 0;
+        const maxIterations = 50;
+        
+        while (Math.abs(delta) > tolerance && iterations < maxIterations) {
+            delta = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+            E -= delta;
+            iterations++;
+        }
+        
+        return E;
+    }
+
     // עדכון כוכב הלכת בלולאת האנימציה
     update(deltaTime) {
         if (!this.isInitialized) return;
         
         this.animation.time += deltaTime;
         
-        // עדכון מיקום במסלול
+        // עדכון מיקום במסלול אליפטי
         this.updateOrbitalPosition(deltaTime);
         
         // עדכון סיבוב עצמי
@@ -370,20 +417,20 @@ class SolarSystemPlanet {
         this.updateEffects(deltaTime);
     }
 
-    // עדכון מיקום במסלול
+    // עדכון מיקום במסלול אליפטי
     updateOrbitalPosition(deltaTime) {
-        // עדכון זווית המסלול
-        this.orbital.angle += this.orbital.speed * deltaTime * 0.001;
+        // עדכון אלמנטים אורביטליים
+        this.updateOrbitalElements(deltaTime);
         
-        // חישוב מיקום עם אקסצנטריות
-        const eccentricAnomaly = this.orbital.angle;
-        const trueAnomaly = eccentricAnomaly + this.orbital.eccentricity * Math.sin(eccentricAnomaly);
+        // חישוב מיקום בקרטזי
+        const r = this.orbital.radius;
+        const nu = this.orbital.trueAnomaly;
+        const i = this.orbital.inclination;
         
-        // מיקום במסלול
-        const distance = this.orbital.radius * (1 - this.orbital.eccentricity * Math.cos(eccentricAnomaly));
-        const x = Math.cos(trueAnomaly) * distance;
-        const z = Math.sin(trueAnomaly) * distance;
-        const y = Math.sin(trueAnomaly) * Math.sin(this.orbital.inclination) * distance * 0.1;
+        // מיקום במישור המסלול
+        const x = r * Math.cos(nu);
+        const z = r * Math.sin(nu);
+        const y = r * Math.sin(nu) * Math.sin(i) * 0.1; // נטייה קלה
         
         this.group.position.set(x, y, z);
     }
@@ -393,12 +440,12 @@ class SolarSystemPlanet {
         this.animation.rotationAngle += this.orbital.rotationSpeed * deltaTime;
         
         if (this.mesh) {
-            this.mesh.rotation.y = this.animation.rotationAngle;
-        }
-        
-        // סיבוב הפוך לוונוס ואורנוס
-        if (this.name === 'venus' || this.data.rotationPeriod < 0) {
-            this.mesh.rotation.y = -this.animation.rotationAngle;
+            // סיבוב הפוך לוונוס ואורנוס
+            if (this.name === 'venus' || this.data.rotationPeriod < 0) {
+                this.mesh.rotation.y = -this.animation.rotationAngle;
+            } else {
+                this.mesh.rotation.y = this.animation.rotationAngle;
+            }
         }
     }
 
@@ -429,81 +476,97 @@ class SolarSystemPlanet {
             mercury: {
                 name: 'כוכב חמה',
                 radius: 2439.7,
-                scaledRadius: 4, // **תיקון: גודל גדול יותר**
+                scaledRadius: 4,
                 scaledDistance: 25,
                 color: 0x8C7853,
                 orbitalPeriod: 87.969,
                 rotationPeriod: 58.646,
+                eccentricity: 0.2056,
+                inclination: 7.00,
                 description: 'הכוכב הקרוב ביותר לשמש'
             },
             venus: {
                 name: 'נוגה',
                 radius: 6051.8,
-                scaledRadius: 6, // **תיקון: גודל גדול יותר**
+                scaledRadius: 6,
                 scaledDistance: 45,
                 color: 0xFFC649,
                 orbitalPeriod: 224.701,
                 rotationPeriod: -243.025,
+                eccentricity: 0.0067,
+                inclination: 3.39,
                 description: 'הכוכב החם ביותר במערכת השמש'
             },
             earth: {
                 name: 'כדור הארץ',
                 radius: 6371,
-                scaledRadius: 6, // **תיקון: גודל גדול יותר**
+                scaledRadius: 6,
                 scaledDistance: 65,
                 color: 0x6B93D6,
                 orbitalPeriod: 365.256,
                 rotationPeriod: 0.99726968,
+                eccentricity: 0.0167,
+                inclination: 0.00,
                 description: 'הכוכב היחיד עם חיים'
             },
             mars: {
                 name: 'מאדים',
                 radius: 3389.5,
-                scaledRadius: 5, // **תיקון: גודל גדול יותר**
+                scaledRadius: 5,
                 scaledDistance: 90,
                 color: 0xCD5C5C,
                 orbitalPeriod: 686.971,
                 rotationPeriod: 1.025957,
+                eccentricity: 0.0935,
+                inclination: 1.85,
                 description: 'הכוכב האדום'
             },
             jupiter: {
                 name: 'צדק',
                 radius: 69911,
-                scaledRadius: 14, // **תיקון: גודל גדול יותר**
+                scaledRadius: 14,
                 scaledDistance: 200,
                 color: 0xD8CA9D,
                 orbitalPeriod: 4332.59,
                 rotationPeriod: 0.41354,
+                eccentricity: 0.0489,
+                inclination: 1.30,
                 description: 'ענק הגז הגדול ביותר'
             },
             saturn: {
                 name: 'שבתאי',
                 radius: 58232,
-                scaledRadius: 12, // **תיקון: גודל גדול יותר**
+                scaledRadius: 12,
                 scaledDistance: 280,
                 color: 0xFAD5A5,
                 orbitalPeriod: 10747.0,
                 rotationPeriod: 0.43958,
+                eccentricity: 0.0565,
+                inclination: 2.49,
                 description: 'מפורסם בטבעות המרהיבות'
             },
             uranus: {
                 name: 'אורנוס',
                 radius: 25362,
-                scaledRadius: 9, // **תיקון: גודל גדול יותר**
+                scaledRadius: 9,
                 scaledDistance: 400,
                 color: 0x4FD0E7,
                 orbitalPeriod: 30588.0,
                 rotationPeriod: -0.71833,
+                eccentricity: 0.0444,
+                inclination: 0.77,
                 description: 'מסתובב על הצד'
             },
             neptune: {
                 name: 'נפטון',
                 radius: 24622,
-                scaledRadius: 8, // **תיקון: גודל גדול יותר**
+                scaledRadius: 8,
                 scaledDistance: 500,
                 color: 0x4B70DD,
                 orbitalPeriod: 60182.0,
                 rotationPeriod: 0.6713,
+                eccentricity: 0.0113,
+                inclination: 1.77,
                 description: 'הכוכב הרחוק ביותר'
             }
         };
@@ -518,7 +581,7 @@ class SolarSystemPlanet {
 
     // קבלת מרחק מהשמש
     getDistanceFromSun() {
-        return this.group.position.length();
+        return this.orbital.radius;
     }
 
     // קבלת מהירות נוכחית
@@ -602,10 +665,12 @@ class SolarSystemPlanet {
                     this.data.mass / (4/3 * Math.PI * Math.pow(this.data.radius * 1000, 3)) : null
             },
             orbitalData: {
-                distance: this.data.distance,
+                semiMajorAxis: this.orbital.semiMajorAxis,
+                eccentricity: this.orbital.eccentricity,
+                currentDistance: this.orbital.radius,
                 period: this.data.orbitalPeriod,
-                eccentricity: this.data.eccentricity,
-                inclination: this.data.inclination
+                inclination: this.data.inclination,
+                trueAnomaly: this.orbital.trueAnomaly * 180 / Math.PI
             },
             rotationalData: {
                 period: this.data.rotationPeriod,
@@ -649,13 +714,12 @@ class SolarSystemPlanet {
         }
     }
 
-    // **הוספה: קבלת mesh לצורכי raycasting**
+    // קבלת mesh לצורכי raycasting
     getMeshForRaycasting() {
-        // החזרת mesh הראשי לזיהוי לחיצות
         return this.mesh || this.group;
     }
 
-    // **הוספה: בדיקה אם נקודה נמצאת על כוכב הלכת**
+    // בדיקה אם נקודה נמצאת על כוכב הלכת
     containsPoint(point) {
         if (!this.mesh) return false;
         
@@ -663,7 +727,7 @@ class SolarSystemPlanet {
         return distance <= this.settings.radius;
     }
 
-    // **הוספה: קבלת מרחק מנקודה**
+    // קבלת מרחק מנקודה
     distanceTo(point) {
         if (!this.mesh) return Infinity;
         return this.mesh.position.distanceTo(point);
@@ -673,7 +737,8 @@ class SolarSystemPlanet {
     resetToInitialPosition() {
         const initialPos = INITIAL_POSITIONS[this.name];
         if (initialPos) {
-            this.orbital.angle = initialPos.angle;
+            this.orbital.meanAnomaly = initialPos.angle;
+            this.updateOrbitalElements(0);
             this.updateOrbitalPosition(0);
         }
     }
@@ -684,7 +749,7 @@ class SolarSystemPlanet {
             name: this.name,
             position: this.group.position.clone(),
             rotation: this.mesh ? this.mesh.rotation.clone() : new THREE.Euler(),
-            orbitalAngle: this.orbital.angle,
+            orbitalAngle: this.orbital.meanAnomaly,
             animationTime: this.animation.time,
             settings: { ...this.settings }
         };
@@ -699,7 +764,7 @@ class SolarSystemPlanet {
             if (this.mesh && state.rotation) {
                 this.mesh.rotation.copy(state.rotation);
             }
-            this.orbital.angle = state.orbitalAngle || 0;
+            this.orbital.meanAnomaly = state.orbitalAngle || 0;
             this.animation.time = state.animationTime || 0;
             
             if (state.settings) {
@@ -713,12 +778,12 @@ class SolarSystemPlanet {
         }
     }
 
-    // **הוספה: קבלת צבע דומיננטי**
+    // קבלת צבע דומיננטי
     getDominantColor() {
         return this.data.color || 0x888888;
     }
 
-    // **הוספה: קבלת מידע לתצוגה מהירה**
+    // קבלת מידע לתצוגה מהירה
     getQuickDisplayInfo() {
         return {
             name: this.data.name,
@@ -730,7 +795,7 @@ class SolarSystemPlanet {
         };
     }
 
-    // **הוספה: קבלת אמוג'י של כוכב הלכת**
+    // קבלת אמוג'י של כוכב הלכת
     getPlanetEmoji() {
         const emojis = {
             sun: '☀️',
@@ -781,7 +846,7 @@ class SolarSystemPlanet {
     }
 }
 
-// **הוספה: פונקציות עזר לכוכבי לכת**
+// פונקציות עזר לכוכבי לכת
 const PlanetUtils = {
     // יצירת כוכב לכת מהיר
     createQuickPlanet(planetName, radius, distance, color) {
@@ -797,18 +862,33 @@ const PlanetUtils = {
         return mesh;
     },
     
-    // חישוב מיקום במסלול
-    calculateOrbitalPosition(angle, distance, inclination = 0) {
+    // חישוב מיקום במסלול אליפטי
+    calculateEllipticalPosition(meanAnomaly, semiMajorAxis, eccentricity, inclination = 0) {
+        // פתרון משוואת קפלר
+        let E = meanAnomaly;
+        for (let i = 0; i < 10; i++) {
+            E = meanAnomaly + eccentricity * Math.sin(E);
+        }
+        
+        // חישוב true anomaly
+        const nu = 2 * Math.atan2(
+            Math.sqrt(1 + eccentricity) * Math.sin(E / 2),
+            Math.sqrt(1 - eccentricity) * Math.cos(E / 2)
+        );
+        
+        // חישוב מרחק
+        const r = semiMajorAxis * (1 - eccentricity * Math.cos(E));
+        
         return new THREE.Vector3(
-            Math.cos(angle) * distance,
-            Math.sin(angle) * Math.sin(inclination) * distance * 0.1,
-            Math.sin(angle) * distance
+            r * Math.cos(nu),
+            r * Math.sin(nu) * Math.sin(inclination) * 0.1,
+            r * Math.sin(nu)
         );
     },
     
     // חישוב מהירות מסלול (חוק קפלר השלישי)
-    calculateOrbitalSpeed(distance) {
-        return Math.sqrt(1 / distance) * 0.001;
+    calculateOrbitalSpeed(semiMajorAxis) {
+        return Math.sqrt(1 / semiMajorAxis) * 0.001;
     },
     
     // המרת יחידות מדויקות
