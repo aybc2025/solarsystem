@@ -1,4 +1,4 @@
-// מחלקת האפליקציה המרכזית - מתוקנת עם אנימציה פועלת ומסלולים אליפטיים
+// מחלקת האפליקציה המרכזית - מתוקנת עם מסלולים אליפטיים ומהירות איטית
 class ImprovedSolarSystemApp {
     constructor() {
         this.scene = null;
@@ -17,10 +17,10 @@ class ImprovedSolarSystemApp {
         this.orbits = new Map();
         this.labels = new Map();
         
-        // מצב האפליקציה - תיקון: isPaused מתחיל ב-false
+        // מצב האפליקציה
         this.state = {
             isLoading: true,
-            isPaused: false, // תיקון: שונה מ-true ל-false כדי שהאנימציה תרוץ
+            isPaused: false,
             timeScale: 1,
             showOrbits: true,
             showLabels: true,
@@ -34,8 +34,7 @@ class ImprovedSolarSystemApp {
         this.time = {
             current: 0,
             delta: 0,
-            lastFrame: performance.now(),
-            elapsed: 0
+            lastFrame: performance.now()
         };
         
         // ביצועים
@@ -52,7 +51,6 @@ class ImprovedSolarSystemApp {
         
         // אתחול התחלתי
         this.isInitialized = false;
-        this.animationId = null;
     }
 
     // אתחול האפליקציה
@@ -79,8 +77,7 @@ class ImprovedSolarSystemApp {
             this.finishLoading();
             
             this.isInitialized = true;
-            console.log('✅ ImprovedSolarSystemApp initialized successfully');
-            console.log('Animation state: isPaused =', this.state.isPaused, 'timeScale =', this.state.timeScale);
+            console.log('✅ ImprovedSolarSystemApp initialized with elliptical orbits');
             
         } catch (error) {
             console.error('❌ Failed to initialize solar system:', error);
@@ -106,7 +103,6 @@ class ImprovedSolarSystemApp {
         
         // מיקום מצלמה ראשוני
         this.camera.position.set(300, 150, 300);
-        this.camera.lookAt(0, 0, 0);
         
         // יצירת renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -226,6 +222,7 @@ class ImprovedSolarSystemApp {
                     await planet.init();
                     
                     const planetMesh = planet.createMesh();
+                    // וידוא שיש שם לאובייקט לזיהוי
                     if (planetMesh.name !== planetName) {
                         planetMesh.name = planetName;
                     }
@@ -236,7 +233,7 @@ class ImprovedSolarSystemApp {
                     }
                     
                     this.scene.add(planetMesh);
-                    this.planets.set(planetName, planet);
+                    this.planets.set(planetName, planet); // שמירת האובייקט המלא
                     
                     // יצירת מסלול אליפטי
                     this.createEllipticalOrbit(planetName, planet.data);
@@ -247,6 +244,7 @@ class ImprovedSolarSystemApp {
                 
             } catch (error) {
                 console.warn(`Failed to create planet ${planetName}:`, error);
+                // המשך גם אם כוכב לכת אחד נכשל
             }
         }
         
@@ -262,11 +260,11 @@ class ImprovedSolarSystemApp {
         
         const geometry = new THREE.SphereGeometry(sunData.scaledRadius, 32, 32);
         
-        // תיקון: שימוש ב-MeshPhongMaterial
         const material = new THREE.MeshPhongMaterial({ 
             color: sunData.color,
             emissive: sunData.emissive || sunData.color,
-            emissiveIntensity: 0.3
+            emissiveIntensity: 0.3,
+            shininess: 100
         });
         
         const sunMesh = new THREE.Mesh(geometry, material);
@@ -285,8 +283,7 @@ class ImprovedSolarSystemApp {
         console.log('✅ Simple sun created');
     }
 
-    // יצירת כוכב לכת פשוט
-    // **תיקון: יצירת כוכב לכת פשוט עם חומר ומסלול מדויקים**
+    // יצירת כוכב לכת פשוט עם מסלול אליפטי
     createSimplePlanet(planetName) {
         const planetData = PLANETS_DATA[planetName];
         if (!planetData) return;
@@ -294,7 +291,6 @@ class ImprovedSolarSystemApp {
         // יצירת גיאומטריה וחומר
         const geometry = new THREE.SphereGeometry(planetData.scaledRadius, 32, 32);
         
-        // **תיקון: שימוש ב-MeshLambertMaterial ללא roughness**
         const material = new THREE.MeshLambertMaterial({ 
             color: planetData.color,
             transparent: false
@@ -305,28 +301,26 @@ class ImprovedSolarSystemApp {
         planetMesh.castShadow = true;
         planetMesh.receiveShadow = true;
         
-        // **תיקון 1: מיקום ראשוני מדויק עם אקסצנטריות**
-        const initialTime = 0; // התחלה בזמן 0
-        const initialPosition = MathUtils.calculateOrbitalPosition(
-            initialTime,
-            planetData.orbitalPeriod || 365.25,
-            planetData.scaledDistance,
-            planetData.eccentricity || 0,
-            MathUtils.degToRad(planetData.inclination || 0)
+        // פרמטרי מסלול אליפטי
+        const a = planetData.scaledDistance;  // ציר ראשי
+        const e = planetData.eccentricity || 0;  // אקסצנטריות
+        const initialAngle = INITIAL_POSITIONS[planetName]?.angle || 0;
+        
+        // חישוב מיקום התחלתי במסלול אליפטי
+        const r = a * (1 - e * e) / (1 + e * Math.cos(initialAngle));
+        planetMesh.position.set(
+            r * Math.cos(initialAngle),
+            0,
+            r * Math.sin(initialAngle)
         );
         
-        planetMesh.position.set(initialPosition.x, initialPosition.y, initialPosition.z);
-        
-        // פרמטרי מסלול מדויקים
+        // פרמטרי מסלול - מהירות איטית יותר
         planetMesh.userData = {
-            // **תיקון: שימוש בתקופה אמיתית במקום נוסחה גנרית**
-            orbitalPeriod: planetData.orbitalPeriod || 365.25, // ימים
-            orbitalSpeed: (2 * Math.PI) / (planetData.orbitalPeriod || 365.25), // רדיאנים ליום
-            rotationSpeed: (2 * Math.PI) / (Math.abs(planetData.rotationPeriod) || 1), // רדיאנים ליום
-            eccentricity: planetData.eccentricity || 0,
-            inclination: MathUtils.degToRad(planetData.inclination || 0),
-            distance: planetData.scaledDistance,
-            time: initialTime, // זמן נוכחי במסלול
+            orbitalSpeed: Math.sqrt(1 / a) * 0.0002,  // הקטנה פי 5
+            rotationSpeed: (2 * Math.PI) / (planetData.rotationPeriod * 60),
+            semiMajorAxis: a,
+            eccentricity: e,
+            meanAnomaly: initialAngle,
             planetName: planetName,
             data: planetData
         };
@@ -334,28 +328,25 @@ class ImprovedSolarSystemApp {
         this.scene.add(planetMesh);
         this.planets.set(planetName, planetMesh);
         
-        // יצירת מסלול
-        this.createOrbit(planetName, planetData);
+        // יצירת מסלול אליפטי
+        this.createEllipticalOrbit(planetName, planetData);
         
-        console.log(`✅ Planet ${planetName} created with realistic orbital mechanics`);
+        console.log(`✅ Simple planet ${planetName} created with elliptical orbit`);
     }
 
-    // יצירת מסלול אליפטי אמיתי
+    // יצירת מסלול אליפטי
     createEllipticalOrbit(planetName, planetData) {
         if (!this.state.showOrbits) return;
         
-        const semiMajorAxis = planetData.scaledDistance;
-        const eccentricity = planetData.eccentricity || 0;
+        const a = planetData.scaledDistance;  // ציר ראשי
+        const e = planetData.eccentricity || 0;  // אקסצנטריות
+        const b = a * Math.sqrt(1 - e * e);  // ציר משני
         
-        // חישוב פרמטרים של האליפסה
-        const semiMinorAxis = semiMajorAxis * Math.sqrt(1 - eccentricity * eccentricity);
-        const focus = semiMajorAxis * eccentricity;
-        
-        // יצירת path אליפטי
+        // יצירת עקומת אליפסה
         const curve = new THREE.EllipseCurve(
-            -focus, 0,  // מרכז האליפסה (הזזה למוקד)
-            semiMajorAxis, semiMinorAxis,  // רדיוסים
-            0, 2 * Math.PI,  // זוויות התחלה וסיום
+            -a * e, 0,  // מרכז האליפסה (הסטה למיקום המוקד)
+            a, b,  // רדיוסים x ו-y
+            0, 2 * Math.PI,  // זווית התחלה וסיום
             false,  // כיוון השעון
             0  // סיבוב
         );
@@ -363,20 +354,27 @@ class ImprovedSolarSystemApp {
         const points = curve.getPoints(128);
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         
+        // חומר למסלול
         const material = new THREE.LineBasicMaterial({
             color: 0x444444,
             transparent: true,
-            opacity: 0.3
+            opacity: 0.5
         });
         
-        const orbit = new THREE.Line(geometry, material);
-        orbit.rotation.x = -Math.PI / 2; // מישור האקליפטיקה
-        orbit.name = `${planetName}Orbit`;
+        // יצירת קו המסלול
+        const orbitLine = new THREE.Line(geometry, material);
+        orbitLine.rotation.x = -Math.PI / 2;  // סיבוב למישור האקליפטיקה
+        orbitLine.name = `${planetName}Orbit`;
         
-        this.scene.add(orbit);
-        this.orbits.set(planetName, orbit);
+        // הוספת נטייה אם יש
+        if (planetData.inclination) {
+            orbitLine.rotation.z = (planetData.inclination * Math.PI / 180) * 0.1;  // הקטנת האפקט
+        }
         
-        console.log(`Created elliptical orbit for ${planetName} with eccentricity ${eccentricity}`);
+        this.scene.add(orbitLine);
+        this.orbits.set(planetName, orbitLine);
+        
+        console.log(`Created elliptical orbit for ${planetName}: a=${a.toFixed(1)}, e=${e.toFixed(3)}`);
     }
 
     // יצירת חגורת אסטרואידים
@@ -384,11 +382,13 @@ class ImprovedSolarSystemApp {
         try {
             console.log('Creating asteroid belt...');
             
+            // פרמטרי חגורת האסטרואידים
             const innerRadius = 120;
             const outerRadius = 180;
             const asteroidCount = 5000;
             const thickness = 15;
             
+            // יצירת מערכת חלקיקים לאסטרואידים קטנים
             const asteroidGeometry = new THREE.BufferGeometry();
             const positions = new Float32Array(asteroidCount * 3);
             const colors = new Float32Array(asteroidCount * 3);
@@ -397,19 +397,23 @@ class ImprovedSolarSystemApp {
             for (let i = 0; i < asteroidCount; i++) {
                 const i3 = i * 3;
                 
+                // התפלגות במסלול דמוי טבעת
                 const angle = Math.random() * Math.PI * 2;
                 const radiusVariation = Math.random();
                 const radius = innerRadius + (outerRadius - innerRadius) * radiusVariation;
                 
+                // מיקום במרחב
                 positions[i3] = Math.cos(angle) * radius;
                 positions[i3 + 1] = (Math.random() - 0.5) * thickness;
                 positions[i3 + 2] = Math.sin(angle) * radius;
                 
+                // צבע אקראי באפור-חום
                 const colorVariation = 0.3 + Math.random() * 0.4;
                 colors[i3] = colorVariation;
                 colors[i3 + 1] = colorVariation * 0.9;
                 colors[i3 + 2] = colorVariation * 0.8;
                 
+                // גודל אקראי
                 sizes[i] = 0.5 + Math.random() * 2.5;
             }
             
@@ -425,19 +429,22 @@ class ImprovedSolarSystemApp {
                 sizeAttenuation: true
             });
             
+            // יצירת מערכת הנקודות
             this.asteroidBelt = new THREE.Points(asteroidGeometry, asteroidMaterial);
             this.asteroidBelt.name = 'asteroidBelt';
             
+            // הוספת סיבוב עדין לחגורה - איטי יותר
             this.asteroidBelt.userData = {
-                rotationSpeed: 0.0001,
+                rotationSpeed: 0.00002,  // הקטנה פי 5
                 originalPositions: positions.slice()
             };
             
             this.scene.add(this.asteroidBelt);
             
+            // יצירת כמה אסטרואידים גדולים
             await this.createMajorAsteroids();
             
-            console.log('✅ Asteroid belt created successfully');
+            console.log('✅ Asteroid belt created');
             
         } catch (error) {
             console.warn('Failed to create asteroid belt:', error);
@@ -454,9 +461,9 @@ class ImprovedSolarSystemApp {
         ];
         
         majorAsteroids.forEach(asteroid => {
+            // יצירת גיאומטריה לא סדירה
             const geometry = this.createIrregularAsteroidGeometry(asteroid.radius);
             
-            // תיקון: MeshLambertMaterial בלי roughness
             const material = new THREE.MeshLambertMaterial({ 
                 color: asteroid.color
             });
@@ -466,20 +473,23 @@ class ImprovedSolarSystemApp {
             asteroidMesh.castShadow = true;
             asteroidMesh.receiveShadow = true;
             
+            // מיקום במסלול
             asteroidMesh.position.set(
                 Math.cos(asteroid.angle) * asteroid.distance,
                 (Math.random() - 0.5) * 10,
                 Math.sin(asteroid.angle) * asteroid.distance
             );
             
+            // סיבוב אקראי
             asteroidMesh.rotation.set(
                 Math.random() * Math.PI * 2,
                 Math.random() * Math.PI * 2,
                 Math.random() * Math.PI * 2
             );
             
+            // פרמטרי מסלול - איטי יותר
             asteroidMesh.userData = {
-                orbitalSpeed: Math.sqrt(1 / asteroid.distance) * 0.0001,
+                orbitalSpeed: Math.sqrt(1 / asteroid.distance) * 0.00002,  // הקטנה פי 5
                 rotationSpeed: (Math.random() - 0.5) * 0.02,
                 distance: asteroid.distance,
                 angle: asteroid.angle,
@@ -497,11 +507,13 @@ class ImprovedSolarSystemApp {
         const geometry = new THREE.SphereGeometry(baseRadius, 12, 8);
         const positions = geometry.attributes.position.array;
         
+        // עיוות הקודקודים ליצירת צורה לא סדירה
         for (let i = 0; i < positions.length; i += 3) {
             const x = positions[i];
             const y = positions[i + 1]; 
             const z = positions[i + 2];
             
+            // רעש פשוט לעיוות
             const noise = Math.sin(x * 2) * Math.sin(y * 2) * Math.sin(z * 2) * 0.3;
             const distortion = 1 + noise;
             
@@ -520,10 +532,12 @@ class ImprovedSolarSystemApp {
     setupClickEvents() {
         const canvas = this.renderer.domElement;
         
+        // לחיצה עם עכבר
         canvas.addEventListener('click', (event) => {
             this.handleClick(event);
         });
         
+        // מגע במובייל
         canvas.addEventListener('touchend', (event) => {
             if (event.changedTouches.length === 1) {
                 const touch = event.changedTouches[0];
@@ -534,25 +548,30 @@ class ImprovedSolarSystemApp {
 
     // טיפול בלחיצות
     handleClick(event) {
+        // חישוב מיקום העכבר ביחס לcanvas
         const rect = this.renderer.domElement.getBoundingClientRect();
         this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
         
+        // raycasting לזיהוי אובייקטים
         this.raycaster.setFromCamera(this.mouse, this.camera);
         
+        // בדיקת חיתוך עם כוכבי לכת
         const intersectableObjects = [];
         
+        // הוספת השמש
         if (this.sun && this.sun.mesh) {
             intersectableObjects.push(this.sun.mesh);
         }
         
+        // הוספת כוכבי הלכת
         this.planets.forEach((planet, planetName) => {
             if (planet.mesh) {
                 intersectableObjects.push(planet.mesh);
             } else if (planet.group) {
                 intersectableObjects.push(planet.group);
             } else {
-                intersectableObjects.push(planet);
+                intersectableObjects.push(planet); // אם זה mesh ישיר
             }
         });
         
@@ -570,18 +589,22 @@ class ImprovedSolarSystemApp {
 
     // חיפוש שם כוכב לכת מאובייקט
     findPlanetName(object) {
+        // בדיקה ישירה לפי שם
         if (object.name && (object.name === 'sun' || ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(object.name))) {
             return object.name;
         }
         
+        // בדיקה לפי userData
         if (object.userData && object.userData.planetName) {
             return object.userData.planetName;
         }
         
+        // בדיקה לפי parent
         if (object.parent && object.parent.userData && object.parent.userData.planetName) {
             return object.parent.userData.planetName;
         }
         
+        // בדיקה עמוקה יותר
         let currentObject = object;
         while (currentObject.parent && currentObject.parent !== this.scene) {
             if (currentObject.parent.name && ['sun', 'mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(currentObject.parent.name)) {
@@ -597,15 +620,19 @@ class ImprovedSolarSystemApp {
     selectPlanet(planetName) {
         console.log(`Planet selected: ${planetName}`);
         
+        // עדכון מצב
         this.state.selectedPlanet = planetName;
         
+        // התמקדות על כוכב לכת
         this.focusOnPlanet(planetName);
         
-        if (window.infoPanel && typeof window.infoPanel.showPlanetInfo === 'function') {
-            window.infoPanel.showPlanetInfo(planetName);
+        // הצגת מידע
+        if (window.infoPanel && typeof window.infoPanel.onPlanetSelected === 'function') {
+            window.infoPanel.onPlanetSelected(planetName);
         } else if (this.ui && typeof this.ui.showPlanetInfo === 'function') {
             this.ui.showPlanetInfo(planetName);
         } else {
+            // fallback לחלון מידע פשוט
             this.showSimplePlanetInfo(planetName);
         }
     }
@@ -623,10 +650,12 @@ class ImprovedSolarSystemApp {
     deselectPlanet() {
         console.log('Planet deselected');
         
+        // עדכון מצב
         this.state.selectedPlanet = null;
         
-        if (window.infoPanel && typeof window.infoPanel.hide === 'function') {
-            window.infoPanel.hide();
+        // הסתרת מידע
+        if (window.infoPanel && typeof window.infoPanel.onPlanetDeselected === 'function') {
+            window.infoPanel.onPlanetDeselected();
         } else if (this.ui && typeof this.ui.closeInfoPanel === 'function') {
             this.ui.closeInfoPanel();
         }
@@ -637,6 +666,7 @@ class ImprovedSolarSystemApp {
         const planet = this.planets.get(planetName);
         if (!planet || !this.camera) return;
         
+        // קבלת מיקום כוכב הלכת
         let planetPosition;
         if (planet.mesh) {
             planetPosition = planet.mesh.position.clone();
@@ -648,15 +678,18 @@ class ImprovedSolarSystemApp {
             planetPosition = planet.position ? planet.position.clone() : new THREE.Vector3();
         }
         
+        // חישוב מרחק מתאים לצפייה
         const planetData = PLANETS_DATA[planetName];
         const distance = planetData ? planetData.scaledRadius * 8 : 60;
         
+        // מיקום המצלמה ליד כוכב הלכת
         const cameraPosition = planetPosition.clone();
         cameraPosition.add(new THREE.Vector3(distance, distance * 0.5, distance));
         
         this.camera.position.copy(cameraPosition);
         this.camera.lookAt(planetPosition);
         
+        // עדכון orbit controls אם קיימים
         if (this.controls && this.controls.target) {
             this.controls.target.copy(planetPosition);
         }
@@ -679,28 +712,34 @@ class ImprovedSolarSystemApp {
     async setupUI() {
         this.updateLoadingProgress('מגדיר ממשק משתמש...', 85);
         
+        // אתחול בקרות ממשק
         if (typeof UIControls !== 'undefined') {
             this.ui = new UIControls();
             await this.ui.init(this);
         } else {
+            // הגדרת בקרות בסיסיות
             this.setupBasicControls();
         }
         
+        // הוספת מאזיני אירועים למקלדת
         this.setupEventListeners();
     }
 
     // הגדרת בקרות בסיסיות כחלופה
     setupBasicControls() {
+        // כפתור השהיה/המשכה
         const playPauseBtn = document.getElementById('playPause');
         if (playPauseBtn) {
             playPauseBtn.addEventListener('click', () => this.togglePause());
         }
         
+        // כפתור איפוס
         const resetBtn = document.getElementById('resetView');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => this.resetView());
         }
         
+        // בקרת מהירות זמן
         const timeSpeedSlider = document.getElementById('timeSpeed');
         if (timeSpeedSlider) {
             timeSpeedSlider.addEventListener('input', (event) => {
@@ -711,10 +750,12 @@ class ImprovedSolarSystemApp {
 
     // הגדרת מאזיני אירועים
     setupEventListeners() {
+        // שינוי גודל חלון
         window.addEventListener('resize', () => {
             this.handleResize();
         });
         
+        // קיצורי מקלדת
         document.addEventListener('keydown', (event) => {
             switch(event.code) {
                 case 'Space':
@@ -741,24 +782,22 @@ class ImprovedSolarSystemApp {
         });
     }
 
-    // התחלת לולאת הרינדור - תיקון עיקרי לאנימציה
+    // התחלת לולאת הרינדור
     startRenderLoop() {
         this.updateLoadingProgress('מתחיל רנדור...', 95);
         
         const animate = (currentTime) => {
-            // חישוב delta time בצורה נכונה
-            const deltaTime = currentTime - this.time.lastFrame;
-            this.time.delta = deltaTime;
+            // חישוב delta time
+            this.time.delta = currentTime - this.time.lastFrame;
             this.time.lastFrame = currentTime;
             
-            // עדכון זמן הסימולציה רק אם לא בהשהיה
+            // עדכון זמן הסימולציה
             if (!this.state.isPaused) {
-                this.time.current += deltaTime * this.state.timeScale;
-                this.time.elapsed += deltaTime;
+                this.time.current += this.time.delta * this.state.timeScale;
             }
             
-            // עדכון אובייקטים תמיד (גם בהשהיה לסיבוב עצמי)
-            this.updateObjects(deltaTime);
+            // עדכון אובייקטים
+            this.updateObjects(this.time.delta);
             
             // עדכון בקרות
             if (this.controls && this.controls.update) {
@@ -772,89 +811,61 @@ class ImprovedSolarSystemApp {
             this.updatePerformance(currentTime);
             
             // המשך הלולאה
-            this.animationId = requestAnimationFrame(animate);
+            requestAnimationFrame(animate);
         };
         
-        // התחלת האנימציה
         requestAnimationFrame(animate);
-        console.log('✅ Animation loop started');
     }
 
-    // עדכון אובייקטים - תיקון התנועה האליפטית
+    // עדכון אובייקטים עם מסלולים אליפטיים
     updateObjects(deltaTime) {
-        if (!deltaTime || deltaTime > 1000) return; // מניעת קפיצות
-        
         // עדכון השמש
-        if (this.sun) {
-            if (this.sun.update) {
-                this.sun.update(deltaTime);
-            } else if (this.sun.mesh) {
-                // סיבוב השמש
-                this.sun.mesh.rotation.y += deltaTime * 0.0001;
-            }
+        if (this.sun && this.sun.update) {
+            this.sun.update(deltaTime);
         }
         
-        // עדכון כוכבי הלכת עם תנועה אליפטית
+        // עדכון כוכבי הלכת
         this.planets.forEach((planet, planetName) => {
             if (planet.update) {
+                // אם יש מתודת update (SolarSystemPlanet)
                 planet.update(deltaTime);
             } else if (planet.userData) {
+                // עדכון מסלול אליפטי פשוט
                 const data = planet.userData;
+                const a = data.semiMajorAxis;
+                const e = data.eccentricity || 0;
                 
-                // עדכון זווית במסלול רק אם לא בהשהיה
-                if (!this.state.isPaused) {
-                    data.angle += data.orbitalSpeed * deltaTime * this.state.timeScale;
-                    
-                    // חישוב מיקום אליפטי
-                    const eccentricity = data.eccentricity || 0;
-                    const semiMajorAxis = data.distance;
-                    
-                    // חישוב anomaly אקסצנטרית (פשוט)
-                    const E = data.angle;
-                    
-                    // חישוב מרחק מהמוקד
-                    const r = semiMajorAxis * (1 - eccentricity * Math.cos(E));
-                    
-                    // חישוב מיקום
-                    const trueAnomaly = E + eccentricity * Math.sin(E);
-                    planet.position.x = r * Math.cos(trueAnomaly);
-                    planet.position.z = r * Math.sin(trueAnomaly);
-                    planet.position.y = 0; // שמירה על מישור אקליפטיקה
+                // עדכון אנומליה ממוצעת
+                data.meanAnomaly += data.orbitalSpeed * deltaTime;
+                
+                // פתרון משוואת קפלר
+                let E = data.meanAnomaly;
+                for (let i = 0; i < 10; i++) {
+                    const dE = (E - e * Math.sin(E) - data.meanAnomaly) / (1 - e * Math.cos(E));
+                    E -= dE;
+                    if (Math.abs(dE) < 1e-6) break;
                 }
                 
-                // סיבוב עצמי תמיד (גם בהשהיה)
-                if (data.rotationSpeed) {
-                    planet.rotation.y += data.rotationSpeed * deltaTime;
-                }
+                // חישוב מרחק ואנומליה אמיתית
+                const r = a * (1 - e * Math.cos(E));
+                const trueAnomaly = 2 * Math.atan2(
+                    Math.sqrt(1 + e) * Math.sin(E / 2),
+                    Math.sqrt(1 - e) * Math.cos(E / 2)
+                );
+                
+                // עדכון מיקום
+                planet.position.x = r * Math.cos(trueAnomaly);
+                planet.position.z = r * Math.sin(trueAnomaly);
+                
+                // סיבוב עצמי
+                planet.rotation.y += data.rotationSpeed * deltaTime;
             }
         });
         
         // עדכון חגורת אסטרואידים
-        if (this.asteroidBelt && this.asteroidBelt.userData && !this.state.isPaused) {
-            this.asteroidBelt.rotation.y += this.asteroidBelt.userData.rotationSpeed * deltaTime * this.state.timeScale;
+        if (this.asteroidBelt && this.asteroidBelt.userData) {
+            this.asteroidBelt.rotation.y += this.asteroidBelt.userData.rotationSpeed * deltaTime;
         }
-        
-        // עדכון אסטרואידים גדולים
-        this.scene.traverse((object) => {
-            if (object.userData && object.userData.planetName && 
-                ['Ceres', 'Vesta', 'Pallas', 'Hygiea'].includes(object.userData.planetName)) {
-                
-                const data = object.userData;
-                
-                if (!this.state.isPaused) {
-                    data.angle += data.orbitalSpeed * deltaTime * this.state.timeScale;
-                    
-                    object.position.x = Math.cos(data.angle) * data.distance;
-                    object.position.z = Math.sin(data.angle) * data.distance;
-                }
-                
-                // סיבוב עצמי
-                if (data.rotationSpeed) {
-                    object.rotation.x += data.rotationSpeed * deltaTime;
-                    object.rotation.y += data.rotationSpeed * deltaTime * 0.7;
-                }
-            }
-        });
     }
 
     // עדכון ביצועים
@@ -865,12 +876,6 @@ class ImprovedSolarSystemApp {
             this.performance.fps = this.performance.frameCount;
             this.performance.frameCount = 0;
             this.performance.lastFpsUpdate = currentTime;
-            
-            // עדכון תצוגת FPS
-            const fpsElement = document.getElementById('fps');
-            if (fpsElement) {
-                fpsElement.textContent = `FPS: ${this.performance.fps}`;
-            }
         }
     }
 
@@ -890,34 +895,25 @@ class ImprovedSolarSystemApp {
     togglePause() {
         this.state.isPaused = !this.state.isPaused;
         console.log(`Animation ${this.state.isPaused ? 'paused' : 'resumed'}`);
-        
-        // עדכון כפתור
-        const playPauseBtn = document.getElementById('playPause');
-        if (playPauseBtn) {
-            playPauseBtn.textContent = this.state.isPaused ? '▶️ המשך' : '⏸️ השהה';
-        }
     }
 
     setTimeScale(scale) {
-        this.state.timeScale = Math.max(0, Math.min(10, scale));
+        this.state.timeScale = Math.max(0, Math.min(5, scale));
         console.log(`Time scale set to: ${this.state.timeScale}x`);
-        
-        // עדכון תצוגה
-        const timeScaleElement = document.getElementById('timeScale');
-        if (timeScaleElement) {
-            timeScaleElement.textContent = `זמן: ${this.state.timeScale.toFixed(1)}x`;
-        }
     }
 
     resetView() {
+        // איפוס מיקום מצלמה
         this.camera.position.set(300, 150, 300);
         this.camera.lookAt(0, 0, 0);
         
+        // איפוס orbit controls
         if (this.controls && this.controls.target) {
             this.controls.target.set(0, 0, 0);
             this.controls.update();
         }
         
+        // ביטול בחירת כוכב לכת
         this.deselectPlanet();
         
         console.log('View reset to default');
@@ -947,25 +943,6 @@ class ImprovedSolarSystemApp {
     toggleRealisticMode() {
         this.state.realisticMode = !this.state.realisticMode;
         console.log(`Realistic mode: ${this.state.realisticMode}`);
-        
-        // עדכון גדלים אם נדרש
-        if (this.state.realisticMode) {
-            // הקטנת כוכבי הלכת הפנימיים
-            this.planets.forEach((planet, name) => {
-                if (['mercury', 'venus', 'earth', 'mars'].includes(name)) {
-                    if (planet.scale) {
-                        planet.scale.setScalar(0.5);
-                    }
-                }
-            });
-        } else {
-            // החזרה לגודל רגיל
-            this.planets.forEach((planet) => {
-                if (planet.scale) {
-                    planet.scale.setScalar(1);
-                }
-            });
-        }
     }
 
     // עדכון מסלולים
@@ -980,6 +957,7 @@ class ImprovedSolarSystemApp {
         this.updateLoadingProgress('מוכן!', 100);
         this.state.isLoading = false;
         
+        // הסתרת מסך הטעינה
         setTimeout(() => {
             const loading = document.getElementById('loading');
             if (loading) {
@@ -1027,7 +1005,6 @@ class ImprovedSolarSystemApp {
             showOrbits: this.state.showOrbits,
             showLabels: this.state.showLabels,
             showAsteroids: this.state.showAsteroids,
-            realisticMode: this.state.realisticMode,
             planetsCount: this.planets.size,
             isInitialized: this.isInitialized,
             fps: this.performance.fps
@@ -1036,21 +1013,19 @@ class ImprovedSolarSystemApp {
 
     // ניקוי משאבים
     dispose() {
-        // עצירת אנימציה
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-        }
-        
+        // ניקוי אובייקטים
         if (this.sun && this.sun.dispose) this.sun.dispose();
         this.planets.forEach(planet => {
             if (planet.dispose) planet.dispose();
         });
         
+        // ניקוי חגורת אסטרואידים
         if (this.asteroidBelt) {
             if (this.asteroidBelt.geometry) this.asteroidBelt.geometry.dispose();
             if (this.asteroidBelt.material) this.asteroidBelt.material.dispose();
         }
         
+        // ניקוי סצנה
         if (this.scene) {
             this.scene.traverse((object) => {
                 if (object.geometry) object.geometry.dispose();
@@ -1058,6 +1033,7 @@ class ImprovedSolarSystemApp {
             });
         }
         
+        // ניקוי renderer
         if (this.renderer) {
             this.renderer.dispose();
         }
