@@ -101,22 +101,40 @@ class SolarSystemPlanet {
     }
 
     // הגדרת פרמטרי מסלול אליפטיים
+    // הגדרת פרמטרי מסלול
     setupOrbitalParameters() {
-        // חישוב מהירות מסלול לפי חוק קפלר השלישי
-        this.orbital.speed = Math.sqrt(1 / this.orbital.semiMajorAxis) * 0.001;
+        this.orbital.radius = this.data.scaledDistance || 100;
         
-        // מהירות סיבוב עצמי
-        this.orbital.rotationSpeed = this.data.rotationPeriod ? 
-            (2 * Math.PI) / (Math.abs(this.data.rotationPeriod) * 60) : 0.01;
+        // **תיקון 3: שימוש בתקופת מסלול אמיתית במקום חישוב גנרי**
+        const orbitalPeriod = this.data.orbitalPeriod || 365.25; // ימים
+        this.orbital.speed = (2 * Math.PI) / orbitalPeriod; // רדיאנים ליום
         
-        // זווית התחלה מהנתונים
+        // מהירות סיבוב עצמי מדויקת
+        const rotationPeriod = this.data.rotationPeriod || 1; // ימים
+        this.orbital.rotationSpeed = (2 * Math.PI) / Math.abs(rotationPeriod); // רדיאנים ליום
+        
+        // **תיקון: הוספת כל פרמטרי המסלול הקיימים בנתונים**
+        this.orbital.inclination = MathUtils.degToRad(this.data.inclination || 0);
+        this.orbital.eccentricity = this.data.eccentricity || 0;
+        this.orbital.argumentOfPeriapsis = MathUtils.degToRad(this.data.argumentOfPeriapsis || 0);
+        this.orbital.longitudeOfAscendingNode = MathUtils.degToRad(this.data.longitudeOfAscendingNode || 0);
+        
+        // זמן נוכחי במסלול
+        this.orbital.time = 0;
+        
+        // זווית התחלה מהנתונים הקיימים
         const initialPos = INITIAL_POSITIONS[this.name];
         if (initialPos) {
-            this.orbital.meanAnomaly = initialPos.angle;
+            // המרת זווית התחלה לזמן במסלול
+            this.orbital.time = (initialPos.angle / (2 * Math.PI)) * orbitalPeriod;
         }
         
-        // חישוב מיקום התחלתי
-        this.updateOrbitalElements(0);
+        console.log(`${this.name} orbital parameters:`, {
+            period: `${orbitalPeriod} days`,
+            eccentricity: this.orbital.eccentricity,
+            inclination: `${MathUtils.radToDeg(this.orbital.inclination).toFixed(1)}°`,
+            rotationPeriod: `${rotationPeriod} days`
+        });
     }
 
     // יצירת רכיבים ויזואליים
