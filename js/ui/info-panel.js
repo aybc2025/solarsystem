@@ -664,3 +664,4 @@ if (typeof module !== 'undefined' && module.exports) {
 // הפוך את המחלקה זמינה גלובלית
 if (typeof window !== 'undefined') {
     window.InfoPanel = InfoPanel;
+}
