@@ -286,6 +286,7 @@ class ImprovedSolarSystemApp {
     }
 
     // יצירת כוכב לכת פשוט
+    // **תיקון: יצירת כוכב לכת פשוט עם חומר ומסלול מדויקים**
     createSimplePlanet(planetName) {
         const planetData = PLANETS_DATA[planetName];
         if (!planetData) return;
@@ -293,9 +294,10 @@ class ImprovedSolarSystemApp {
         // יצירת גיאומטריה וחומר
         const geometry = new THREE.SphereGeometry(planetData.scaledRadius, 32, 32);
         
-        // תיקון: שימוש ב-MeshLambertMaterial בלי shininess
+        // **תיקון: שימוש ב-MeshLambertMaterial ללא roughness**
         const material = new THREE.MeshLambertMaterial({ 
-            color: planetData.color
+            color: planetData.color,
+            transparent: false
         });
         
         const planetMesh = new THREE.Mesh(geometry, material);
@@ -303,23 +305,28 @@ class ImprovedSolarSystemApp {
         planetMesh.castShadow = true;
         planetMesh.receiveShadow = true;
         
-        // מיקום ראשוני
-        const initialAngle = INITIAL_POSITIONS[planetName]?.angle || Math.random() * Math.PI * 2;
-        const initialDistance = planetData.scaledDistance;
-        
-        planetMesh.position.set(
-            Math.cos(initialAngle) * initialDistance,
-            0,
-            Math.sin(initialAngle) * initialDistance
+        // **תיקון 1: מיקום ראשוני מדויק עם אקסצנטריות**
+        const initialTime = 0; // התחלה בזמן 0
+        const initialPosition = MathUtils.calculateOrbitalPosition(
+            initialTime,
+            planetData.orbitalPeriod || 365.25,
+            planetData.scaledDistance,
+            planetData.eccentricity || 0,
+            MathUtils.degToRad(planetData.inclination || 0)
         );
         
-        // פרמטרי מסלול כולל אקסצנטריות
+        planetMesh.position.set(initialPosition.x, initialPosition.y, initialPosition.z);
+        
+        // פרמטרי מסלול מדויקים
         planetMesh.userData = {
-            orbitalSpeed: Math.sqrt(1 / planetData.scaledDistance) * 0.001,
-            rotationSpeed: (2 * Math.PI) / (Math.abs(planetData.rotationPeriod) * 60),
-            distance: planetData.scaledDistance,
-            angle: initialAngle,
+            // **תיקון: שימוש בתקופה אמיתית במקום נוסחה גנרית**
+            orbitalPeriod: planetData.orbitalPeriod || 365.25, // ימים
+            orbitalSpeed: (2 * Math.PI) / (planetData.orbitalPeriod || 365.25), // רדיאנים ליום
+            rotationSpeed: (2 * Math.PI) / (Math.abs(planetData.rotationPeriod) || 1), // רדיאנים ליום
             eccentricity: planetData.eccentricity || 0,
+            inclination: MathUtils.degToRad(planetData.inclination || 0),
+            distance: planetData.scaledDistance,
+            time: initialTime, // זמן נוכחי במסלול
             planetName: planetName,
             data: planetData
         };
@@ -327,10 +334,10 @@ class ImprovedSolarSystemApp {
         this.scene.add(planetMesh);
         this.planets.set(planetName, planetMesh);
         
-        // יצירת מסלול אליפטי
-        this.createEllipticalOrbit(planetName, planetData);
+        // יצירת מסלול
+        this.createOrbit(planetName, planetData);
         
-        console.log(`✅ Simple planet ${planetName} created`);
+        console.log(`✅ Planet ${planetName} created with realistic orbital mechanics`);
     }
 
     // יצירת מסלול אליפטי אמיתי
